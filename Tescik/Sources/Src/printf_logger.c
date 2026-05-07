@@ -1,0 +1,150 @@
+/*
+ * printf_logger.c
+ *
+ *  Created on: 23 kwi 2026
+ *      Author: tomas
+ */
+
+
+#include "printf_logger.h"
+#include "stm32f446xx.h"
+
+void printf_init(void)
+{
+	DBGMCU->CR |= DBGMCU_CR_TRACE_IOEN;
+
+	RCC->APB2ENR |= (1 << 0);
+
+	ITM->TCR = 0;
+
+    ITM->LAR = 0xC5ACCE55;
+
+    TPI->SPPR = 2; // NRZ
+
+    TPI->ACPR = (16000000 / 1000000) - 1; // 2 MHz
+
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+
+	ITM->TCR = 0;
+
+    ITM->TCR |= ITM_TCR_ITMENA_Msk;
+
+    ITM->TER = 1;
+}
+
+void printf_c(char c)
+{
+    if (!(ITM->TCR & ITM_TCR_ITMENA_Msk)) return;
+    if (!(ITM->TER & 1)) return;
+
+    while (!(ITM->PORT[0].u32 & 1));
+    ITM->PORT[0].u8 = c;
+}
+
+static void printf_hex(uint32_t val)
+{
+    char hex[] = "0123456789ABCDEF";
+    for (int i = 7; i >= 0; i--)
+    {
+    	printf_c(hex[(val >> (i * 4)) & 0xF]);
+    }
+}
+
+void printf_v(const char *fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+
+    while (*fmt)
+    {
+        if (*fmt == '%')
+        {
+            fmt++;
+
+            switch (*fmt)
+            {
+                case 'd':
+                {
+                    int v = va_arg(args, int);
+                    printf_int(v);
+                    break;
+                }
+
+                case 'x':
+                {
+                    uint32_t v = va_arg(args, uint32_t);
+                    printf_hex(v);
+                    break;
+                }
+
+                case 's':
+                {
+                    char *s = va_arg(args, char*);
+                    printf_s(s ? s : "(null)");
+                    break;
+                }
+
+                case '%':
+                {
+                	printf_c('%');
+                    break;
+                }
+
+                default:
+                    // nieznany format → wypisz literalnie
+                	printf_c('%');
+                	printf_c(*fmt);
+                    break;
+            }
+        }
+        else
+        {
+        	printf_c(*fmt);
+        }
+
+        fmt++;
+    }
+
+    va_end(args);
+}
+
+void printf_s(const char *s)
+{
+    while (*s)
+    {
+    	printf_c(*s++);
+    }
+}
+
+void printf_uint(uint32_t value)
+{
+    char buf[10];
+    int i = 0;
+
+    if (value == 0)
+    {
+    	printf_c('0');
+        return;
+    }
+
+    while (value > 0)
+    {
+        buf[i++] = '0' + (value % 10);
+        value /= 10;
+    }
+
+    while (i--)
+    {
+    	printf_c(buf[i]);
+    }
+}
+
+void printf_int(int value)
+{
+    if (value < 0)
+    {
+    	printf_c('-');
+        value = -value;
+    }
+    printf_uint((uint32_t)value);
+}

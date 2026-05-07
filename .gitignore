@@ -1,3 +1,10 @@
+# CUSTOM TA
+*.metadata/*
+*/.settings/*
+*/Debug/*
+*/Release/*
+*.launch*
+
 # Prerequisites
 *.d
 
