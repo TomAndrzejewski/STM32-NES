@@ -23,6 +23,7 @@
 
 #include "printf_logger.h"
 
+
 void FPU_init()
 {
 	SCB->CPACR |= (0xF << 20);
@@ -31,17 +32,69 @@ void FPU_init()
 void GPIO_init()
 {
 	// GPIOA clock enable
-	RCC->AHB1ENR |= (1 << 0);
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
 
 	// PA1 floating input
-	GPIOA->PUPDR &= ~(0x3 << 0);
-	GPIOA->MODER &= ~(0x3 << 0);
+	GPIOA->PUPDR &= ~GPIO_PUPDR_PUPD0; //floating
+	GPIOA->MODER &= ~GPIO_MODER_MODER0; //input
 
 	// PA2 pull-down output
-	GPIOA->PUPDR 	= (GPIOA->PUPDR | (0x1 << 3)) & ~(0x1 << 2);
-	GPIOA->MODER	= (GPIOA->MODER | (0x1 << 2)) & ~(0x1 << 3);
-	GPIOA->OTYPER 	&= ~(0x1 << 0);
+	GPIOA->PUPDR 	= (GPIOA->PUPDR | GPIO_PUPDR_PUPD1_1) & ~GPIO_PUPDR_PUPD1_0; //pull-down
+	GPIOA->MODER	= (GPIOA->MODER | GPIO_MODER_MODER1_0) & ~GPIO_MODER_MODER1_1; //output
+	GPIOA->OTYPER 	&= ~GPIO_OTYPER_OT0; //push-pull
 
+}
+
+void Flash_init()
+{
+	FLASH->ACR |= FLASH_ACR_ICEN; //instruction cache enable
+	FLASH->ACR |= FLASH_ACR_DCEN; //data cache enable
+	FLASH->ACR |= FLASH_ACR_PRFTEN; //prefetch enable
+
+#if SYSCLOCK_MHZ == SYSCLOCK_144MHZ
+	FLASH->ACR |= FLASH_ACR_LATENCY_4WS; //4 cycles latency
+#endif
+
+	while ((FLASH->ACR & FLASH_ACR_ICEN) != FLASH_ACR_ICEN);
+	while ((FLASH->ACR & FLASH_ACR_DCEN) != FLASH_ACR_DCEN);
+	while ((FLASH->ACR & FLASH_ACR_PRFTEN) != FLASH_ACR_PRFTEN);
+
+#if SYSCLOCK_MHZ == SYSCLOCK_144MHZ
+	while ((FLASH->ACR & FLASH_ACR_LATENCY_4WS) != FLASH_ACR_LATENCY_4WS);
+#endif
+}
+
+int Clock_init()
+{
+	RCC->CR |= RCC_CR_HSION; //turn HSI on (usually always on)
+	while(!(RCC->CR & RCC_CR_HSIRDY)); //wait until HSI ready
+
+#if SYSCLOCK_MHZ == SYSCLOCK_144MHZ
+	// Konfiguracja magistral (Preskalery)
+	RCC->CFGR |= RCC_CFGR_HPRE_DIV1;  // AHB  = 144 MHz
+	RCC->CFGR |= RCC_CFGR_PPRE2_DIV2; // APB2 = 72 MHz
+	RCC->CFGR |= RCC_CFGR_PPRE1_DIV4; // APB1 = 36 MHz
+
+	RCC->PLLCFGR |= RCC_PLLCFGR_PLLSRC_HSI; //HSI as PLL source
+
+	// clk = src * (N / M) / P
+	RCC->PLLCFGR &= ~RCC_PLLCFGR_PLLN_Msk; //clear PLLN prescaler
+	RCC->PLLCFGR |= (144 << RCC_PLLCFGR_PLLN_Pos); //set PLLN prescaler
+
+	RCC->PLLCFGR &= ~RCC_PLLCFGR_PLLM_Msk; //clear PLLM prescaler
+	RCC->PLLCFGR |= (8 << RCC_PLLCFGR_PLLM_Pos); //set PLLM prescaler
+
+	RCC->PLLCFGR &= ~RCC_PLLCFGR_PLLP_Msk; //clear PLLP prescaler
+	RCC->PLLCFGR |= (0 << RCC_PLLCFGR_PLLP_Pos); //set PLLP prescaler
+
+	RCC->CR |= RCC_CR_PLLON; //turn on PLL
+	while ((RCC->CR & RCC_CR_PLLRDY) != RCC_CR_PLLRDY); //wait for PLL stabilization
+
+	RCC->CFGR |= RCC_CFGR_SW_PLL; //set sysclk source as PLL
+	while ((RCC->CFGR & RCC_CFGR_SWS_PLL) != RCC_CFGR_SWS_PLL); //wait for sysclk to react to change
+#endif
+
+	return 0;
 }
 
 void print_start()
@@ -51,18 +104,24 @@ void print_start()
 
 int main(void)
 {
+	Flash_init();
+	int ret = Clock_init();
 	FPU_init();
 	GPIO_init();
 	printf_init();
 
 	print_start();
+	if (ret < 0)
+	{
+		printf_v("Clock_init failed, code: %d\n", ret);
+	}
 
 
 	bool inState = false;
 
 	while(1)
 	{
-		for(int i = 0; i < 100000; i++)
+		for(int i = 0; i < 10000000; i++)
 		{
 
 		}
@@ -70,13 +129,13 @@ int main(void)
 		{
 			inState = false;
 			printf_v("%d\n", inState);
-			GPIOA->ODR &= ~(0x1 << 1);
+			GPIOA->ODR &= ~GPIO_ODR_OD1;
 		}
 		else
 		{
 			inState = true;
 			printf_v("%d\n", inState);
-			GPIOA->ODR |= (0x1 << 1);
+			GPIOA->ODR |= GPIO_ODR_OD1;
 		}
 	}
 
