@@ -10,7 +10,8 @@
 #include "stm32f446xx.h"
 
 #include "printf_logger.h"
-#include "Defines.h"
+
+#include "NES_Defs.h"
 
 
 void printf_init(void)

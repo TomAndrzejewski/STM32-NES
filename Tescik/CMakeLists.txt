@@ -66,6 +66,7 @@ set (PROJECT_INCLUDES
 	# LIST INCLUDE DIRECTORIES HERE
 	Sources/Inc
     Sources/SystemInc
+    Sources/SystemInc/LowLayer
     )
 
 ############ MODIFY ACCORDING TO REQUIREMENTS) ########################
