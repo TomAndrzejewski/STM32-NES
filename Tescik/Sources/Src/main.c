@@ -235,28 +235,49 @@ int main(void)
 
 	LCD_init();
 	delay(200);
-//	LCD_ReadCTRLDisplay();
-//	delay(1);
-//	LCD_WriteCTRLDisplay();
-//	delay(1);
-//	LCD_ReadCTRLDisplay();
+
+	startTime = GetTimestamp();
+	LCD_SetBackground(LCD_WHITE);
+	elapsedUS = CalcTimeUS(startTime);
+	printf_v("LCD_SetBackground(LCD_WHITE) took: %d us\n", elapsedUS);
+
+	delay(1000);
+
+	startTime = GetTimestamp();
+	LCD_SetBackground(LCD_GREEN);
+	elapsedUS = CalcTimeUS(startTime);
+	printf_v("LCD_SetBackground(LCD_WHITE) took: %d us\n", elapsedUS);
+
+	delay(1000);
 
 
 	while(1)
 	{
-		startTime = GetTimestamp();
-		LCD_SetBackground(LCD_WHITE);
-		elapsedUS = CalcTimeUS(startTime);
-		printf_v("LCD_SetBackground(LCD_WHITE) took: %d us\n", elapsedUS);
+//		startTime = GetTimestamp();
+//		LCD_SetBackground(LCD_WHITE);
+//		elapsedUS = CalcTimeUS(startTime);
+//		printf_v("LCD_SetBackground(LCD_WHITE) took: %d us\n", elapsedUS);
+//
+//		delay(1000);
+//
+//		startTime = GetTimestamp();
+//		LCD_SetBackground(LCD_GREEN);
+//		elapsedUS = CalcTimeUS(startTime);
+//		printf_v("LCD_SetBackground(LCD_WHITE) took: %d us\n", elapsedUS);
 
 		delay(1000);
 
-		startTime = GetTimestamp();
-		LCD_SetBackground(LCD_GREEN);
-		elapsedUS = CalcTimeUS(startTime);
-		printf_v("LCD_SetBackground(LCD_GREEN) took: %d us\n", elapsedUS);
+		LCD_DrawMario();
 
-		delay(1000);
+//		delay(1000);
+
+//		startTime = GetTimestamp();
+//		LCD_SetBackground(LCD_GREEN);
+//		elapsedUS = CalcTimeUS(startTime);
+//		printf_v("LCD_SetBackground(LCD_GREEN) took: %d us\n", elapsedUS);
+//
+//		delay(1000);
+
 //		delay(1000);
 //		LCD_ReadID1();
 	}

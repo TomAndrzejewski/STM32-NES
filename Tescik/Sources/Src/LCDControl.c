@@ -13,6 +13,32 @@
 #define FRAMEBUFFER_SIZE	(40*240)
 uint16_t framebuffer[FRAMEBUFFER_SIZE];
 
+// Kolory użyte w grafice (RGB565 MSB):
+// 0x5DFF - Jasnoniebieski (Tło nieba)
+// 0xD000 - Czerwony (Czapka i koszulka)
+// 0x0210 - Niebieski (Ogrodniczki)
+// 0xFCE0 - Beżowy / Skóra (Twarz i dłonie)
+// 0x79E0 - Brązowy (Włosy i buty)
+
+const uint16_t mario_16x16_dma[256] = {
+		0xffff, 0xffff, 0xffff, 0xffff, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff,
+		0xffff, 0xffff, 0xffff, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0xffff, 0xffff, 0xffff,
+		0xffff, 0xffff, 0xffff, 0xe314, 0xe314, 0xe314, 0xe314, 0xe0fd, 0xe0fd, 0xe314, 0xe0fd, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff,
+		0xffff, 0xffff, 0xe314, 0xe314, 0xe0fd, 0xe314, 0xe0fd, 0xe0fd, 0xe0fd, 0xe314, 0xe0fd, 0xe0fd, 0xe0fd, 0xffff, 0xffff, 0xffff,
+		0xffff, 0xffff, 0xe314, 0xe314, 0xe0fd, 0xe314, 0xe314, 0xe0fd, 0xe0fd, 0xe0fd, 0xe314, 0xe0fd, 0xe0fd, 0xe0fd, 0xffff, 0xffff,
+		0xffff, 0xffff, 0xe314, 0xe314, 0xe314, 0xe0fd, 0xe0fd, 0xe0fd, 0xe0fd, 0xe314, 0xe314, 0xe314, 0xe314, 0xffff, 0xffff, 0xffff,
+		0xffff, 0xffff, 0xffff, 0xffff, 0xe0fd, 0xe0fd, 0xe0fd, 0xe0fd, 0xe0fd, 0xe0fd, 0xe0fd, 0xe0fd, 0xffff, 0xffff, 0xffff, 0xffff,
+		0xffff, 0xffff, 0xffff, 0xe314, 0xe314, 0xe314, 0x00f8, 0xe314, 0xe314, 0xe314, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff,
+		0xffff, 0xffff, 0xe314, 0xe314, 0xe314, 0xe314, 0x00f8, 0xe314, 0xe314, 0x00f8, 0xe314, 0xe314, 0xe314, 0xffff, 0xffff, 0xffff,
+		0xffff, 0xe314, 0xe314, 0xe314, 0xe314, 0xe314, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0xe314, 0xe314, 0xe314, 0xe314, 0xffff, 0xffff,
+		0xffff, 0xe0fd, 0xe0fd, 0xe0fd, 0xe314, 0x00f8, 0xe0fd, 0x00f8, 0x00f8, 0xe0fd, 0x00f8, 0xe314, 0xe0fd, 0xe0fd, 0xffff, 0xffff,
+		0xffff, 0xe0fd, 0xe0fd, 0xe0fd, 0xe0fd, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0xe0fd, 0xe0fd, 0xe0fd, 0xffff, 0xffff,
+		0xffff, 0xe0fd, 0xe0fd, 0xe0fd, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0xe0fd, 0xe0fd, 0xffff, 0xffff,
+		0xffff, 0xffff, 0xffff, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0xffff, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0xffff, 0xffff, 0xffff,
+		0xffff, 0xffff, 0xe314, 0xe314, 0xe314, 0xe314, 0xe314, 0xffff, 0xffff, 0xffff, 0xe314, 0xe314, 0xe314, 0xe314, 0xffff, 0xffff,
+		0xffff, 0xe314, 0xe314, 0xe314, 0xe314, 0xe314, 0xe314, 0xffff, 0xffff, 0xffff, 0xe314, 0xe314, 0xe314, 0xe314, 0xe314, 0xffff
+	};
+
 void DMA2_SPI1_Send_NoBlock(uint8_t* buffer, uint16_t length)
 {
     // 1. Sprawdź, czy poprzedni transfer DMA się zakończył
@@ -166,11 +192,35 @@ void LCD_init()
 	LCD_WritePixelFormat();
 	delay(1);
 	LCD_WriteDisplayON();
-	delay(100);
+	delay(200);
+
+	LCD_ReadDisplayMADCTL();
+	delay(1);
+	LCD_WriteDisplayMADCTL();
+	delay(2000);
+	LCD_ReadDisplayMADCTL();
+
 
 //	LCD_SetBackground(LCD_WHITE);
 //	delay(1000);
 //	LCD_SetBackground(LCD_GREEN);
+}
+
+void LCD_ReadDisplayMADCTL()
+{
+	printf_v("LCD LCD_ReadDisplayMADCTL Start\n");
+	uint8_t madctl = 0;
+	SPI1_SendRead_U8(LCD_RDDMADCTL, &madctl);
+	printf_v("LCD LCD_ReadDisplayMADCTL End, bytes: 0x%x\n", madctl);
+}
+
+void LCD_WriteDisplayMADCTL()
+{
+	uint8_t madctl = 0b10100000;
+	printf_v("LCD LCD_WriteDisplayMADCTL Start\n");
+	SPI1_SendCmd_U8(LCD_MADCTL);
+	SPI1_SendData_U8(madctl);
+	printf_v("LCD LCD_WriteDisplayMADCTL End, bytes: 0x%x\n", madctl);
 }
 
 void LCD_ReadPixelFormat()
@@ -204,21 +254,56 @@ void LCD_SoftwareReset()
 	printf_v("LCD LCD_SoftwareReset End\n");
 }
 
+void LCD_SetRectToDraw(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
+{
+	if (x > 319 || y > 239)
+	{
+		return;
+	}
+
+	if (x + w > 319 || y + h > 239)
+	{
+		return;
+	}
+
+	uint16_t x2 = x + w;
+	uint16_t y2 = y + h;
+
+	uint8_t msb = 0;
+	uint8_t lsb = 0;
+
+
+	SPI1_SendCmd_U8(LCD_CASET);
+
+	msb = (uint8_t)(x >> 8);
+	lsb = (uint8_t)(x & 0xFF);
+	SPI1_SendData_U8(msb);
+	SPI1_SendData_U8(lsb);
+
+	msb = (uint8_t)(x2 >> 8);
+	lsb = (uint8_t)(x2 & 0xFF);
+	SPI1_SendData_U8(msb);
+	SPI1_SendData_U8(lsb);
+
+
+	SPI1_SendCmd_U8(LCD_RASET);
+
+	msb = (uint8_t)(y >> 8);
+	lsb = (uint8_t)(y & 0xFF);
+	SPI1_SendData_U8(msb);
+	SPI1_SendData_U8(lsb);
+
+	msb = (uint8_t)(y2 >> 8);
+	lsb = (uint8_t)(y2 & 0xFF);
+	SPI1_SendData_U8(msb);
+	SPI1_SendData_U8(lsb);
+}
+
 void LCD_SetBackground(LCD_Color color)
 {
 	printf_v("LCD LCD_SetGreenBackground Start\n");
 
-	SPI1_SendCmd_U8(LCD_CASET);
-	SPI1_SendData_U8(0x00);
-	SPI1_SendData_U8(0x00);
-	SPI1_SendData_U8(0x00);
-	SPI1_SendData_U8(0xEF);
-
-	SPI1_SendCmd_U8(LCD_RASET);
-	SPI1_SendData_U8(0x00);
-	SPI1_SendData_U8(0x00);
-	SPI1_SendData_U8(0x01);
-	SPI1_SendData_U8(0x3F);
+	LCD_SetRectToDraw(0, 0, 319, 239);
 
 	SPI1_SendCmd_U8(LCD_RAMWR);
 
@@ -228,23 +313,33 @@ void LCD_SetBackground(LCD_Color color)
 	{
 	case LCD_GREEN:
 	{
-		msByte = 0x07;
-		lsByte = 0xE0;
-		twoBytes = 0xE0F7;
+		twoBytes = 0xE007;
 		break;
 	}
 	case LCD_WHITE:
 	{
-		msByte = 0xFF;
-		lsByte = 0xFF;
 		twoBytes = 0xFFFF;
+		break;
+	}
+	case LCD_RED:
+	{
+		twoBytes = 0xF800;
+		break;
+	}
+	case LCD_BLUE:
+	{
+		twoBytes = 0x00F8;
 		break;
 	}
 	}
 
+	msByte = (uint8_t)(twoBytes >> 8);
+	lsByte = (uint8_t)(twoBytes & 0xFF);
+
+
 	if (false)
 	{
-		int maxLoop = 40*240;
+		int maxLoop = 320*240;
 		for (int i = 0; i < maxLoop; i++)
 		{
 			SPI1_SendData_U8(msByte);
@@ -258,11 +353,30 @@ void LCD_SetBackground(LCD_Color color)
 			framebuffer[i] = twoBytes;
 		}
 
-		DMA2_SPI1_Send_NoBlock((uint8_t*)framebuffer, FRAMEBUFFER_SIZE*2);
+		for (int i = 0; i < 8; i++)
+		{
+			DMA2_SPI1_Send_NoBlock((uint8_t*)framebuffer, FRAMEBUFFER_SIZE*2);
+//			DMA2_SPI1_Send_NoBlock((uint8_t*)framebuffer, 0x10*0x30*2);
+//			DMA2_SPI1_Send_NoBlock((uint8_t*)mario_16x16_dma, 256*2);
+
+		}
 	}
 
 
 	printf_v("LCD LCD_SetGreenBackground End\n");
+}
+
+void LCD_DrawMario()
+{
+	printf_v("LCD LCD_DrawMario Start\n");
+
+	LCD_SetRectToDraw(0, 0, 15, 15);
+
+	SPI1_SendCmd_U8(LCD_RAMWR);
+
+	DMA2_SPI1_Send_NoBlock((uint8_t*)mario_16x16_dma, 256*2);
+
+	printf_v("LCD LCD_DrawMario End\n");
 }
 
 

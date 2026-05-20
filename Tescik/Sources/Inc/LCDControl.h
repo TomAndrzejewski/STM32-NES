@@ -28,6 +28,8 @@
 #define LCD_RASET		(0x2B)
 #define LCD_RAMWR		(0x2C)
 #define LCD_SWRESET		(0x01)
+#define LCD_RDDMADCTL	(0x0B)
+#define LCD_MADCTL		(0x36)
 
 
 #define LCD_RESET_LOW()		(GPIOA->BSRR = GPIO_BSRR_BR0)
@@ -41,6 +43,8 @@
 typedef enum
 {
 	LCD_WHITE,
+	LCD_BLUE,
+	LCD_RED,
 	LCD_GREEN,
 }LCD_Color;
 
@@ -56,6 +60,8 @@ void LCD_WriteCTRLDisplay();
 void LCD_WriteDisplayON();
 void LCD_SetBackground(LCD_Color color);
 void LCD_SoftwareReset();
-
+void LCD_ReadDisplayMADCTL();
+void LCD_WriteDisplayMADCTL();
+void LCD_DrawMario();
 
 #endif /* SOURCES_INC_LCDCONTROL_H_ */
