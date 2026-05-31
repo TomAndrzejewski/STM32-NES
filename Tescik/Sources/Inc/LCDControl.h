@@ -62,6 +62,6 @@ void LCD_SetBackground(LCD_Color color);
 void LCD_SoftwareReset();
 void LCD_ReadDisplayMADCTL();
 void LCD_WriteDisplayMADCTL();
-void LCD_DrawMario();
+void LCD_DrawMario(uint16_t x, uint16_t y);
 
 #endif /* SOURCES_INC_LCDCONTROL_H_ */

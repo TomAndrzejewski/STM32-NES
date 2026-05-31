@@ -29,6 +29,8 @@
 #include "printf_logger.h"
 
 #include "LCDControl.h"
+#include "PADControl.h"
+
 
 
 void FPU_init()
@@ -79,6 +81,7 @@ void DMA2_SPI1_TX_Init(void)
 void GPIO_init()
 {
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN; // GPIOA clock enable
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN; // GPIOA clock enable
 	RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
 
 	//////////////////////////////////
@@ -106,6 +109,32 @@ void GPIO_init()
 	SET_FIELD_32(GPIOA->OSPEEDR, GPIO_OSPEEDR_OSPEED4_Msk, GPIO_OSPEEDR_OSPEED4_Pos, LL_GPIO_SPEED_FREQ_VERY_HIGH); //fast speed
 	SET_FIELD_32(GPIOA->OTYPER, GPIO_OTYPER_OT4_Msk, GPIO_OTYPER_OT4_Pos, LL_GPIO_OUTPUT_PUSHPULL); //push-pull
 	SET_FIELD_32(GPIOA->MODER, GPIO_MODER_MODER4_Msk, GPIO_MODER_MODER4_Pos, LL_GPIO_MODE_OUTPUT); //output
+
+	/////////////////////////////////
+	// PAD_CLK
+	// PA10 pull-up output
+	GPIOA->BSRR = GPIO_BSRR_BR10; // init as low
+//	SET_FIELD_32(GPIOA->PUPDR, GPIO_PUPDR_PUPD3_Msk, GPIO_PUPDR_PUPD3_Pos, LL_GPIO_PULL_DOWN); //pull-down
+	SET_FIELD_32(GPIOA->OSPEEDR, GPIO_OSPEEDR_OSPEED10_Msk, GPIO_OSPEEDR_OSPEED10_Pos, LL_GPIO_SPEED_FREQ_VERY_HIGH); //fast speed
+//	SET_FIELD_32(GPIOA->OTYPER, GPIO_OTYPER_OT3_Msk, GPIO_OTYPER_OT3_Pos, LL_GPIO_OUTPUT_PUSHPULL); //push-pull
+	SET_FIELD_32(GPIOA->MODER, GPIO_MODER_MODER10_Msk, GPIO_MODER_MODER10_Pos, LL_GPIO_MODE_OUTPUT); //output
+
+	/////////////////////////////////
+	// PAD_LATCH
+	// PB5 pull-up output
+	GPIOB->BSRR = GPIO_BSRR_BR5; // init as low
+//	SET_FIELD_32(GPIOB->PUPDR, GPIO_PUPDR_PUPD5_Msk, GPIO_PUPDR_PUPD5_Pos, LL_GPIO_PULL_DOWN); //pull-down
+	SET_FIELD_32(GPIOB->OSPEEDR, GPIO_OSPEEDR_OSPEED5_Msk, GPIO_OSPEEDR_OSPEED5_Pos, LL_GPIO_SPEED_FREQ_VERY_HIGH); //fast speed
+//	SET_FIELD_32(GPIOB->OTYPER, GPIO_OTYPER_OT5_Msk, GPIO_OTYPER_OT5_Pos, LL_GPIO_OUTPUT_PUSHPULL); //push-pull
+	SET_FIELD_32(GPIOB->MODER, GPIO_MODER_MODER5_Msk, GPIO_MODER_MODER5_Pos, LL_GPIO_MODE_OUTPUT); //output
+
+	/////////////////////////////////
+	// PAD_DATA
+	// PB10 pull-up input
+	SET_FIELD_32(GPIOB->PUPDR, GPIO_PUPDR_PUPD10_Msk, GPIO_PUPDR_PUPD10_Pos, LL_GPIO_PULL_UP); //pull-up
+	SET_FIELD_32(GPIOB->OSPEEDR, GPIO_OSPEEDR_OSPEED10_Msk, GPIO_OSPEEDR_OSPEED10_Pos, LL_GPIO_SPEED_FREQ_VERY_HIGH); //fast speed
+	SET_FIELD_32(GPIOB->OTYPER, GPIO_OTYPER_OT10_Msk, GPIO_OTYPER_OT10_Pos, LL_GPIO_OUTPUT_PUSHPULL); //push-pull
+	SET_FIELD_32(GPIOB->MODER, GPIO_MODER_MODER10_Msk, GPIO_MODER_MODER10_Pos, LL_GPIO_MODE_INPUT); //input
 
 	/////////////////////////////////
 	// LCD_SCK
@@ -251,35 +280,45 @@ int main(void)
 	delay(1000);
 
 
+//	uint8_t speed = 0;
+	uint16_t mariopos_x = 0;
+	uint16_t mariopos_y = 0;
 	while(1)
 	{
-//		startTime = GetTimestamp();
-//		LCD_SetBackground(LCD_WHITE);
-//		elapsedUS = CalcTimeUS(startTime);
-//		printf_v("LCD_SetBackground(LCD_WHITE) took: %d us\n", elapsedUS);
-//
-//		delay(1000);
-//
-//		startTime = GetTimestamp();
-//		LCD_SetBackground(LCD_GREEN);
-//		elapsedUS = CalcTimeUS(startTime);
-//		printf_v("LCD_SetBackground(LCD_WHITE) took: %d us\n", elapsedUS);
+		uint32_t buttons_state = 0;
+		buttons_state = GetButtonsState();
+		PrintButtons(buttons_state);
 
-		delay(1000);
+		if (buttons_state & PAD_BUTTON_RIGHT)
+		{
+			mariopos_x++;
+			if (mariopos_x >= 300)
+			{
+				mariopos_x = 0;
+			}
+		}
 
-		LCD_DrawMario();
+		if (buttons_state & PAD_BUTTON_DOWN)
+		{
+			mariopos_y++;
+			if (mariopos_y >= 220)
+			{
+				mariopos_y = 0;
+			}
+		}
 
-//		delay(1000);
+		if (buttons_state & PAD_BUTTON_A)
+		{
+			if (mariopos_y <= 5)
+			{
+				mariopos_y = 220;
+			}
+			mariopos_y -= 5;
+		}
 
-//		startTime = GetTimestamp();
-//		LCD_SetBackground(LCD_GREEN);
-//		elapsedUS = CalcTimeUS(startTime);
-//		printf_v("LCD_SetBackground(LCD_GREEN) took: %d us\n", elapsedUS);
-//
-//		delay(1000);
+		LCD_DrawMario(mariopos_x, mariopos_y);
 
-//		delay(1000);
-//		LCD_ReadID1();
+		delay(16);
 	}
 
     /* Loop forever */

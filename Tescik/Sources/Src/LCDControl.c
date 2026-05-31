@@ -10,6 +10,7 @@
 
 #include "NES_Functions.h"
 
+
 #define FRAMEBUFFER_SIZE	(40*240)
 uint16_t framebuffer[FRAMEBUFFER_SIZE];
 
@@ -366,11 +367,11 @@ void LCD_SetBackground(LCD_Color color)
 	printf_v("LCD LCD_SetGreenBackground End\n");
 }
 
-void LCD_DrawMario()
+void LCD_DrawMario(uint16_t x, uint16_t y)
 {
 	printf_v("LCD LCD_DrawMario Start\n");
 
-	LCD_SetRectToDraw(0, 0, 15, 15);
+	LCD_SetRectToDraw(x, y, 15, 15);
 
 	SPI1_SendCmd_U8(LCD_RAMWR);
 
