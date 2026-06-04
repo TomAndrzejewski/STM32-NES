@@ -30,6 +30,11 @@
 
 #include "LCDControl.h"
 #include "PADControl.h"
+#include "RenderEngine.h"
+#include "Mario.h"
+
+#define DEFINE_NES_ENGINE
+#include "NESEngine.h"
 
 
 
@@ -194,7 +199,7 @@ void Flash_init()
 #endif
 }
 
-int Clock_init()
+void Clock_init()
 {
 	RCC->CR |= RCC_CR_HSION; //turn HSI on (usually always on)
 	while(!(RCC->CR & RCC_CR_HSIRDY)); //wait until HSI ready
@@ -223,8 +228,6 @@ int Clock_init()
 	RCC->CFGR |= RCC_CFGR_SW_PLL; //set sysclk source as PLL
 	while ((RCC->CFGR & RCC_CFGR_SWS_PLL) != RCC_CFGR_SWS_PLL); //wait for sysclk to react to change
 #endif
-
-	return 0;
 }
 
 void Delay_init()
@@ -240,15 +243,13 @@ void Delay_init()
 
 void print_start()
 {
-	printf_v("Welcome!\n");
+ 	printf_v("Welcome!\n");
 }
 
 int main(void)
 {
-	uint32_t startTime = 0, elapsedUS = 0;
-
 	Flash_init();
-	int ret = Clock_init();
+	Clock_init();
 	FPU_init();
 	Delay_init();
 	GPIO_init();
@@ -256,67 +257,121 @@ int main(void)
 	printf_init();
 
 	print_start();
-	if (ret < 0)
-	{
-		printf_v("Clock_init failed, code: %d\n", ret);
-	}
+
+	RE_Init();
 
 
 	LCD_init();
-	delay(200);
 
-	startTime = GetTimestamp();
-	LCD_SetBackground(LCD_WHITE);
-	elapsedUS = CalcTimeUS(startTime);
-	printf_v("LCD_SetBackground(LCD_WHITE) took: %d us\n", elapsedUS);
+	Mario_Init(&gMario);
 
-	delay(1000);
+	Rect_t baseRect, prevBaseRect;
+	Rect_t marioRect, lastMarioRect;
+	Point_t baseToMarioOffset;
+	Point_t baseRectOffset;
+	Rect_t baseRectSize;
 
-	startTime = GetTimestamp();
-	LCD_SetBackground(LCD_GREEN);
-	elapsedUS = CalcTimeUS(startTime);
-	printf_v("LCD_SetBackground(LCD_WHITE) took: %d us\n", elapsedUS);
+	memset(&baseRect, 0, sizeof(baseRect));
+	memset(&prevBaseRect, 0, sizeof(prevBaseRect));
+	memset(&marioRect, 0, sizeof(marioRect));
+	memset(&baseToMarioOffset, 0, sizeof(baseToMarioOffset));
+	memset(&baseRectOffset, 0, sizeof(baseRectOffset));
+	memset(&baseRectSize, 0, sizeof(baseRectSize));
+	memset(&lastMarioRect, 0, sizeof(lastMarioRect));
 
-	delay(1000);
 
+	marioRect.p1.x = 0;
+	marioRect.p1.y = 0;
+	marioRect.p2.x = 16;
+	marioRect.p2.y = 16;
 
-//	uint8_t speed = 0;
-	uint16_t mariopos_x = 0;
-	uint16_t mariopos_y = 0;
+	baseRectSize.p1.x = 0;
+	baseRectSize.p1.y = 0;
+	baseRectSize.p2.x = 16;
+	baseRectSize.p2.y = 16;
+
 	while(1)
 	{
 		uint32_t buttons_state = 0;
 		buttons_state = GetButtonsState();
 		PrintButtons(buttons_state);
 
+		marioRect.p1.x = 0;
+		marioRect.p1.y = 0;
+		marioRect.p2.x = 16;
+		marioRect.p2.y = 16;
+
+		baseRectSize.p1.x = 0;
+		baseRectSize.p1.y = 0;
+		baseRectSize.p2.x = 16;
+		baseRectSize.p2.y = 16;
+
+		baseToMarioOffset.x = 0;
+		baseToMarioOffset.y = 0;
+
 		if (buttons_state & PAD_BUTTON_RIGHT)
 		{
-			mariopos_x++;
-			if (mariopos_x >= 300)
+			baseRectOffset.x++;
+			if (baseRectOffset.x >= 300)
 			{
-				mariopos_x = 0;
+				baseRectOffset.x = 0;
 			}
+		}
+
+		if (buttons_state & PAD_BUTTON_UP)
+		{
+			baseRectSize.p2.y++;
+
+			baseToMarioOffset.x += 0;
+			baseToMarioOffset.y += 1;
 		}
 
 		if (buttons_state & PAD_BUTTON_DOWN)
 		{
-			mariopos_y++;
-			if (mariopos_y >= 220)
+			if (baseRectOffset.y <= 5)
 			{
-				mariopos_y = 0;
+				baseRectOffset.y = 220;
+			}
+			baseRectOffset.y--;
+			baseRectSize.p2.y++;
+		}
+
+		if (buttons_state & PAD_BUTTON_A)
+		{
+			baseRectSize.p2.y += 5;
+
+			baseToMarioOffset.x += 0;
+			baseToMarioOffset.y += 5;
+		}
+
+		baseRect.p1.x = baseRectSize.p1.x + baseRectOffset.x;
+		baseRect.p1.y = baseRectSize.p1.y + baseRectOffset.y;
+		baseRect.p2.x = baseRectSize.p2.x + baseRectOffset.x;
+		baseRect.p2.y = baseRectSize.p2.y + baseRectOffset.y;
+
+//		LCD_DrawMario(baseRect, marioRect, baseToMarioOffset);
+		Mario_SetPixelPos(&gMario, baseRectOffset);
+		Mario_Render(&gMario);
+
+
+		if (buttons_state & PAD_BUTTON_UP)
+		{
+			baseRectOffset.y++;
+			if (baseRectOffset.y >= 220)
+			{
+				baseRectOffset.y = 0;
 			}
 		}
 
 		if (buttons_state & PAD_BUTTON_A)
 		{
-			if (mariopos_y <= 5)
+			baseRectOffset.y += 5;
+			if (baseRectOffset.y >= 220)
 			{
-				mariopos_y = 220;
+				baseRectOffset.y = 0;
 			}
-			mariopos_y -= 5;
 		}
 
-		LCD_DrawMario(mariopos_x, mariopos_y);
 
 		delay(16);
 	}

@@ -7,6 +7,7 @@
 
 #include <stm32f446xx.h>
 #include "core_cm4.h"
+#include "stdlib.h"
 
 #include "NES_Defs.h"
 #include "NES_Functions.h"
@@ -39,4 +40,24 @@ uint32_t CalcTimeUS(uint32_t startTime)
 	uint32_t cycles_per_us = (SYSCLOCK_MHZ / 1000000UL);
 
 	return (elapsed_cycles / cycles_per_us);
+}
+
+int CalcRectArea(Rect_t rect)
+{
+	int a = abs(rect.p1.x - rect.p2.x);
+	int b = abs(rect.p1.y - rect.p2.y);
+	int area = a*b;
+	return area;
+}
+
+int CalcRectXLen(Rect_t rect)
+{
+	int a = abs(rect.p1.x - rect.p2.x);
+	return a;
+}
+
+int CalcRectYLen(Rect_t rect)
+{
+	int b = abs(rect.p1.y - rect.p2.y);
+	return b;
 }

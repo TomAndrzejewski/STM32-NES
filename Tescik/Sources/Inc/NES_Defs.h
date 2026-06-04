@@ -16,6 +16,13 @@
 #define SYSCLOCK_MHZ		SYSCLOCK_144MHZ
 
 
+#define LCD_HEIGHT		(240)
+#define LCD_WIDTH		(320)
+#define LCD_SIZE		(LCD_HEIGHT * LCD_WIDTH)
+
+
+#define LCD_TRANSPARENT_COLOR		(0xFFFF)
+
 
 #define MODIFY_BITS(var, mask, val) ((var) = ((var) & ~(mask)) | ((val) & (mask)))
 
@@ -25,6 +32,10 @@
     temp |= (((val) << (shift)) & (mask));    \
     (var) = temp;                             \
 } while(0)
+
+
+#define min(a, b) ((a) < (b) ? (a) : (b))
+#define max(a, b) ((a) > (b) ? (a) : (b))
 
 
 #endif /* SOURCES_INC_NES_DEFS_H_ */

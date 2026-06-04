@@ -7,38 +7,16 @@
 
 
 #include "LCDControl.h"
-
+#include "RenderEngine.h"
 #include "NES_Functions.h"
 
 
-#define FRAMEBUFFER_SIZE	(40*240)
-uint16_t framebuffer[FRAMEBUFFER_SIZE];
-
-// Kolory użyte w grafice (RGB565 MSB):
-// 0x5DFF - Jasnoniebieski (Tło nieba)
-// 0xD000 - Czerwony (Czapka i koszulka)
-// 0x0210 - Niebieski (Ogrodniczki)
-// 0xFCE0 - Beżowy / Skóra (Twarz i dłonie)
-// 0x79E0 - Brązowy (Włosy i buty)
-
-const uint16_t mario_16x16_dma[256] = {
-		0xffff, 0xffff, 0xffff, 0xffff, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff,
-		0xffff, 0xffff, 0xffff, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0xffff, 0xffff, 0xffff,
-		0xffff, 0xffff, 0xffff, 0xe314, 0xe314, 0xe314, 0xe314, 0xe0fd, 0xe0fd, 0xe314, 0xe0fd, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff,
-		0xffff, 0xffff, 0xe314, 0xe314, 0xe0fd, 0xe314, 0xe0fd, 0xe0fd, 0xe0fd, 0xe314, 0xe0fd, 0xe0fd, 0xe0fd, 0xffff, 0xffff, 0xffff,
-		0xffff, 0xffff, 0xe314, 0xe314, 0xe0fd, 0xe314, 0xe314, 0xe0fd, 0xe0fd, 0xe0fd, 0xe314, 0xe0fd, 0xe0fd, 0xe0fd, 0xffff, 0xffff,
-		0xffff, 0xffff, 0xe314, 0xe314, 0xe314, 0xe0fd, 0xe0fd, 0xe0fd, 0xe0fd, 0xe314, 0xe314, 0xe314, 0xe314, 0xffff, 0xffff, 0xffff,
-		0xffff, 0xffff, 0xffff, 0xffff, 0xe0fd, 0xe0fd, 0xe0fd, 0xe0fd, 0xe0fd, 0xe0fd, 0xe0fd, 0xe0fd, 0xffff, 0xffff, 0xffff, 0xffff,
-		0xffff, 0xffff, 0xffff, 0xe314, 0xe314, 0xe314, 0x00f8, 0xe314, 0xe314, 0xe314, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff,
-		0xffff, 0xffff, 0xe314, 0xe314, 0xe314, 0xe314, 0x00f8, 0xe314, 0xe314, 0x00f8, 0xe314, 0xe314, 0xe314, 0xffff, 0xffff, 0xffff,
-		0xffff, 0xe314, 0xe314, 0xe314, 0xe314, 0xe314, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0xe314, 0xe314, 0xe314, 0xe314, 0xffff, 0xffff,
-		0xffff, 0xe0fd, 0xe0fd, 0xe0fd, 0xe314, 0x00f8, 0xe0fd, 0x00f8, 0x00f8, 0xe0fd, 0x00f8, 0xe314, 0xe0fd, 0xe0fd, 0xffff, 0xffff,
-		0xffff, 0xe0fd, 0xe0fd, 0xe0fd, 0xe0fd, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0xe0fd, 0xe0fd, 0xe0fd, 0xffff, 0xffff,
-		0xffff, 0xe0fd, 0xe0fd, 0xe0fd, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0xe0fd, 0xe0fd, 0xffff, 0xffff,
-		0xffff, 0xffff, 0xffff, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0xffff, 0x00f8, 0x00f8, 0x00f8, 0x00f8, 0xffff, 0xffff, 0xffff,
-		0xffff, 0xffff, 0xe314, 0xe314, 0xe314, 0xe314, 0xe314, 0xffff, 0xffff, 0xffff, 0xe314, 0xe314, 0xe314, 0xe314, 0xffff, 0xffff,
-		0xffff, 0xe314, 0xe314, 0xe314, 0xe314, 0xe314, 0xe314, 0xffff, 0xffff, 0xffff, 0xe314, 0xe314, 0xe314, 0xe314, 0xe314, 0xffff
-	};
+uint16_t LCD_Colors[LCD_NUMOF_COLORS] = {
+		0xFFFE,
+		0x00F8,
+		0xF800,
+		0xE007
+};
 
 void DMA2_SPI1_Send_NoBlock(uint8_t* buffer, uint16_t length)
 {
@@ -144,6 +122,7 @@ int SPI1_SendRead_U8(uint8_t data, uint8_t* output)
 	return 0;
 }
 
+// nie dziala, bo trzeba by przelaczac spi na gpio output i recznie machnac raz zegarem XD
 int SPI1_SendRead_U24(uint8_t data, uint8_t* output2, uint8_t* output1, uint8_t* output0)
 {
 	if (output2 == NULL || output1 == NULL || output0 == NULL)	{ return -1; }
@@ -202,9 +181,28 @@ void LCD_init()
 	LCD_ReadDisplayMADCTL();
 
 
+	// not essential start
+	delay(200);
+
+	uint32_t startTime = 0, elapsedUS = 0;
+	startTime = GetTimestamp();
 //	LCD_SetBackground(LCD_WHITE);
-//	delay(1000);
+	LCD_PrepFillBackgroud();
+	RE_RenderFullBackgroud(LCD_Colors[LCD_WHITE]);
+	elapsedUS = CalcTimeUS(startTime);
+	printf_v("LCD_SetBackground(LCD_WHITE) took: %d us\n", elapsedUS);
+
+	delay(1000);
+
+	startTime = GetTimestamp();
 //	LCD_SetBackground(LCD_GREEN);
+	LCD_PrepFillBackgroud();
+	RE_RenderFullBackgroud(LCD_Colors[LCD_GREEN]);
+	elapsedUS = CalcTimeUS(startTime);
+	printf_v("LCD_SetBackground(LCD_WHITE) took: %d us\n", elapsedUS);
+
+	delay(1000);
+	// not essential end
 }
 
 void LCD_ReadDisplayMADCTL()
@@ -215,9 +213,58 @@ void LCD_ReadDisplayMADCTL()
 	printf_v("LCD LCD_ReadDisplayMADCTL End, bytes: 0x%x\n", madctl);
 }
 
+void LCD_WriteVertScrollDef()
+{
+	uint16_t tfa = 0;
+	uint16_t vsa = 320;
+	uint16_t bfa = 0;
+
+	printf_v("LCD LCD_WriteVertScrollDef Start\n");
+
+	SPI1_SendCmd_U8(LCD_VSCRDEF);
+
+	uint8_t msb = 0;
+	uint8_t lsb = 0;
+
+	msb = (uint8_t)(tfa >> 8);
+	lsb = (uint8_t)(tfa & 0xFF);
+	SPI1_SendData_U8(msb);
+	SPI1_SendData_U8(lsb);
+
+	msb = (uint8_t)(vsa >> 8);
+	lsb = (uint8_t)(vsa & 0xFF);
+	SPI1_SendData_U8(msb);
+	SPI1_SendData_U8(lsb);
+
+	msb = (uint8_t)(bfa >> 8);
+	lsb = (uint8_t)(bfa & 0xFF);
+	SPI1_SendData_U8(msb);
+	SPI1_SendData_U8(lsb);
+
+//	printf_v("LCD LCD_WriteVertScrollDef End, bytes: 0x%x\n", madctl);
+}
+
+void LCD_WriteVertScrollStartAddr(uint16_t startAddr)
+{
+	printf_v("LCD LCD_WriteVertScrollStartAddr Start\n");
+
+	SPI1_SendCmd_U8(LCD_VSCSAD);
+
+	uint8_t msb = 0;
+	uint8_t lsb = 0;
+
+	msb = (uint8_t)(startAddr >> 8);
+	lsb = (uint8_t)(startAddr & 0xFF);
+	SPI1_SendData_U8(msb);
+	SPI1_SendData_U8(lsb);
+
+//	printf_v("LCD LCD_WriteVertScrollStartAddr End, bytes: 0x%x\n", madctl);
+}
+
 void LCD_WriteDisplayMADCTL()
 {
-	uint8_t madctl = 0b10100000;
+//	uint8_t madctl = 0b11100000;//tu ladnie renderowal sie mario
+	uint8_t madctl = 0b11100000;
 	printf_v("LCD LCD_WriteDisplayMADCTL Start\n");
 	SPI1_SendCmd_U8(LCD_MADCTL);
 	SPI1_SendData_U8(madctl);
@@ -300,7 +347,14 @@ void LCD_SetRectToDraw(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
 	SPI1_SendData_U8(lsb);
 }
 
-void LCD_SetBackground(LCD_Color color)
+void LCD_PrepFillBackgroud()
+{
+	LCD_SetRectToDraw(0, 0, 319, 239);
+
+	SPI1_SendCmd_U8(LCD_RAMWR);
+}
+
+void LCD_SetBackground(LCD_ColorEnum color)
 {
 	printf_v("LCD LCD_SetGreenBackground Start\n");
 
@@ -349,35 +403,42 @@ void LCD_SetBackground(LCD_Color color)
 	}
 	else
 	{
-		for (int i = 0; i < FRAMEBUFFER_SIZE; i++)
-		{
-			framebuffer[i] = twoBytes;
-		}
-
-		for (int i = 0; i < 8; i++)
-		{
-			DMA2_SPI1_Send_NoBlock((uint8_t*)framebuffer, FRAMEBUFFER_SIZE*2);
-//			DMA2_SPI1_Send_NoBlock((uint8_t*)framebuffer, 0x10*0x30*2);
-//			DMA2_SPI1_Send_NoBlock((uint8_t*)mario_16x16_dma, 256*2);
-
-		}
+//		for (int i = 0; i < FRAMEBUFFER_NUMOF_PIXELS; i++)
+//		{
+//			if (!RE_FillPixel(twoBytes))
+//			{
+//				break;
+//			}
+//		}
+//
+//		for (int i = 0; i < 8; i++)
+//		{
+////			DMA2_SPI1_Send_NoBlock((uint8_t*)gFramebuffer, FRAMEBUFFER_SIZE);
+//
+//		}
 	}
 
 
 	printf_v("LCD LCD_SetGreenBackground End\n");
 }
 
-void LCD_DrawMario(uint16_t x, uint16_t y)
+void LCD_DrawMario(Rect_t baseRect, Rect_t marioRect, Point_t offset)
 {
-	printf_v("LCD LCD_DrawMario Start\n");
+//	printf_v("LCD LCD_DrawMario Start\n");
 
-	LCD_SetRectToDraw(x, y, 15, 15);
+
+	uint16_t x = baseRect.p1.x;
+	uint16_t y = baseRect.p1.y;
+	uint16_t w = baseRect.p2.x-baseRect.p1.x;
+	uint16_t h = baseRect.p2.y-baseRect.p1.y;
+	LCD_SetRectToDraw(x, y, w-1, h-1);
 
 	SPI1_SendCmd_U8(LCD_RAMWR);
 
-	DMA2_SPI1_Send_NoBlock((uint8_t*)mario_16x16_dma, 256*2);
+//	DMA2_SPI1_Send_NoBlock((uint8_t*)mario_16x16_dma, 256*2);
+//	RE_RenderSprite((uint16_t*)mario_16x16_dma, 256);
 
-	printf_v("LCD LCD_DrawMario End\n");
+//	printf_v("LCD LCD_DrawMario End\n");
 }
 
 
