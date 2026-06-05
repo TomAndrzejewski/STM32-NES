@@ -61,3 +61,12 @@ int CalcRectYLen(Rect_t rect)
 	int b = abs(rect.p1.y - rect.p2.y);
 	return b;
 }
+
+int Point_Move(Point_t* src, Point_t* moveVector)
+{
+	if (src == NULL)		{ return -1; }
+	if (moveVector == NULL)	{ return -5; }
+
+	src->x += moveVector->x;
+	src->y += moveVector->y;
+}

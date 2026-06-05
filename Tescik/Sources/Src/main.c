@@ -260,35 +260,10 @@ int main(void)
 
 	RE_Init();
 
-
 	LCD_init();
 
-	Mario_Init(&gMario);
+	Mario_Init(pMario);
 
-	Rect_t baseRect, prevBaseRect;
-	Rect_t marioRect, lastMarioRect;
-	Point_t baseToMarioOffset;
-	Point_t baseRectOffset;
-	Rect_t baseRectSize;
-
-	memset(&baseRect, 0, sizeof(baseRect));
-	memset(&prevBaseRect, 0, sizeof(prevBaseRect));
-	memset(&marioRect, 0, sizeof(marioRect));
-	memset(&baseToMarioOffset, 0, sizeof(baseToMarioOffset));
-	memset(&baseRectOffset, 0, sizeof(baseRectOffset));
-	memset(&baseRectSize, 0, sizeof(baseRectSize));
-	memset(&lastMarioRect, 0, sizeof(lastMarioRect));
-
-
-	marioRect.p1.x = 0;
-	marioRect.p1.y = 0;
-	marioRect.p2.x = 16;
-	marioRect.p2.y = 16;
-
-	baseRectSize.p1.x = 0;
-	baseRectSize.p1.y = 0;
-	baseRectSize.p2.x = 16;
-	baseRectSize.p2.y = 16;
 
 	while(1)
 	{
@@ -296,81 +271,9 @@ int main(void)
 		buttons_state = GetButtonsState();
 		PrintButtons(buttons_state);
 
-		marioRect.p1.x = 0;
-		marioRect.p1.y = 0;
-		marioRect.p2.x = 16;
-		marioRect.p2.y = 16;
 
-		baseRectSize.p1.x = 0;
-		baseRectSize.p1.y = 0;
-		baseRectSize.p2.x = 16;
-		baseRectSize.p2.y = 16;
-
-		baseToMarioOffset.x = 0;
-		baseToMarioOffset.y = 0;
-
-		if (buttons_state & PAD_BUTTON_RIGHT)
-		{
-			baseRectOffset.x++;
-			if (baseRectOffset.x >= 300)
-			{
-				baseRectOffset.x = 0;
-			}
-		}
-
-		if (buttons_state & PAD_BUTTON_UP)
-		{
-			baseRectSize.p2.y++;
-
-			baseToMarioOffset.x += 0;
-			baseToMarioOffset.y += 1;
-		}
-
-		if (buttons_state & PAD_BUTTON_DOWN)
-		{
-			if (baseRectOffset.y <= 5)
-			{
-				baseRectOffset.y = 220;
-			}
-			baseRectOffset.y--;
-			baseRectSize.p2.y++;
-		}
-
-		if (buttons_state & PAD_BUTTON_A)
-		{
-			baseRectSize.p2.y += 5;
-
-			baseToMarioOffset.x += 0;
-			baseToMarioOffset.y += 5;
-		}
-
-		baseRect.p1.x = baseRectSize.p1.x + baseRectOffset.x;
-		baseRect.p1.y = baseRectSize.p1.y + baseRectOffset.y;
-		baseRect.p2.x = baseRectSize.p2.x + baseRectOffset.x;
-		baseRect.p2.y = baseRectSize.p2.y + baseRectOffset.y;
-
-//		LCD_DrawMario(baseRect, marioRect, baseToMarioOffset);
-		Mario_SetPixelPos(&gMario, baseRectOffset);
-		Mario_Render(&gMario);
-
-
-		if (buttons_state & PAD_BUTTON_UP)
-		{
-			baseRectOffset.y++;
-			if (baseRectOffset.y >= 220)
-			{
-				baseRectOffset.y = 0;
-			}
-		}
-
-		if (buttons_state & PAD_BUTTON_A)
-		{
-			baseRectOffset.y += 5;
-			if (baseRectOffset.y >= 220)
-			{
-				baseRectOffset.y = 0;
-			}
-		}
+		Mario_ReactToButton(pMario, buttons_state);
+		Mario_Render(pMario);
 
 
 		delay(16);

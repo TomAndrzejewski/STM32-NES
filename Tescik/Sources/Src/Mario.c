@@ -7,7 +7,12 @@
 
 #include "string.h"
 
+#include "NES_Defs.h"
+#include "NES_Types.h"
+#include "NES_Functions.h"
+
 #include "LCDControl.h"
+#include "PADControl.h"
 #include "RenderEngine.h"
 #include "Mario.h"
 
@@ -61,20 +66,105 @@ Sprite_t* Mario_GetSprite(Mario_t* p)
 	return &p->sprite;
 }
 
+int Mario_LimitPixelPos(Mario_t* p, Point_t* newPos)
+{
+	if (p == NULL)	{ return -1; }
+	if (newPos == NULL)	{ return -5; }
+
+	if (newPos->x + p->sprite.size.x >= LCD_WIDTH)
+	{
+		newPos->x = LCD_WIDTH - 1 - p->sprite.size.x;
+	}
+	if (newPos->x < 0)
+	{
+		newPos->x = 0;
+	}
+
+	if (newPos->y + p->sprite.size.y >= LCD_HEIGHT)
+	{
+		newPos->y = LCD_HEIGHT - 1 - p->sprite.size.y;
+	}
+	if (newPos->y < 0)
+	{
+		newPos->y = 0;
+	}
+
+	return 0;
+}
+
 int Mario_SetPixelPos(Mario_t* p, Point_t pos)
 {
 	if (p == NULL)	{ return -1; }
 
 	p->prevPixelPos = p->currPixelPos;
+
 	p->currPixelPos = pos;
+	Mario_LimitPixelPos(p, &p->currPixelPos);
 
 	return 0;
 }
 
-int Mario_SetNextMove(Mario_t* p, MarioMoveEnum nextMove)
+int Mario_MovePixelPos(Mario_t* p, Point_t moveVector)
 {
 	if (p == NULL)	{ return -1; }
-	p->nextMove = nextMove;
+
+	p->prevPixelPos = p->currPixelPos;
+
+	Point_Move(&p->currPixelPos, &moveVector);
+	Mario_LimitPixelPos(p, &p->currPixelPos);
+
+	return 0;
+}
+
+int Mario_ReactToButton(Mario_t* p, uint32_t buttons_state)
+{
+	if (p == NULL)	{ return -1; }
+
+	Point_t moveVector = {0};
+	Point_t setVector = {0};
+	bool useMove = true;
+
+	if (buttons_state & PAD_BUTTON_START)
+	{
+		setVector.x = 0;
+		setVector.y = 0;
+		useMove = false;
+	}
+
+	if (useMove)
+	{
+		if (buttons_state & PAD_BUTTON_RIGHT)
+		{
+			moveVector.x++;
+		}
+		if (buttons_state & PAD_BUTTON_LEFT)
+		{
+			moveVector.x--;
+		}
+		if (buttons_state & PAD_BUTTON_UP)
+		{
+			moveVector.y++;
+		}
+		if (buttons_state & PAD_BUTTON_DOWN)
+		{
+			moveVector.y--;
+		}
+		if (buttons_state & PAD_BUTTON_A)
+		{
+			moveVector.y += 5;
+		}
+		if (buttons_state & PAD_BUTTON_B)
+		{
+			moveVector.y -= 5;
+		}
+
+		Mario_MovePixelPos(p, moveVector);
+	}
+	else
+	{
+		Mario_SetPixelPos(p, setVector);
+	}
+
 	return 0;
 }
 
@@ -115,5 +205,4 @@ int Mario_Render(Mario_t* p)
 
 	return 0;
 }
-
 

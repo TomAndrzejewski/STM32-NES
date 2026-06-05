@@ -24,7 +24,8 @@
 #endif
 
 
-GLOBAL_NES_ENGINE Mario_t gMario;
+GLOBAL_NES_ENGINE Mario_t 	gMario;
+GLOBAL_NES_ENGINE Mario_t*	pMario INIT_NES_ENGINE(&gMario);
 
 
 #endif /* SOURCES_INC_NESENGINE_H_ */

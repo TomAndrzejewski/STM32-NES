@@ -40,10 +40,14 @@ typedef struct
 }Mario_t;
 
 
-int Mario_Init(Mario_t* p);
+int 		Mario_Init(Mario_t* p);
+Sprite_t* 	Mario_GetSprite(Mario_t* p);
 
-int Mario_Render(Mario_t* p);
-int Mario_SetPixelPos(Mario_t* p, Point_t pos);
+int 		Mario_Render(Mario_t* p);
+int 		Mario_ReactToButton(Mario_t* p, uint32_t buttons_state);
+
+int 		Mario_SetPixelPos(Mario_t* p, Point_t pos);
+int			Mario_MovePixelPos(Mario_t* p, Point_t moveVector);
 
 
 

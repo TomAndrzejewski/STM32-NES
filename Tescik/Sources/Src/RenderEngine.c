@@ -179,7 +179,7 @@ int RE_RenderMario(const uint16_t* sprite, Rect_t baseRect, Rect_t spriteRect, P
 	RE_ResetFB();
 
 	int baseRectArea = CalcRectArea(baseRect);
-	int ret = RE_FillBackgroud(LCD_Colors[LCD_WHITE], baseRectArea);
+	int ret = RE_FillBackgroud(LCD_Colors[LCD_GREEN], baseRectArea);
 	if (ret < 0)
 	{
 		return -10;
