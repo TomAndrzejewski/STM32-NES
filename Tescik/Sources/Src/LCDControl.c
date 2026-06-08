@@ -246,7 +246,7 @@ void LCD_WriteVertScrollDef()
 
 void LCD_WriteVertScrollStartAddr(uint16_t startAddr)
 {
-	printf_v("LCD LCD_WriteVertScrollStartAddr Start\n");
+//	printf_v("LCD LCD_WriteVertScrollStartAddr Start\n");
 
 	SPI1_SendCmd_U8(LCD_VSCSAD);
 
@@ -422,10 +422,9 @@ void LCD_SetBackground(LCD_ColorEnum color)
 	printf_v("LCD LCD_SetGreenBackground End\n");
 }
 
-void LCD_DrawMario(Rect_t baseRect, Rect_t marioRect, Point_t offset)
+void LCD_DrawRect(Rect_t baseRect)
 {
 //	printf_v("LCD LCD_DrawMario Start\n");
-
 
 	uint16_t x = baseRect.p1.x;
 	uint16_t y = baseRect.p1.y;
@@ -434,9 +433,6 @@ void LCD_DrawMario(Rect_t baseRect, Rect_t marioRect, Point_t offset)
 	LCD_SetRectToDraw(x, y, w-1, h-1);
 
 	SPI1_SendCmd_U8(LCD_RAMWR);
-
-//	DMA2_SPI1_Send_NoBlock((uint8_t*)mario_16x16_dma, 256*2);
-//	RE_RenderSprite((uint16_t*)mario_16x16_dma, 256);
 
 //	printf_v("LCD LCD_DrawMario End\n");
 }

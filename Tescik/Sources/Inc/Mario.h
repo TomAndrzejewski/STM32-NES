@@ -12,7 +12,6 @@
 #include "NES_Types.h"
 
 
-
 typedef enum
 {
 	MARIO_STANDSTILL,
@@ -22,11 +21,6 @@ typedef enum
 	MARIO_RIGHT,
 }MarioMoveEnum;
 
-typedef struct
-{
-	const uint16_t* bitmap;
-	Point_t			size;
-}Sprite_t;
 
 typedef struct
 {

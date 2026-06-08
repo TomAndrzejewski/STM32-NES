@@ -263,8 +263,24 @@ int main(void)
 	LCD_init();
 
 	Mario_Init(pMario);
+	BG_Init(pBG);
 
+	uint32_t startTime = 0, elapsedUS = 0;
+	uint16_t verScrollAddr = 319;
 
+	startTime = GetTimestamp();
+	BG_RenderFloor(pBG);
+	elapsedUS = CalcTimeUS(startTime);
+//		printf_v("BG_RenderFloor took: %d us\n", elapsedUS);
+
+	startTime = GetTimestamp();
+	BG_RenderJedynka(pBG);
+	elapsedUS = CalcTimeUS(startTime);
+	printf_v("BG_RenderFloor took: %d us\n", elapsedUS);
+
+	BG_RenderDwojka(pBG);
+
+	LCD_WriteVertScrollDef();
 	while(1)
 	{
 		uint32_t buttons_state = 0;
@@ -272,9 +288,37 @@ int main(void)
 		PrintButtons(buttons_state);
 
 
-		Mario_ReactToButton(pMario, buttons_state);
-		Mario_Render(pMario);
+//		Mario_ReactToButton(pMario, buttons_state);
 
+		if (buttons_state & PAD_BUTTON_LEFT)
+		{
+			if (verScrollAddr < 319)
+			{
+				verScrollAddr++;
+			}
+			else
+			{
+				verScrollAddr = 0;
+			}
+			LCD_WriteVertScrollStartAddr(verScrollAddr);
+		}
+		if (buttons_state & PAD_BUTTON_RIGHT)
+		{
+			if (verScrollAddr > 0)
+			{
+				verScrollAddr--;
+			}
+			else
+			{
+				verScrollAddr = 319;
+			}
+			LCD_WriteVertScrollStartAddr(verScrollAddr);
+		}
+
+		startTime = GetTimestamp();
+		Mario_Render(pMario);
+		elapsedUS = CalcTimeUS(startTime);
+//		printf_v("Mario_Render took: %d us\n", elapsedUS);
 
 		delay(16);
 	}

@@ -126,48 +126,48 @@ int RE_FillBackgroud(uint16_t pixel, int numOfPixels)
 	return 0;
 }
 
-int RE_RenderSprite(uint16_t* sprite, int numOfPixels)
-{
-	if (sprite == NULL)
-	{
-		return -1;
-	}
-	if (numOfPixels <= 0)
-	{
-		return -5;
-	}
-
-	RE_ResetFB();
-
-	int ret = RE_FillBackgroud(LCD_Colors[LCD_WHITE], numOfPixels);
-	if (ret < 0)
-	{
-		return -10;
-	}
-
-	RE_ResetFB();
-
-	for (int i = 0; i < numOfPixels; i++)
-	{
-		if (sprite[i] == LCD_TRANSPARENT_COLOR)
-		{
-			RE_OmmitPixel();
-		}
-		else
-		{
-			RE_FillPixel(sprite[i]);
-		}
-	}
-
-	ret = RE_SendFB(numOfPixels);
-	RE_ResetFB();
-	if (ret < 0)
-	{
-		return -15;
-	}
-
-	return 0;
-}
+//int RE_RenderSprite(uint16_t* sprite, int numOfPixels)
+//{
+//	if (sprite == NULL)
+//	{
+//		return -1;
+//	}
+//	if (numOfPixels <= 0)
+//	{
+//		return -5;
+//	}
+//
+//	RE_ResetFB();
+//
+//	int ret = RE_FillBackgroud(LCD_Colors[LCD_WHITE], numOfPixels);
+//	if (ret < 0)
+//	{
+//		return -10;
+//	}
+//
+//	RE_ResetFB();
+//
+//	for (int i = 0; i < numOfPixels; i++)
+//	{
+//		if (sprite[i] == LCD_TRANSPARENT_COLOR)
+//		{
+//			RE_OmmitPixel();
+//		}
+//		else
+//		{
+//			RE_FillPixel(sprite[i]);
+//		}
+//	}
+//
+//	ret = RE_SendFB(numOfPixels);
+//	RE_ResetFB();
+//	if (ret < 0)
+//	{
+//		return -15;
+//	}
+//
+//	return 0;
+//}
 
 int RE_RenderMario(const uint16_t* sprite, Rect_t baseRect, Rect_t spriteRect, Point_t offset)
 {
@@ -183,6 +183,50 @@ int RE_RenderMario(const uint16_t* sprite, Rect_t baseRect, Rect_t spriteRect, P
 	if (ret < 0)
 	{
 		return -10;
+	}
+
+	Rect_t movedSpriteRect = spriteRect;
+	movedSpriteRect.p1.x += baseRect.p1.x;
+	movedSpriteRect.p2.x += baseRect.p1.x;
+	movedSpriteRect.p1.y += baseRect.p1.y;
+	movedSpriteRect.p2.y += baseRect.p1.y;
+
+	movedSpriteRect.p1.x += offset.x;
+	movedSpriteRect.p2.x += offset.x;
+	movedSpriteRect.p1.y += offset.y;
+	movedSpriteRect.p2.y += offset.y;
+
+	RE_FillSprite(sprite, baseRect, movedSpriteRect);
+
+	ret = RE_SendFB(baseRectArea);
+	RE_ResetFB();
+	if (ret < 0)
+	{
+		return -15;
+	}
+
+	return 0;
+}
+
+int RE_RenderSprite(const uint16_t* sprite, Rect_t baseRect, Rect_t spriteRect, Point_t offset, bool fillBG)
+{
+	if (sprite == NULL)
+	{
+		return -1;
+	}
+
+	RE_ResetFB();
+
+	int ret = 0;
+	int baseRectArea = CalcRectArea(baseRect);
+
+	if (fillBG)
+	{
+		int ret = RE_FillBackgroud(LCD_Colors[LCD_GREEN], baseRectArea);
+		if (ret < 0)
+		{
+			return -10;
+		}
 	}
 
 	Rect_t movedSpriteRect = spriteRect;

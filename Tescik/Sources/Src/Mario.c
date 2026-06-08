@@ -55,6 +55,11 @@ int Mario_Init(Mario_t* p)
 	memset(&p->currPixelPos, 0, sizeof(p->currPixelPos));
 	memset(&p->prevPixelPos, 0, sizeof(p->prevPixelPos));
 
+	p->currPixelPos.x = 0;
+	p->currPixelPos.y = 32;
+
+	p->prevPixelPos = p->currPixelPos;
+
 	p->nextMove = MARIO_STANDSTILL;
 
 	return 0;
@@ -199,7 +204,7 @@ int Mario_Render(Mario_t* p)
 	currPosToDirtyRectOffset.y = currDirtyRect.p1.y - commonDirtyRect.p1.y;
 
 
-	LCD_DrawMario(commonDirtyRect, currDirtyRect, currPosToDirtyRectOffset);
+	LCD_DrawRect(commonDirtyRect);
 
 	RE_RenderMario(p->sprite.bitmap, commonDirtyRect, spriteRect, currPosToDirtyRectOffset);
 

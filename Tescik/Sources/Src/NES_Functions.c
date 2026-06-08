@@ -69,4 +69,6 @@ int Point_Move(Point_t* src, Point_t* moveVector)
 
 	src->x += moveVector->x;
 	src->y += moveVector->y;
+
+	return 0;
 }

@@ -9,6 +9,7 @@
 #define SOURCES_INC_NESENGINE_H_
 
 #include "Mario.h"
+#include "Background.h"
 
 
 #ifdef DEFINE_NES_ENGINE
@@ -26,6 +27,9 @@
 
 GLOBAL_NES_ENGINE Mario_t 	gMario;
 GLOBAL_NES_ENGINE Mario_t*	pMario INIT_NES_ENGINE(&gMario);
+
+GLOBAL_NES_ENGINE Background_t 	gBG;
+GLOBAL_NES_ENGINE Background_t*	pBG INIT_NES_ENGINE(&gBG);
 
 
 #endif /* SOURCES_INC_NESENGINE_H_ */

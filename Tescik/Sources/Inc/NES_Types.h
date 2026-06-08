@@ -19,5 +19,17 @@ typedef struct{
 	Point_t p2; //RIGHT-UP
 }Rect_t;
 
+typedef struct
+{
+	const uint16_t* bitmap;
+	Point_t			size;
+}Sprite_t;
+
+typedef struct
+{
+	Sprite_t	sprite;
+	Point_t		mulVector;
+}RepSprite_t;
+
 
 #endif /* SOURCES_INC_NES_TYPES_H_ */

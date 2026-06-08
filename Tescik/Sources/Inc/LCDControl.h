@@ -55,6 +55,8 @@ typedef enum
 
 extern uint16_t LCD_Colors[LCD_NUMOF_COLORS];
 
+#define LCD_COLOR_BLUE	(0x00F8)
+
 
 void LCD_init();
 
@@ -72,7 +74,7 @@ void LCD_ReadDisplayMADCTL();
 void LCD_WriteDisplayMADCTL();
 void LCD_WriteVertScrollDef();
 void LCD_WriteVertScrollStartAddr(uint16_t startAddr);
-void LCD_DrawMario(Rect_t baseRect, Rect_t marioRect, Point_t offset);
+void LCD_DrawRect(Rect_t baseRect);
 void LCD_PrepFillBackgroud();
 
 void DMA2_SPI1_Send_NoBlock(uint8_t* buffer, uint16_t length);
