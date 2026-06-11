@@ -1,15 +1,28 @@
 /*
+ * Map.c
+ *
+ *  Created on: 10 cze 2026
+ *      Author: tomasz
+ */
+
+
+/*
  * Background.c
  *
  *  Created on: 5 cze 2026
  *      Author: tomasz
  */
 
+#include <stdlib.h>
+
+#include "NES_Functions.h"
+
 #include "LCDControl.h"
 #include "RenderEngine.h"
-#include "Background.h"
+#include "PADControl.h"
+#include "Map.h"
 
-const uint16_t bg_floor_16x16_dma[256] = {
+const uint16_t map_floor_16x16_dma[256] = {
 		0xc3e8, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0xc3e8, 0xbdf7, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0xc3e8,
 		0xbdf7, 0x00d0, 0x00d0, 0x00d0, 0x00d0, 0x00d0, 0x00d0, 0x0000, 0xbdf7, 0x00d0, 0x00d0, 0x00d0, 0x00d0, 0x00d0, 0x0000, 0x0000,
 		0xbdf7, 0x00d0, 0x00d0, 0x00d0, 0xbdf7, 0xbdf7, 0xbdf7, 0x0000, 0xbdf7, 0x00d0, 0x00d0, 0x00d0, 0x00d0, 0x00d0, 0x00d0, 0x0000,
@@ -28,7 +41,7 @@ const uint16_t bg_floor_16x16_dma[256] = {
 		0xc3e8, 0xbdf7, 0xbdf7, 0xbdf7, 0xbdf7, 0xbdf7, 0xbdf7, 0xbdf7, 0xbdf7, 0x0000, 0xc3e8, 0xbdf7, 0xbdf7, 0xbdf7, 0xbdf7, 0xc3e8
 };
 
-const uint16_t bg_jedynka_32x32_dma[32*32] = {
+const uint16_t map_jedynka_32x32_dma[32*32] = {
 		0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff,
 		0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff,
 		0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xc318, 0xc318, 0xc318, 0xc318, 0xc318, 0xc318, 0xc318, 0xc318, 0xc318, 0xc318, 0xc318, 0xc318, 0xc318, 0xc318, 0xc318, 0xc318, 0xc318, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff,
@@ -63,7 +76,7 @@ const uint16_t bg_jedynka_32x32_dma[32*32] = {
 		0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xc318, 0xc318, 0xc318, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff
 };
 
-const uint16_t bg_dwojka_32x32_dma[32*32] = {
+const uint16_t map_dwojka_32x32_dma[32*32] = {
 		0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff,
 		0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff,
 		0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff,
@@ -99,11 +112,26 @@ const uint16_t bg_dwojka_32x32_dma[32*32] = {
 };
 
 
-int BG_Init(Background_t* p)
+int Map_Init(Map_t* p)
 {
 	if (p == NULL)	{ return -1; }
 
-	p->floorSprite.sprite.bitmap = bg_floor_16x16_dma;
+	memset(p, 0, sizeof(Map_t));
+
+	p->LCDOffsetX = 319;
+
+	p->mapSize.p1.x = 0;
+	p->mapSize.p1.y = 0;
+	p->mapSize.p2.x = 1280;
+	p->mapSize.p2.y = 239;
+
+	p->currCameraPos.x = 0;
+	p->currCameraPos.y = 0;
+	p->prevCameraPos.x = 0;
+	p->prevCameraPos.y = 0;
+
+
+	p->floorSprite.sprite.bitmap = map_floor_16x16_dma;
 	p->floorSprite.sprite.size.x = 16;
 	p->floorSprite.sprite.size.y = 16;
 	p->floorSprite.mulVector.x = LCD_WIDTH/16;
@@ -113,59 +141,158 @@ int BG_Init(Background_t* p)
 	p->floorPixelPos.y = 0;
 
 
-	p->jedynkaSprite.bitmap = bg_jedynka_32x32_dma;
+	p->jedynkaSprite.bitmap = map_jedynka_32x32_dma;
 	p->jedynkaSprite.size.x = 32;
 	p->jedynkaSprite.size.y = 32;
 
+//	p->jedynkaPixelPos.x = 160;
 	p->jedynkaPixelPos.x = 80;
 	p->jedynkaPixelPos.y = 120;
 
 
-	p->dwojkaSprite.bitmap = bg_dwojka_32x32_dma;
+	p->dwojkaSprite.bitmap = map_dwojka_32x32_dma;
 	p->dwojkaSprite.size.x = 32;
 	p->dwojkaSprite.size.y = 32;
 
+//	p->dwojkaPixelPos.x = 480;
 	p->dwojkaPixelPos.x = 240;
 	p->dwojkaPixelPos.y = 120;
 
 	return 0;
 }
 
-int BG_RenderJedynka(Background_t* p)
+int Map_ReactToButtons(Map_t* p, uint32_t buttons_state)
 {
 	if (p == NULL)	{ return -1; }
 
-	Rect_t spriteRect;
-	spriteRect.p1.x = 0;
-	spriteRect.p1.y = 0;
-	spriteRect.p2.x = p->jedynkaSprite.size.x;
-	spriteRect.p2.y = p->jedynkaSprite.size.y;
+	Point_t moveVector = {0};
+	Point_t setVector = {0};
+	bool useMove = true;
 
-	Rect_t baseRect;
-	baseRect.p1.x = p->jedynkaPixelPos.x;
-	baseRect.p1.y = p->jedynkaPixelPos.y;
-	baseRect.p2.x = p->jedynkaPixelPos.x + p->jedynkaSprite.size.x;
-	baseRect.p2.y = p->jedynkaPixelPos.y + p->jedynkaSprite.size.y;
+//	if (buttons_state & PAD_BUTTON_START)
+//	{
+//		setVector.x = 0;
+//		setVector.y = 0;
+//		useMove = false;
+//	}
 
-	Point_t baseToSpriteOffset;
-	memset(&baseToSpriteOffset, 0, sizeof(baseToSpriteOffset));
+	if (useMove)
+	{
+		if (buttons_state & PAD_BUTTON_RIGHT)
+		{
+			moveVector.x++;
+		}
+		if (buttons_state & PAD_BUTTON_LEFT)
+		{
+			moveVector.x--;
+		}
+		if (buttons_state & PAD_BUTTON_UP)
+		{
+//			moveVector.y++;
+		}
+		if (buttons_state & PAD_BUTTON_DOWN)
+		{
+//			moveVector.y--;
+		}
+		if (buttons_state & PAD_BUTTON_A)
+		{
+//			moveVector.y += 5;
+		}
+		if (buttons_state & PAD_BUTTON_B)
+		{
+//			moveVector.y -= 5;
+		}
 
-	LCD_DrawRect(baseRect);
-
-	RE_RenderSprite(p->jedynkaSprite.bitmap, baseRect, spriteRect, baseToSpriteOffset, true);
+		p->prevCameraPos = p->currCameraPos;
+		Point_Move(&p->currCameraPos, &moveVector);
+	}
+//	else
+//	{
+//		p->prevCameraPos = p->currCameraPos;
+//		p->currCameraPos.x = 0;
+//		p->currCameraPos.y = 0;
+//	}
 
 	return 0;
 }
 
-int BG_RenderDwojka(Background_t* p)
+int Map_CameraBasedRender(Map_t* p)
 {
 	if (p == NULL)	{ return -1; }
 
-	Rect_t spriteRect;
-	spriteRect.p1.x = 0;
-	spriteRect.p1.y = 0;
-	spriteRect.p2.x = p->dwojkaSprite.size.x;
-	spriteRect.p2.y = p->dwojkaSprite.size.y;
+
+	Point_t cameraDiff;
+	cameraDiff.x = p->prevCameraPos.x - p->currCameraPos.x;
+
+	p->LCDOffsetX += cameraDiff.x;
+	if (p->LCDOffsetX > 319)
+	{
+		p->LCDOffsetX = p->LCDOffsetX - 320;
+	}
+	if (p->LCDOffsetX < 0)
+	{
+		p->LCDOffsetX = 320 + p->LCDOffsetX;
+	}
+
+	LCD_WriteVertScrollStartAddr(p->LCDOffsetX);
+
+
+	Rect_t leftRectToRedraw;
+	Rect_t rightRectToRedraw;
+
+	leftRectToRedraw.p1.x = p->prevCameraPos.x;
+	leftRectToRedraw.p2.x = p->currCameraPos.x;
+
+	rightRectToRedraw.p1.x = p->prevCameraPos.x + 320;
+	rightRectToRedraw.p2.x = p->currCameraPos.x + 320;
+
+
+	return 0;
+}
+
+int Map_RenderJedynka(Map_t* p)
+{
+	if (p == NULL)	{ return -1; }
+	Sprite_t* s = &p->jedynkaSprite;
+
+	static int minus = 0;
+	minus++;
+	if (minus >= 16)
+	{
+		minus = 0;
+	}
+
+	s->render.visiblePartRect.p1.x = minus;
+	s->render.visiblePartRect.p1.y = 0;
+	s->render.visiblePartRect.p2.x = s->size.x - minus;
+	s->render.visiblePartRect.p2.y = s->size.y;
+
+	Rect_t baseRect;
+	baseRect.p1.x = p->jedynkaPixelPos.x;
+	baseRect.p1.y = p->jedynkaPixelPos.y;
+	baseRect.p2.x = p->jedynkaPixelPos.x + s->size.x;
+	baseRect.p2.y = p->jedynkaPixelPos.y + s->size.y;
+
+	Point_t baseToSpriteOffset;
+	memset(&baseToSpriteOffset, 0, sizeof(baseToSpriteOffset));
+
+	s->render.baseRect = baseRect;
+	s->render.baseToSpriteOffset = baseToSpriteOffset;
+
+	RE_RenderSprite(s, true);
+
+	return 0;
+}
+
+int Map_RenderDwojka(Map_t* p)
+{
+	if (p == NULL)	{ return -1; }
+	Sprite_t* s = &p->dwojkaSprite;
+
+	s->render.visiblePartRect.p1.x = 0;
+	s->render.visiblePartRect.p1.y = 0;
+	s->render.visiblePartRect.p2.x = s->size.x;
+	s->render.visiblePartRect.p2.y = s->size.y;
 
 	Rect_t baseRect;
 	baseRect.p1.x = p->dwojkaPixelPos.x;
@@ -176,18 +303,26 @@ int BG_RenderDwojka(Background_t* p)
 	Point_t baseToSpriteOffset;
 	memset(&baseToSpriteOffset, 0, sizeof(baseToSpriteOffset));
 
-	LCD_DrawRect(baseRect);
+	p->dwojkaSprite.render.baseRect = baseRect;
+	p->dwojkaSprite.render.baseToSpriteOffset = baseToSpriteOffset;
 
-	RE_RenderSprite(p->dwojkaSprite.bitmap, baseRect, spriteRect, baseToSpriteOffset, true);
+	LCD_DrawRect(p->dwojkaSprite.render.baseRect);
+
+	RE_RenderSprite(&p->dwojkaSprite, true);
 
 	return 0;
 }
 
-int BG_RenderFloor(Background_t* p)
+int Map_RenderFloor(Map_t* p)
 {
 	if (p == NULL)	{ return -1; }
+	Sprite_t* s = &p->floorSprite.sprite;
 
-	Rect_t spriteRect;
+	s->render.visiblePartRect.p1.x = 0;
+	s->render.visiblePartRect.p1.y = 0;
+	s->render.visiblePartRect.p2.x = s->size.x;
+	s->render.visiblePartRect.p2.y = s->size.y;
+
 	Rect_t baseRect;
 	Point_t baseToSpriteOffset;
 
@@ -195,10 +330,6 @@ int BG_RenderFloor(Background_t* p)
 	{
 		for (int j = 0; j < p->floorSprite.mulVector.x; j++)
 		{
-			spriteRect.p1.x = 0;
-			spriteRect.p1.y = 0;
-			spriteRect.p2 = p->floorSprite.sprite.size;
-
 			baseRect.p1.x = j * p->floorSprite.sprite.size.x;
 			baseRect.p1.y = i * p->floorSprite.sprite.size.y;
 			baseRect.p2.x = baseRect.p1.x + p->floorSprite.sprite.size.x;
@@ -206,9 +337,12 @@ int BG_RenderFloor(Background_t* p)
 
 			memset(&baseToSpriteOffset, 0, sizeof(baseToSpriteOffset));
 
+			p->floorSprite.sprite.render.baseRect = baseRect;
+			p->floorSprite.sprite.render.baseToSpriteOffset = baseToSpriteOffset;
+
 			LCD_DrawRect(baseRect);
 
-			RE_RenderSprite(p->floorSprite.sprite.bitmap, baseRect, spriteRect, baseToSpriteOffset, false);
+			RE_RenderSprite(&p->floorSprite.sprite, false);
 		}
 	}
 

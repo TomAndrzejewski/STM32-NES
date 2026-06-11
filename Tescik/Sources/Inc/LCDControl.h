@@ -53,7 +53,7 @@ typedef enum
 	LCD_NUMOF_COLORS,
 }LCD_ColorEnum;
 
-extern uint16_t LCD_Colors[LCD_NUMOF_COLORS];
+extern const uint16_t LCD_Colors[LCD_NUMOF_COLORS];
 
 #define LCD_COLOR_BLUE	(0x00F8)
 

@@ -21,8 +21,21 @@ typedef struct{
 
 typedef struct
 {
+	Rect_t	visiblePartRect;
+
+	Rect_t	baseRect;
+	Point_t	baseToSpriteOffset;
+	Rect_t	movedSpriteRect;
+
+}SpriteRender_t;
+
+typedef struct
+{
 	const uint16_t* bitmap;
 	Point_t			size;
+
+	SpriteRender_t	render;
+
 }Sprite_t;
 
 typedef struct

@@ -11,7 +11,7 @@
 #include "NES_Functions.h"
 
 
-uint16_t LCD_Colors[LCD_NUMOF_COLORS] = {
+uint16_t const LCD_Colors[LCD_NUMOF_COLORS] = {
 		0xFFFE,
 		0x00F8,
 		0xF800,
@@ -203,6 +203,9 @@ void LCD_init()
 
 	delay(1000);
 	// not essential end
+
+	LCD_WriteVertScrollDef();
+	LCD_WriteVertScrollStartAddr(0);
 }
 
 void LCD_ReadDisplayMADCTL()
