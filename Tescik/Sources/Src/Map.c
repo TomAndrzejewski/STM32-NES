@@ -235,72 +235,56 @@ int Map_CameraBasedRender(Map_t* p)
 {
 	if (p == NULL)	{ return -1; }
 
+	p->cameraDiff.x = p->prevCameraPos.x - p->currCameraPos.x;
 
-	Point_t cameraDiff;
-	cameraDiff.x = p->prevCameraPos.x - p->currCameraPos.x;
-
-	p->LCDOffsetX += cameraDiff.x;
-	if (p->LCDOffsetX > 319)
+	if (p->cameraDiff.x > 0)
 	{
-		p->LCDOffsetX = p->LCDOffsetX - 320;
+		p->LCDOffsetX += p->cameraDiff.x;
+		if (p->LCDOffsetX > 319)
+		{
+			p->LCDOffsetX = p->LCDOffsetX - 320;
+		}
+		if (p->LCDOffsetX < 0)
+		{
+			p->LCDOffsetX = 320 + p->LCDOffsetX;
+		}
+
+		LCD_WriteVertScrollStartAddr(p->LCDOffsetX);
+
+
+		Rect_t leftMapRect;
+		Rect_t rightMapRect;
+		Rect_t leftScreenRect;
+		Rect_t rightScreenRect;
+
+		leftMapRect.p1.x = p->prevCameraPos.x;
+		leftMapRect.p1.y = LCD_HEIGHT;
+		leftMapRect.p2.x = p->currCameraPos.x;
+		leftMapRect.p2.y = LCD_HEIGHT;
+
+		rightMapRect.p1.x = p->prevCameraPos.x + LCD_WIDTH;
+		rightMapRect.p1.y = LCD_HEIGHT;
+		rightMapRect.p2.x = p->currCameraPos.x + LCD_WIDTH;
+		rightMapRect.p2.y = LCD_HEIGHT;
+
+		leftScreenRect.p1.x = 0;
+		leftScreenRect.p1.y = p->floorSprite.sprite.size.y * p->floorSprite.mulVector.y + 1;
+		leftScreenRect.p2.x = p->cameraDiff.x;
+		leftScreenRect.p2.y = LCD_HEIGHT;
+
+		rightScreenRect.p1.x = LCD_WIDTH - p->cameraDiff.x;
+		rightScreenRect.p1.y = p->floorSprite.sprite.size.y * p->floorSprite.mulVector.y + 1;
+		rightScreenRect.p2.x = LCD_WIDTH;
+		rightScreenRect.p2.y = LCD_HEIGHT;
 	}
-	if (p->LCDOffsetX < 0)
-	{
-		p->LCDOffsetX = 320 + p->LCDOffsetX;
-	}
-
-	LCD_WriteVertScrollStartAddr(p->LCDOffsetX);
-
-
-	Rect_t leftRectToRedraw;
-	Rect_t rightRectToRedraw;
-
-	leftRectToRedraw.p1.x = p->prevCameraPos.x;
-	leftRectToRedraw.p1.y = LCD_HEIGHT;
-	leftRectToRedraw.p2.x = p->currCameraPos.x;
-	leftRectToRedraw.p2.y = LCD_HEIGHT;
-
-	rightRectToRedraw.p1.x = p->prevCameraPos.x + 320;
-	rightRectToRedraw.p1.y = LCD_HEIGHT;
-	rightRectToRedraw.p2.x = p->currCameraPos.x + 320;
-	rightRectToRedraw.p2.y = LCD_HEIGHT;
 
 
 	return 0;
 }
 
-int Map_RenderPartOfJedynka(Map_t* p)
+int	Map_RenderScrollRect(Map_t* p, Rect_t mapRect, Rect_t lcdRect)
 {
 	if (p == NULL)	{ return -1; }
-	Sprite_t* s = &p->jedynkaSprite;
-
-	static int minus = 0;
-	minus++;
-	if (minus >= 16)
-	{
-		minus = 0;
-	}
-
-	s->render.visiblePartRect.p1.x = minus;
-	s->render.visiblePartRect.p1.y = 0;
-	s->render.visiblePartRect.p2.x = s->size.x - minus;
-	s->render.visiblePartRect.p2.y = s->size.y;
-
-	Rect_t baseRect;
-	baseRect.p1.x = p->jedynkaPixelPos.x;
-	baseRect.p1.y = p->jedynkaPixelPos.y;
-	baseRect.p2.x = p->jedynkaPixelPos.x + s->size.x;
-	baseRect.p2.y = p->jedynkaPixelPos.y + s->size.y;
-
-	Point_t baseToSpriteOffset;
-	memset(&baseToSpriteOffset, 0, sizeof(baseToSpriteOffset));
-
-	s->render.baseRect = baseRect;
-	s->render.baseToSpriteOffset = baseToSpriteOffset;
-
-	RE_RenderSprite(s, true);
-
-	return 0;
 }
 
 int Map_RenderJedynka(Map_t* p)

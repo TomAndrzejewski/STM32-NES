@@ -17,7 +17,9 @@ typedef struct
 	Rect_t 	mapSize;
 	Point_t	currCameraPos;
 	Point_t	prevCameraPos;
+	Point_t cameraDiff;
 	int		LCDOffsetX;
+
 
 	RepSprite_t floorSprite;
 	Point_t		floorPixelPos;
@@ -31,13 +33,13 @@ typedef struct
 }Map_t;
 
 int 	Map_Init(Map_t* p);
+int 	Map_ReactToButtons(Map_t* p, uint32_t buttons_state);
 
 int		Map_CameraBasedRender(Map_t* p);
-int 	Map_ReactToButtons(Map_t* p, uint32_t buttons_state);
+int		Map_RenderScrollRect(Map_t* p, Rect_t newRect);
 
 int		Map_RenderFloor(Map_t* p);
 int		Map_RenderJedynka(Map_t* p);
-int 	Map_RenderPartOfJedynka(Map_t* p);
 int 	Map_RenderDwojka(Map_t* p);
 
 
