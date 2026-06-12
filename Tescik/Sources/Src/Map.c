@@ -145,8 +145,8 @@ int Map_Init(Map_t* p)
 	p->jedynkaSprite.size.x = 32;
 	p->jedynkaSprite.size.y = 32;
 
-//	p->jedynkaPixelPos.x = 160;
-	p->jedynkaPixelPos.x = 80;
+	p->jedynkaPixelPos.x = 160;
+//	p->jedynkaPixelPos.x = 80;
 	p->jedynkaPixelPos.y = 120;
 
 
@@ -154,8 +154,8 @@ int Map_Init(Map_t* p)
 	p->dwojkaSprite.size.x = 32;
 	p->dwojkaSprite.size.y = 32;
 
-//	p->dwojkaPixelPos.x = 480;
-	p->dwojkaPixelPos.x = 240;
+	p->dwojkaPixelPos.x = 480;
+//	p->dwojkaPixelPos.x = 240;
 	p->dwojkaPixelPos.y = 120;
 
 	return 0;
@@ -216,6 +216,18 @@ int Map_ReactToButtons(Map_t* p, uint32_t buttons_state)
 	return 0;
 }
 
+// RENDER PIPELINE
+// Narysuj nowe linie po prawej i po lewej
+// 	- Najlepiej po jednym wyslaniu na linie
+// Narysuj przeciwnikow
+//	- tlo
+//	- nieruchome sprity
+//	- przeciwnik
+// Narysuj mario
+//	- tlo
+//	- nieruchome sprity
+//	- mario
+
 int Map_CameraBasedRender(Map_t* p)
 {
 	if (p == NULL)	{ return -1; }
@@ -241,11 +253,49 @@ int Map_CameraBasedRender(Map_t* p)
 	Rect_t rightRectToRedraw;
 
 	leftRectToRedraw.p1.x = p->prevCameraPos.x;
+	leftRectToRedraw.p1.y = LCD_HEIGHT;
 	leftRectToRedraw.p2.x = p->currCameraPos.x;
+	leftRectToRedraw.p2.y = LCD_HEIGHT;
 
 	rightRectToRedraw.p1.x = p->prevCameraPos.x + 320;
+	rightRectToRedraw.p1.y = LCD_HEIGHT;
 	rightRectToRedraw.p2.x = p->currCameraPos.x + 320;
+	rightRectToRedraw.p2.y = LCD_HEIGHT;
 
+
+	return 0;
+}
+
+int Map_RenderPartOfJedynka(Map_t* p)
+{
+	if (p == NULL)	{ return -1; }
+	Sprite_t* s = &p->jedynkaSprite;
+
+	static int minus = 0;
+	minus++;
+	if (minus >= 16)
+	{
+		minus = 0;
+	}
+
+	s->render.visiblePartRect.p1.x = minus;
+	s->render.visiblePartRect.p1.y = 0;
+	s->render.visiblePartRect.p2.x = s->size.x - minus;
+	s->render.visiblePartRect.p2.y = s->size.y;
+
+	Rect_t baseRect;
+	baseRect.p1.x = p->jedynkaPixelPos.x;
+	baseRect.p1.y = p->jedynkaPixelPos.y;
+	baseRect.p2.x = p->jedynkaPixelPos.x + s->size.x;
+	baseRect.p2.y = p->jedynkaPixelPos.y + s->size.y;
+
+	Point_t baseToSpriteOffset;
+	memset(&baseToSpriteOffset, 0, sizeof(baseToSpriteOffset));
+
+	s->render.baseRect = baseRect;
+	s->render.baseToSpriteOffset = baseToSpriteOffset;
+
+	RE_RenderSprite(s, true);
 
 	return 0;
 }

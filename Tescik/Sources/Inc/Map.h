@@ -37,6 +37,7 @@ int 	Map_ReactToButtons(Map_t* p, uint32_t buttons_state);
 
 int		Map_RenderFloor(Map_t* p);
 int		Map_RenderJedynka(Map_t* p);
+int 	Map_RenderPartOfJedynka(Map_t* p);
 int 	Map_RenderDwojka(Map_t* p);
 
 
