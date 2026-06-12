@@ -219,14 +219,17 @@ int Map_ReactToButtons(Map_t* p, uint32_t buttons_state)
 // RENDER PIPELINE
 // Narysuj nowe linie po prawej i po lewej
 // 	- Najlepiej po jednym wyslaniu na linie
+//	- NOWY TYP RENDEROWANIA (PODLOGI NIE RUSZASZ, ROBISZ TLO + LINIE Z NIERUCHOMYCH SPRITOW)
 // Narysuj przeciwnikow
 //	- tlo
 //	- nieruchome sprity
 //	- przeciwnik
+//	- NOWY TYP RENDEROWANIA (MUSISZ W DIRTYBOXA PRZECIWNIKA WPISAC FRAGMENTY NIERUCHOMYCH SPRITOW)
 // Narysuj mario
 //	- tlo
 //	- nieruchome sprity
 //	- mario
+//	- NOWY TYP RENDEROWANIA (MUSISZ W DIRTYBOXA PRZECIWNIKA WPISAC FRAGMENTY NIERUCHOMYCH SPRITOW)
 
 int Map_CameraBasedRender(Map_t* p)
 {
