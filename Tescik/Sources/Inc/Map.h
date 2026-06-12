@@ -23,6 +23,7 @@ typedef struct
 
 	RepSprite_t floorSprite;
 	Point_t		floorPixelPos;
+	int			floorYLevel;
 
 	Sprite_t 	jedynkaSprite;
 	Point_t		jedynkaPixelPos;

@@ -140,6 +140,8 @@ int Map_Init(Map_t* p)
 	p->floorPixelPos.x = 0;
 	p->floorPixelPos.y = 0;
 
+	p->floorYLevel = p->floorSprite.sprite.size.y * p->floorSprite.mulVector.y;
+
 
 	p->jedynkaSprite.bitmap = map_jedynka_32x32_dma;
 	p->jedynkaSprite.size.x = 32;
@@ -258,22 +260,22 @@ int Map_CameraBasedRender(Map_t* p)
 		Rect_t rightScreenRect;
 
 		leftMapRect.p1.x = p->prevCameraPos.x;
-		leftMapRect.p1.y = LCD_HEIGHT;
+		leftMapRect.p1.y = p->floorYLevel;
 		leftMapRect.p2.x = p->currCameraPos.x;
 		leftMapRect.p2.y = LCD_HEIGHT;
 
 		rightMapRect.p1.x = p->prevCameraPos.x + LCD_WIDTH;
-		rightMapRect.p1.y = LCD_HEIGHT;
+		rightMapRect.p1.y = p->floorYLevel;
 		rightMapRect.p2.x = p->currCameraPos.x + LCD_WIDTH;
 		rightMapRect.p2.y = LCD_HEIGHT;
 
 		leftScreenRect.p1.x = 0;
-		leftScreenRect.p1.y = p->floorSprite.sprite.size.y * p->floorSprite.mulVector.y + 1;
+		leftScreenRect.p1.y = p->floorYLevel;
 		leftScreenRect.p2.x = p->cameraDiff.x;
 		leftScreenRect.p2.y = LCD_HEIGHT;
 
 		rightScreenRect.p1.x = LCD_WIDTH - p->cameraDiff.x;
-		rightScreenRect.p1.y = p->floorSprite.sprite.size.y * p->floorSprite.mulVector.y + 1;
+		rightScreenRect.p1.y = p->floorYLevel;
 		rightScreenRect.p2.x = LCD_WIDTH;
 		rightScreenRect.p2.y = LCD_HEIGHT;
 	}
@@ -285,6 +287,15 @@ int Map_CameraBasedRender(Map_t* p)
 int	Map_RenderScrollRect(Map_t* p, Rect_t mapRect, Rect_t lcdRect)
 {
 	if (p == NULL)	{ return -1; }
+
+//	if (p->jedynkaPixelPos.p1.x )
+}
+
+int Map_RenderLinesOfJedynka(Map_t* p, Rect_t linesRect)
+{
+	if (p == NULL)	{ return -1; }
+
+
 }
 
 int Map_RenderJedynka(Map_t* p)
