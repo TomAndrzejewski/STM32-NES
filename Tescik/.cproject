@@ -14,7 +14,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="com.st.stm32cube.ide.cmake.cmakeTarget">
-				<src>D:\gitProjects\UC\STM32-NES\Tescik</src>
+				<src>/home/tomasz/GitProjekty/STM32-NES/Tescik</src>
 				<build>Debug</build>
 				<generator>Ninja</generator>
 				<cmake_build_type>Debug</cmake_build_type>

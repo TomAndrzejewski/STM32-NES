@@ -318,7 +318,14 @@ int main(void)
 
 		Map_CameraBasedRender(pMap);
 
+		LCD_PrepFillBackgroud();
+		RE_RenderFullBackgroud(LCD_Colors[LCD_GREEN]);
+
+		startTime = GetTimestamp();
 		Map_RenderJedynka(pMap);
+		elapsedUS = CalcTimeUS(startTime);
+		printf_c('\n');
+		printf_v("Map_RenderJedynka took: %d us\n", elapsedUS);
 
 		startTime = GetTimestamp();
 		Mario_Render(pMario);

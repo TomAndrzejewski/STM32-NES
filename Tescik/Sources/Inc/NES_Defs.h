@@ -10,6 +10,12 @@
 
 #include "stdint.h"
 
+#ifndef NDEBUG
+    #define OPTIMIZE_FOR_DEBUG __attribute__((optimize("Og")))
+#else
+    #define OPTIMIZE_FOR_DEBUG // W Release makro jest puste i znika
+#endif
+
 #define SYSCLOCK_16MHZ		(16000000UL)
 #define SYSCLOCK_144MHZ		(144000000UL)
 

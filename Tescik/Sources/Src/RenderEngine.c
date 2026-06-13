@@ -61,11 +61,17 @@ int RE_SendFB(int pixelsToSend)
 	return 0;
 }
 
+uint8_t* RE_GetFB()
+{
+	return _FB;
+}
+
 void RE_ResetFB()
 {
 	_WritePos = 0;
 }
 
+OPTIMIZE_FOR_DEBUG
 int RE_FillPixel(uint16_t pixel)
 {
 	if (_WritePos + BYTES_PER_PIXEL >= FRAMEBUFFER_SIZE)
@@ -107,6 +113,7 @@ int RE_RenderFullBackgroud(uint16_t pixel)
 	return 0;
 }
 
+OPTIMIZE_FOR_DEBUG
 int RE_FillBackgroud(uint16_t pixel, int numOfPixels)
 {
 	if (numOfPixels <= 0)
@@ -178,46 +185,104 @@ int RE_RenderSprite(Sprite_t* sprite, bool fillBG)
 		return -1;
 	}
 
-	Rect_t movedSpriteRect;
-	movedSpriteRect.p1.x = 0;
-	movedSpriteRect.p1.y = 0;
-	movedSpriteRect.p2.x = sprite->size.x;
-	movedSpriteRect.p2.y = sprite->size.y;
-
-	movedSpriteRect.p1.x += sprite->render.baseRect.p1.x;
-	movedSpriteRect.p2.x += sprite->render.baseRect.p1.x;
-	movedSpriteRect.p1.y += sprite->render.baseRect.p1.y;
-	movedSpriteRect.p2.y += sprite->render.baseRect.p1.y;
-
-	movedSpriteRect.p1.x += sprite->render.baseToSpriteOffset.x;
-	movedSpriteRect.p2.x += sprite->render.baseToSpriteOffset.x;
-	movedSpriteRect.p1.y += sprite->render.baseToSpriteOffset.y;
-	movedSpriteRect.p2.y += sprite->render.baseToSpriteOffset.y;
-
 
 	RE_ResetFB();
 
 	int ret = 0;
 	int baseRectArea = CalcRectArea(sprite->render.baseRect);
 
+	uint32_t startTime = GetTimestamp();
 	if (fillBG)
 	{
-		int ret = RE_FillBackgroud(LCD_Colors[LCD_GREEN], baseRectArea);
+		int ret = RE_FillBackgroud(LCD_Colors[LCD_WHITE], baseRectArea);
 		if (ret < 0)
 		{
 			return -10;
 		}
 	}
+	uint32_t elapsedUS = CalcTimeUS(startTime);
+	printf_uint(elapsedUS);
+	printf_c('\t');
 
-	RE_FillSprite(sprite->bitmap, sprite->render.baseRect, movedSpriteRect, sprite->render.visiblePartRect);
 
+//	RE_FillSprite(sprite->bitmap, sprite->render.baseRect, movedSpriteRect, sprite->render.visiblePartRect);
+	startTime = GetTimestamp();
+	RE_FillSprite2(sprite, sprite->render.baseRect, sprite->render.baseToSpriteOffset);
+	elapsedUS = CalcTimeUS(startTime);
+	printf_uint(elapsedUS);
+	printf_c('\t');
+
+	startTime = GetTimestamp();
 	LCD_DrawRect(sprite->render.baseRect);
+	elapsedUS = CalcTimeUS(startTime);
+	printf_uint(elapsedUS);
+	printf_c('\t');
 
+	startTime = GetTimestamp();
 	ret = RE_SendFB(baseRectArea);
+	elapsedUS = CalcTimeUS(startTime);
+	printf_uint(elapsedUS);
+	printf_c('\t');
 	RE_ResetFB();
 	if (ret < 0)
 	{
 		return -15;
+	}
+
+	return 0;
+}
+
+OPTIMIZE_FOR_DEBUG
+int RE_FillSprite2(Sprite_t* sprite, Rect_t baseRect, Point_t baseToSpriteOffset)
+{
+	if (sprite == NULL)
+	{
+		return -1;
+	}
+
+	Rect_t fbRect;
+	fbRect.p1.x = 0;
+	fbRect.p1.y = 0;
+	fbRect.p2.x = baseRect.p2.x - baseRect.p1.x;
+	fbRect.p2.y = baseRect.p2.y - baseRect.p1.y;
+
+	RE_ResetFB();
+	const uint16_t (*s2d)[sprite->size.x] = (const uint16_t (*)[sprite->size.x])sprite->bitmap;
+	uint16_t (*fb)[fbRect.p2.x] = (uint16_t (*)[fbRect.p2.x])RE_GetFB();
+
+	Rect_t spriteFBRect;
+	spriteFBRect.p1.x = 0;
+	spriteFBRect.p1.y = 0;
+	spriteFBRect.p2.x = sprite->size.x;
+	spriteFBRect.p2.y = sprite->size.y;
+
+	Rect_t commonFBRect;
+	commonFBRect.p1.x = max(spriteFBRect.p1.x, fbRect.p1.x);
+	commonFBRect.p1.y = max(spriteFBRect.p1.y, fbRect.p1.y);
+	commonFBRect.p2.x = min(spriteFBRect.p2.x, fbRect.p2.x);
+	commonFBRect.p2.y = min(spriteFBRect.p2.y, fbRect.p2.y);
+
+	// czesc wspolna istnieje
+	if (commonFBRect.p1.x <= commonFBRect.p2.x && commonFBRect.p1.y <= commonFBRect.p2.y)
+	{
+		int spriteStartOffsetX = (baseToSpriteOffset.x < 0) ? -baseToSpriteOffset.x : 0;
+		int spriteStartOffsetY = (baseToSpriteOffset.y < 0) ? -baseToSpriteOffset.y : 0;
+
+		for (int i = commonFBRect.p1.y; i < commonFBRect.p1.y + commonFBRect.p2.y; i++)
+		{
+			for (int j = commonFBRect.p1.x; j < commonFBRect.p1.x + commonFBRect.p2.x; j++)
+			{
+				int indY = i + spriteStartOffsetY;
+				int indX = j + spriteStartOffsetX;
+				if (indX >= 0 && indY >= 0)
+				{
+					if (s2d[indY][indX] != LCD_TRANSPARENT_COLOR)
+					{
+						fb[i][j] = s2d[indY][indX];
+					}
+				}
+			}
+		}
 	}
 
 	return 0;
