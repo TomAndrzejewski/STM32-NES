@@ -266,7 +266,8 @@ int main(void)
 	Map_Init(pMap);
 
 	uint32_t startTime = 0, elapsedUS = 0;
-	uint16_t verScrollAddr = 319;
+	Rect_t mapRectToDraw;
+	Rect_t screenRect;
 
 	startTime = GetTimestamp();
 	Map_RenderFloor(pMap);
@@ -274,7 +275,7 @@ int main(void)
 //		printf_v("Map_RenderFloor took: %d us\n", elapsedUS);
 
 	startTime = GetTimestamp();
-	Map_RenderJedynka(pMap);
+//	Map_RenderJedynka(pMap);
 	elapsedUS = CalcTimeUS(startTime);
 	printf_v("Map_RenderJedynka took: %d us\n", elapsedUS);
 
@@ -291,48 +292,23 @@ int main(void)
 
 		Map_ReactToButtons(pMap, buttons_state);
 
-//		if (buttons_state & PAD_BUTTON_LEFT)
-//		{
-//			if (verScrollAddr < 319)
-//			{
-//				verScrollAddr++;
-//			}
-//			else
-//			{
-//				verScrollAddr = 0;
-//			}
-//			LCD_WriteVertScrollStartAddr(verScrollAddr);
-//		}
-//		if (buttons_state & PAD_BUTTON_RIGHT)
-//		{
-//			if (verScrollAddr > 0)
-//			{
-//				verScrollAddr--;
-//			}
-//			else
-//			{
-//				verScrollAddr = 319;
-//			}
-//			LCD_WriteVertScrollStartAddr(verScrollAddr);
-//		}
-
 		Map_CameraBasedRender(pMap);
 
-		LCD_PrepFillBackgroud();
-		RE_RenderFullBackgroud(LCD_Colors[LCD_GREEN]);
+//		LCD_PrepFillBackgroud();
+//		RE_RenderFullBackgroud(LCD_Colors[LCD_GREEN]);
 
-		startTime = GetTimestamp();
-		Map_RenderJedynka(pMap);
-		elapsedUS = CalcTimeUS(startTime);
-		printf_c('\n');
-		printf_v("Map_RenderJedynka took: %d us\n", elapsedUS);
+//		startTime = GetTimestamp();
+//		Map_RenderJedynka(pMap);
+//		elapsedUS = CalcTimeUS(startTime);
+//		printf_c('\n');
+//		printf_v("Map_RenderJedynka took: %d us\n", elapsedUS);
 
 		startTime = GetTimestamp();
 		Mario_Render(pMario);
 		elapsedUS = CalcTimeUS(startTime);
 //		printf_v("Mario_Render took: %d us\n", elapsedUS);
 
-		delay(160);
+		delay(16);
 	}
 
     /* Loop forever */

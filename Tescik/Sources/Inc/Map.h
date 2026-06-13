@@ -41,7 +41,7 @@ int		Map_RenderScrollRect(Map_t* p, Rect_t newRect);
 
 int		Map_RenderFloor(Map_t* p);
 int		Map_RenderJedynka(Map_t* p);
-int		Map_RenderJedynka2(Map_t* p);
+int 	Map_RenderJedynka2(Map_t* p, Rect_t mapRectToDraw, Rect_t screenRect);
 int 	Map_RenderDwojka(Map_t* p);
 
 

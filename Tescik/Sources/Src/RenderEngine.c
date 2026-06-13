@@ -210,19 +210,19 @@ int RE_RenderSprite(Sprite_t* sprite, bool fillBG)
 	RE_FillSprite2(sprite, sprite->render.baseRect, sprite->render.baseToSpriteOffset);
 	elapsedUS = CalcTimeUS(startTime);
 	printf_uint(elapsedUS);
-	printf_c('\t');
+	printf_c('\n');
 
-	startTime = GetTimestamp();
+//	startTime = GetTimestamp();
 	LCD_DrawRect(sprite->render.baseRect);
-	elapsedUS = CalcTimeUS(startTime);
-	printf_uint(elapsedUS);
-	printf_c('\t');
+//	elapsedUS = CalcTimeUS(startTime);
+//	printf_uint(elapsedUS);
+//	printf_c('\t');
 
-	startTime = GetTimestamp();
+//	startTime = GetTimestamp();
 	ret = RE_SendFB(baseRectArea);
-	elapsedUS = CalcTimeUS(startTime);
-	printf_uint(elapsedUS);
-	printf_c('\t');
+//	elapsedUS = CalcTimeUS(startTime);
+//	printf_uint(elapsedUS);
+//	printf_c('\t');
 	RE_ResetFB();
 	if (ret < 0)
 	{
@@ -267,18 +267,24 @@ int RE_FillSprite2(Sprite_t* sprite, Rect_t baseRect, Point_t baseToSpriteOffset
 	{
 		int spriteStartOffsetX = (baseToSpriteOffset.x < 0) ? -baseToSpriteOffset.x : 0;
 		int spriteStartOffsetY = (baseToSpriteOffset.y < 0) ? -baseToSpriteOffset.y : 0;
+		int fbStartOffsetX = (baseToSpriteOffset.x > 0) ? baseToSpriteOffset.x : 0;
+		int fbStartOffsetY = (baseToSpriteOffset.y > 0) ? baseToSpriteOffset.y : 0;
+
+		if (spriteStartOffsetX >= 0 && spriteStartOffsetY >= 0 && fbStartOffsetX >= 0 && fbStartOffsetY >= 0)
 
 		for (int i = commonFBRect.p1.y; i < commonFBRect.p1.y + commonFBRect.p2.y; i++)
 		{
 			for (int j = commonFBRect.p1.x; j < commonFBRect.p1.x + commonFBRect.p2.x; j++)
 			{
-				int indY = i + spriteStartOffsetY;
-				int indX = j + spriteStartOffsetX;
-				if (indX >= 0 && indY >= 0)
+				int spriteIndY = i + spriteStartOffsetY;
+				int spriteIndX = j + spriteStartOffsetX;
+				int fbIndY = i + fbStartOffsetY;
+				int fbIndX = j + fbStartOffsetX;
+//				if (spriteIndX >= 0 && spriteIndY >= 0 && fbIndX >= 0 && fbIndY >= 0)
 				{
-					if (s2d[indY][indX] != LCD_TRANSPARENT_COLOR)
+					if (s2d[spriteIndY][spriteIndX] != LCD_TRANSPARENT_COLOR)
 					{
-						fb[i][j] = s2d[indY][indX];
+						fb[fbIndY][fbIndX] = s2d[spriteIndY][spriteIndX];
 					}
 				}
 			}

@@ -281,6 +281,25 @@ int Map_CameraBasedRender(Map_t* p)
 	}
 
 
+//	static Rect_t mapRectToDraw = {{0,32},{1,240}};
+	static Rect_t mapRectToDraw = {{80,120},{80+32,120+32}};
+	static Rect_t screenRect;
+
+//	mapRectToDraw.p1.x++;
+//	mapRectToDraw.p2.x++;
+//	if (mapRectToDraw.p1.x > 320)
+//	{
+//		mapRectToDraw.p1.x = 0;
+//	}
+//	if (mapRectToDraw.p2.x > 320)
+//	{
+//		mapRectToDraw.p2.x = 0;
+//	}
+	screenRect = mapRectToDraw;
+
+	Map_RenderJedynka2(p, mapRectToDraw, screenRect);
+
+
 	return 0;
 }
 
@@ -298,36 +317,45 @@ int Map_CameraBasedRender(Map_t* p)
 //
 //}
 
-int Map_RenderJedynka2(Map_t* p)
+int Map_RenderJedynka2(Map_t* p, Rect_t mapRectToDraw, Rect_t screenRect)
 {
 	if (p == NULL)	{ return -1; }
 	Sprite_t* s = &p->jedynkaSprite;
 
-	static int minus = 0;
-	minus++;
-	if (minus >= 16)
-	{
-		minus = 0;
+	Rect_t jedynkaPos;
+	jedynkaPos.p1.x = p->jedynkaPixelPos.x;
+	jedynkaPos.p1.y = p->jedynkaPixelPos.y;
+	jedynkaPos.p2.x = p->jedynkaPixelPos.x + s->size.x;
+	jedynkaPos.p2.y = p->jedynkaPixelPos.y + s->size.y;
+
+	Rect_t commonRect;
+	commonRect.p1.x = max(mapRectToDraw.p1.x, jedynkaPos.p1.x);
+	commonRect.p1.y = max(mapRectToDraw.p1.y, jedynkaPos.p1.y);
+	commonRect.p2.x = min(mapRectToDraw.p2.x, jedynkaPos.p2.x);
+	commonRect.p2.y = min(mapRectToDraw.p2.y, jedynkaPos.p2.y);
+
+	if (mapRectToDraw.p1.x == 90){
+		delay(1);
 	}
 
-	s->render.visiblePartRect.p1.x = minus;
-	s->render.visiblePartRect.p1.y = 0;
-	s->render.visiblePartRect.p2.x = s->size.x - minus;
-	s->render.visiblePartRect.p2.y = s->size.y;
+	// czesc wspolna istnieje
+	if (commonRect.p1.x <= commonRect.p2.x && commonRect.p1.y <= commonRect.p2.y)
+	{
+		Rect_t baseRect = screenRect;
+//		baseRect.p1.x = p->jedynkaPixelPos.x;
+//		baseRect.p1.y = p->jedynkaPixelPos.y;
+//		baseRect.p2.x = p->jedynkaPixelPos.x + s->size.x;
+//		baseRect.p2.y = p->jedynkaPixelPos.y + s->size.y;
 
-	Rect_t baseRect;
-	baseRect.p1.x = p->jedynkaPixelPos.x;
-	baseRect.p1.y = p->jedynkaPixelPos.y;
-	baseRect.p2.x = p->jedynkaPixelPos.x + s->size.x;
-	baseRect.p2.y = p->jedynkaPixelPos.y + s->size.y;
+		Point_t baseToSpriteOffset;
+		baseToSpriteOffset.x = jedynkaPos.p1.x - mapRectToDraw.p1.x;
+		baseToSpriteOffset.y = jedynkaPos.p1.y - mapRectToDraw.p1.y;
 
-	Point_t baseToSpriteOffset;
-	memset(&baseToSpriteOffset, 0, sizeof(baseToSpriteOffset));
+		s->render.baseRect = baseRect;
+		s->render.baseToSpriteOffset = baseToSpriteOffset;
 
-	s->render.baseRect = baseRect;
-	s->render.baseToSpriteOffset = baseToSpriteOffset;
-
-	RE_RenderSprite(s, true);
+		RE_RenderSprite(s, true);
+	}
 
 	return 0;
 }
@@ -344,11 +372,6 @@ int Map_RenderJedynka(Map_t* p)
 		minus = 0;
 	}
 
-	s->render.visiblePartRect.p1.x = minus;
-	s->render.visiblePartRect.p1.y = 0;
-	s->render.visiblePartRect.p2.x = s->size.x - minus;
-	s->render.visiblePartRect.p2.y = s->size.y;
-
 	Rect_t baseRect;
 	baseRect.p1.x = p->jedynkaPixelPos.x;
 	baseRect.p1.y = p->jedynkaPixelPos.y + minus;
@@ -356,7 +379,6 @@ int Map_RenderJedynka(Map_t* p)
 	baseRect.p2.y = p->jedynkaPixelPos.y + s->size.y;
 
 	Point_t baseToSpriteOffset;
-	memset(&baseToSpriteOffset, 0, sizeof(baseToSpriteOffset));
 	baseToSpriteOffset.x = 0;
 	baseToSpriteOffset.y = -minus;
 
