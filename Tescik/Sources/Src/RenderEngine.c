@@ -289,25 +289,19 @@ int RE_FillSprite3(Sprite_t* sprite, SpriteRender_t renderContext)
 		int fbStartOffsetX = (renderContext.baseToSpriteOffset.x > 0) ? renderContext.baseToSpriteOffset.x : 0;
 		int fbStartOffsetY = (renderContext.baseToSpriteOffset.y > 0) ? renderContext.baseToSpriteOffset.y : 0;
 
-		if (spriteStartOffsetX >= 0 && spriteStartOffsetY >= 0 && fbStartOffsetX >= 0 && fbStartOffsetY >= 0)
+		int endY = CalcRectYLen(renderContext.commonRect);
+		int endX = CalcRectXLen(renderContext.commonRect);
+		for (int i = 0; i < endY; i++)
 		{
-			int endY = CalcRectYLen(renderContext.commonRect);
-			int endX = CalcRectXLen(renderContext.commonRect);
-			for (int i = 0; i < endY; i++)
+			for (int j = 0; j < endX; j++)
 			{
-				for (int j = 0; j < endX; j++)
+				int spriteIndY = i + spriteStartOffsetY;
+				int spriteIndX = j + spriteStartOffsetX;
+				int fbIndY = i + fbStartOffsetY;
+				int fbIndX = j + fbStartOffsetX;
+				if (s2d[spriteIndY][spriteIndX] != LCD_TRANSPARENT_COLOR)
 				{
-					int spriteIndY = i + spriteStartOffsetY;
-					int spriteIndX = j + spriteStartOffsetX;
-					int fbIndY = i + fbStartOffsetY;
-					int fbIndX = j + fbStartOffsetX;
-	//				if (spriteIndX >= 0 && spriteIndY >= 0 && fbIndX >= 0 && fbIndY >= 0)
-					{
-						if (s2d[spriteIndY][spriteIndX] != LCD_TRANSPARENT_COLOR)
-						{
-							fb[fbIndY][fbIndX] = s2d[spriteIndY][spriteIndX];
-						}
-					}
+					fb[fbIndY][fbIndX] = s2d[spriteIndY][spriteIndX];
 				}
 			}
 		}

@@ -266,6 +266,7 @@ int main(void)
 	Map_Init(pMap);
 
 	uint32_t startTime = 0, elapsedUS = 0;
+	uint32_t startTime2 = 0;
 
 	Map_FirstRender(pMap);
 
@@ -281,7 +282,14 @@ int main(void)
 
 		Map_ReactToButtons(pMap, buttons_state);
 
+		startTime2 = GetTimestamp();
 		Map_ScrollRender(pMap);
+		elapsedUS = CalcTimeUS(startTime2);
+		if (elapsedUS > 0)
+		{
+			printf_uint(elapsedUS); printf_c('\n');
+		}
+
 
 //		Mario_Render(pMario);
 

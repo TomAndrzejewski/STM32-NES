@@ -452,7 +452,7 @@ void LCD_DrawRect(Rect_t baseRect, int LCDOffsetX)
 	uint16_t y = lcdRect.p1.y;
 	uint16_t w = lcdRect.p2.x-lcdRect.p1.x;
 	uint16_t h = lcdRect.p2.y-lcdRect.p1.y;
-	printf_v("SetRectToDraw: %d %d %d %d\n", x, y, w, h);
+//	printf_v("SetRectToDraw: %d %d %d %d\n", x, y, w, h);
 	int ret = LCD_SetRectToDraw(x, y, w, h);
 	if (ret < 0)
 	{
