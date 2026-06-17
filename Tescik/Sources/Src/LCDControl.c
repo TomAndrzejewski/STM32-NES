@@ -5,6 +5,7 @@
  *      Author: tomasz
  */
 
+#include <stdlib.h>
 
 #include "LCDControl.h"
 #include "RenderEngine.h"
@@ -197,7 +198,7 @@ void LCD_init()
 	startTime = GetTimestamp();
 //	LCD_SetBackground(LCD_GREEN);
 	LCD_PrepFillBackgroud();
-	RE_RenderFullBackgroud(LCD_Colors[LCD_GREEN]);
+	RE_RenderFullBackgroud(LCD_COLOR_BLUESKY);
 	elapsedUS = CalcTimeUS(startTime);
 	printf_v("LCD_SetBackground(LCD_WHITE) took: %d us\n", elapsedUS);
 
@@ -305,16 +306,16 @@ void LCD_SoftwareReset()
 	printf_v("LCD LCD_SoftwareReset End\n");
 }
 
-void LCD_SetRectToDraw(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
+int LCD_SetRectToDraw(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
 {
 	if (x > 319 || y > 239)
 	{
-		return;
+		return -1;
 	}
 
 	if (x + w > 319 || y + h > 239)
 	{
-		return;
+		return -5;
 	}
 
 	uint16_t x2 = x + w;
@@ -348,6 +349,8 @@ void LCD_SetRectToDraw(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
 	lsb = (uint8_t)(y2 & 0xFF);
 	SPI1_SendData_U8(msb);
 	SPI1_SendData_U8(lsb);
+
+	return 0;
 }
 
 void LCD_PrepFillBackgroud()
@@ -425,15 +428,36 @@ void LCD_SetBackground(LCD_ColorEnum color)
 	printf_v("LCD LCD_SetGreenBackground End\n");
 }
 
-void LCD_DrawRect(Rect_t baseRect)
+void LCD_DrawRect(Rect_t baseRect, int LCDOffsetX)
 {
 //	printf_v("LCD LCD_DrawMario Start\n");
 
-	uint16_t x = baseRect.p1.x;
-	uint16_t y = baseRect.p1.y;
-	uint16_t w = baseRect.p2.x-baseRect.p1.x;
-	uint16_t h = baseRect.p2.y-baseRect.p1.y;
-	LCD_SetRectToDraw(x, y, w-1, h-1);
+	Rect_t lcdRect = baseRect;
+	if (lcdRect.p2.x > lcdRect.p1.x)
+	{
+		baseRect.p2.x--;
+	}
+	if (lcdRect.p2.y > lcdRect.p1.y)
+	{
+		lcdRect.p2.y--;
+	}
+	lcdRect.p1.x = (baseRect.p1.x + (LCD_WIDTH - LCDOffsetX)) % LCD_WIDTH;
+	lcdRect.p2.x = (baseRect.p2.x + (LCD_WIDTH - LCDOffsetX)) % LCD_WIDTH;
+	if (lcdRect.p1.x < 0 ||  lcdRect.p2.x < 0)
+	{
+		delay(1);
+	}
+
+	uint16_t x = lcdRect.p1.x;
+	uint16_t y = lcdRect.p1.y;
+	uint16_t w = lcdRect.p2.x-lcdRect.p1.x;
+	uint16_t h = lcdRect.p2.y-lcdRect.p1.y;
+	printf_v("SetRectToDraw: %d %d %d %d\n", x, y, w, h);
+	int ret = LCD_SetRectToDraw(x, y, w, h);
+	if (ret < 0)
+	{
+		printf_v("SetRectToDraw err: %d %d %d %d (%d)\n", x, y, w, h, ret);
+	}
 
 	SPI1_SendCmd_U8(LCD_RAMWR);
 

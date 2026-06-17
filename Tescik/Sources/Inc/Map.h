@@ -26,23 +26,22 @@ typedef struct
 	int			floorYLevel;
 
 	Sprite_t 	jedynkaSprite;
-	Point_t		jedynkaPixelPos;
+	Rect_t		jedynkaPosRect;
 
 	Sprite_t 	dwojkaSprite;
-	Point_t		dwojkaPixelPos;
+	Rect_t		dwojkaPosRect;
 
 }Map_t;
 
 int 	Map_Init(Map_t* p);
 int 	Map_ReactToButtons(Map_t* p, uint32_t buttons_state);
 
-int		Map_CameraBasedRender(Map_t* p);
-int		Map_RenderScrollRect(Map_t* p, Rect_t newRect);
+int 	Map_FirstRender(Map_t* p);
+int		Map_ScrollRender(Map_t* p);
 
 int		Map_RenderFloor(Map_t* p);
-int		Map_RenderJedynka(Map_t* p);
-int 	Map_RenderJedynka2(Map_t* p, Rect_t mapRectToDraw, Rect_t screenRect);
-int 	Map_RenderDwojka(Map_t* p);
+int 	Map_RenderJedynka(Map_t* p, Rect_t mapRectToDraw, Rect_t screenRect, int LCDOffsetX, bool render, bool fillBG);
+int 	Map_RenderDwojka(Map_t* p, Rect_t mapRectToDraw, Rect_t screenRect, int LCDOffsetX, bool render, bool fillBG);
 
 
 #endif /* SOURCES_INC_MAP_H_ */

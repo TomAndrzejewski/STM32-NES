@@ -204,7 +204,7 @@ int Mario_Render(Mario_t* p)
 	currPosToDirtyRectOffset.y = currDirtyRect.p1.y - commonDirtyRect.p1.y;
 
 
-	LCD_DrawRect(commonDirtyRect);
+	LCD_DrawRect(commonDirtyRect, 0);
 
 	RE_RenderMario(p->sprite.bitmap, commonDirtyRect, spriteRect, currPosToDirtyRectOffset);
 

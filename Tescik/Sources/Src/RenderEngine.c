@@ -74,7 +74,7 @@ void RE_ResetFB()
 OPTIMIZE_FOR_DEBUG
 int RE_FillPixel(uint16_t pixel)
 {
-	if (_WritePos + BYTES_PER_PIXEL >= FRAMEBUFFER_SIZE)
+	if (_WritePos + BYTES_PER_PIXEL > FRAMEBUFFER_SIZE)
 	{
 		return -1;
 	}
@@ -87,7 +87,7 @@ int RE_FillPixel(uint16_t pixel)
 
 int RE_OmmitPixel()
 {
-	if (_WritePos + BYTES_PER_PIXEL >= FRAMEBUFFER_SIZE)
+	if (_WritePos + BYTES_PER_PIXEL > FRAMEBUFFER_SIZE)
 	{
 		return -1;
 	}
@@ -178,7 +178,22 @@ int RE_RenderMario(const uint16_t* sprite, Rect_t baseRect, Rect_t spriteRect, P
 	return 0;
 }
 
-int RE_RenderSprite(Sprite_t* sprite, bool fillBG)
+int RE_SendRect(Rect_t baseRect, int LCDOffsetX)
+{
+	int baseRectArea = CalcRectArea(baseRect);
+	LCD_DrawRect(baseRect, LCDOffsetX);
+
+	int ret = RE_SendFB(baseRectArea);
+	RE_ResetFB();
+	if (ret < 0)
+	{
+		return -15;
+	}
+
+	return 0;
+}
+
+int RE_RenderSprite(Sprite_t* sprite, SpriteRender_t renderContext, bool fillBG)
 {
 	if (sprite == NULL)
 	{
@@ -189,12 +204,12 @@ int RE_RenderSprite(Sprite_t* sprite, bool fillBG)
 	RE_ResetFB();
 
 	int ret = 0;
-	int baseRectArea = CalcRectArea(sprite->render.baseRect);
+	int baseRectArea = CalcRectArea(renderContext.baseRect);
 
 	uint32_t startTime = GetTimestamp();
 	if (fillBG)
 	{
-		int ret = RE_FillBackgroud(LCD_Colors[LCD_WHITE], baseRectArea);
+		int ret = RE_FillBackgroud(LCD_COLOR_BLUESKY, baseRectArea);
 		if (ret < 0)
 		{
 			return -10;
@@ -207,13 +222,17 @@ int RE_RenderSprite(Sprite_t* sprite, bool fillBG)
 
 //	RE_FillSprite(sprite->bitmap, sprite->render.baseRect, movedSpriteRect, sprite->render.visiblePartRect);
 	startTime = GetTimestamp();
-	RE_FillSprite2(sprite, sprite->render.baseRect, sprite->render.baseToSpriteOffset);
+//	RE_FillSprite2(sprite, renderContext.baseRect, renderContext.baseToSpriteOffset);
+	RE_FillSprite3(sprite, renderContext);
 	elapsedUS = CalcTimeUS(startTime);
 	printf_uint(elapsedUS);
 	printf_c('\n');
 
 //	startTime = GetTimestamp();
-	LCD_DrawRect(sprite->render.baseRect);
+//	Rect_t lcdRect = renderContext.baseRect;
+//	lcdRect.p1.x = (renderContext.baseRect.p1.x + renderContext.LCDOffsetX) % LCD_WIDTH;
+//	lcdRect.p2.x = (renderContext.baseRect.p2.x + renderContext.LCDOffsetX) % LCD_WIDTH;
+	LCD_DrawRect(renderContext.baseRect, renderContext.LCDOffsetX);
 //	elapsedUS = CalcTimeUS(startTime);
 //	printf_uint(elapsedUS);
 //	printf_c('\t');
@@ -233,6 +252,71 @@ int RE_RenderSprite(Sprite_t* sprite, bool fillBG)
 }
 
 OPTIMIZE_FOR_DEBUG
+int RE_FillSprite3(Sprite_t* sprite, SpriteRender_t renderContext)
+{
+	if (sprite == NULL)
+	{
+		return -1;
+	}
+
+	Rect_t fbRect;
+	fbRect.p1.x = 0;
+	fbRect.p1.y = 0;
+	fbRect.p2.x = renderContext.baseRect.p2.x - renderContext.baseRect.p1.x;
+	fbRect.p2.y = renderContext.baseRect.p2.y - renderContext.baseRect.p1.y;
+
+	RE_ResetFB();
+	const uint16_t (*s2d)[sprite->size.x] = (const uint16_t (*)[sprite->size.x])sprite->bitmap;
+	uint16_t (*fb)[fbRect.p2.x] = (uint16_t (*)[fbRect.p2.x])RE_GetFB();
+
+	Rect_t spriteFBRect;
+	spriteFBRect.p1.x = 0;
+	spriteFBRect.p1.y = 0;
+	spriteFBRect.p2.x = sprite->size.x;
+	spriteFBRect.p2.y = sprite->size.y;
+
+	Rect_t commonFBRect;
+	commonFBRect.p1.x = max(spriteFBRect.p1.x, fbRect.p1.x);
+	commonFBRect.p1.y = max(spriteFBRect.p1.y, fbRect.p1.y);
+	commonFBRect.p2.x = min(spriteFBRect.p2.x, fbRect.p2.x);
+	commonFBRect.p2.y = min(spriteFBRect.p2.y, fbRect.p2.y);
+
+	// czesc wspolna istnieje
+	if (commonFBRect.p1.x <= commonFBRect.p2.x && commonFBRect.p1.y <= commonFBRect.p2.y)
+	{
+		int spriteStartOffsetX = (renderContext.baseToSpriteOffset.x < 0) ? -renderContext.baseToSpriteOffset.x : 0;
+		int spriteStartOffsetY = (renderContext.baseToSpriteOffset.y < 0) ? -renderContext.baseToSpriteOffset.y : 0;
+		int fbStartOffsetX = (renderContext.baseToSpriteOffset.x > 0) ? renderContext.baseToSpriteOffset.x : 0;
+		int fbStartOffsetY = (renderContext.baseToSpriteOffset.y > 0) ? renderContext.baseToSpriteOffset.y : 0;
+
+		if (spriteStartOffsetX >= 0 && spriteStartOffsetY >= 0 && fbStartOffsetX >= 0 && fbStartOffsetY >= 0)
+		{
+			int endY = CalcRectYLen(renderContext.commonRect);
+			int endX = CalcRectXLen(renderContext.commonRect);
+			for (int i = 0; i < endY; i++)
+			{
+				for (int j = 0; j < endX; j++)
+				{
+					int spriteIndY = i + spriteStartOffsetY;
+					int spriteIndX = j + spriteStartOffsetX;
+					int fbIndY = i + fbStartOffsetY;
+					int fbIndX = j + fbStartOffsetX;
+	//				if (spriteIndX >= 0 && spriteIndY >= 0 && fbIndX >= 0 && fbIndY >= 0)
+					{
+						if (s2d[spriteIndY][spriteIndX] != LCD_TRANSPARENT_COLOR)
+						{
+							fb[fbIndY][fbIndX] = s2d[spriteIndY][spriteIndX];
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return 0;
+}
+
+//OPTIMIZE_FOR_DEBUG
 int RE_FillSprite2(Sprite_t* sprite, Rect_t baseRect, Point_t baseToSpriteOffset)
 {
 	if (sprite == NULL)
@@ -270,21 +354,22 @@ int RE_FillSprite2(Sprite_t* sprite, Rect_t baseRect, Point_t baseToSpriteOffset
 		int fbStartOffsetX = (baseToSpriteOffset.x > 0) ? baseToSpriteOffset.x : 0;
 		int fbStartOffsetY = (baseToSpriteOffset.y > 0) ? baseToSpriteOffset.y : 0;
 
-		if (spriteStartOffsetX >= 0 && spriteStartOffsetY >= 0 && fbStartOffsetX >= 0 && fbStartOffsetY >= 0)
-
-		for (int i = commonFBRect.p1.y; i < commonFBRect.p1.y + commonFBRect.p2.y; i++)
+//		if (spriteStartOffsetX >= 0 && spriteStartOffsetY >= 0 && fbStartOffsetX >= 0 && fbStartOffsetY >= 0)
 		{
-			for (int j = commonFBRect.p1.x; j < commonFBRect.p1.x + commonFBRect.p2.x; j++)
+			for (int i = commonFBRect.p1.y; i < commonFBRect.p1.y + commonFBRect.p2.y; i++)
 			{
-				int spriteIndY = i + spriteStartOffsetY;
-				int spriteIndX = j + spriteStartOffsetX;
-				int fbIndY = i + fbStartOffsetY;
-				int fbIndX = j + fbStartOffsetX;
-//				if (spriteIndX >= 0 && spriteIndY >= 0 && fbIndX >= 0 && fbIndY >= 0)
+				for (int j = commonFBRect.p1.x + fbStartOffsetX; j < commonFBRect.p1.x + commonFBRect.p2.x; j++)
 				{
-					if (s2d[spriteIndY][spriteIndX] != LCD_TRANSPARENT_COLOR)
+					int spriteIndY = i + spriteStartOffsetY;
+					int spriteIndX = j - fbStartOffsetX + spriteStartOffsetX;
+					int fbIndY = i + fbStartOffsetY;
+	//				int fbIndX = j + fbStartOffsetX;
+	//				if (spriteIndX >= 0 && spriteIndY >= 0 && fbIndX >= 0 && fbIndY >= 0)
 					{
-						fb[fbIndY][fbIndX] = s2d[spriteIndY][spriteIndX];
+						if (s2d[spriteIndY][spriteIndX] != LCD_TRANSPARENT_COLOR)
+						{
+							fb[fbIndY][j] = s2d[spriteIndY][spriteIndX];
+						}
 					}
 				}
 			}

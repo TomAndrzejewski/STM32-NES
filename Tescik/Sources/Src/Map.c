@@ -118,7 +118,7 @@ int Map_Init(Map_t* p)
 
 	memset(p, 0, sizeof(Map_t));
 
-	p->LCDOffsetX = 319;
+	p->LCDOffsetX = 0;
 
 	p->mapSize.p1.x = 0;
 	p->mapSize.p1.y = 0;
@@ -147,18 +147,22 @@ int Map_Init(Map_t* p)
 	p->jedynkaSprite.size.x = 32;
 	p->jedynkaSprite.size.y = 32;
 
-//	p->jedynkaPixelPos.x = 160;
-	p->jedynkaPixelPos.x = 80;
-	p->jedynkaPixelPos.y = 120;
+//	p->jedynkaPosRect.p1.x = 380;
+	p->jedynkaPosRect.p1.x = 160;
+	p->jedynkaPosRect.p1.y = 120;
+	p->jedynkaPosRect.p2.x = p->jedynkaPosRect.p1.x + p->jedynkaSprite.size.x;
+	p->jedynkaPosRect.p2.y = p->jedynkaPosRect.p1.y + p->jedynkaSprite.size.y;
 
 
 	p->dwojkaSprite.bitmap = map_dwojka_32x32_dma;
 	p->dwojkaSprite.size.x = 32;
 	p->dwojkaSprite.size.y = 32;
 
-//	p->dwojkaPixelPos.x = 480;
-	p->dwojkaPixelPos.x = 240;
-	p->dwojkaPixelPos.y = 120;
+	p->dwojkaPosRect.p1.x = 400;
+//	p->dwojkaPosRect.p1.x = 240;
+	p->dwojkaPosRect.p1.y = 120;
+	p->dwojkaPosRect.p2.x = p->dwojkaPosRect.p1.x + p->dwojkaSprite.size.x;
+	p->dwojkaPosRect.p2.y = p->dwojkaPosRect.p1.y + p->dwojkaSprite.size.y;
 
 	return 0;
 }
@@ -186,7 +190,7 @@ int Map_ReactToButtons(Map_t* p, uint32_t buttons_state)
 		}
 		if (buttons_state & PAD_BUTTON_LEFT)
 		{
-			moveVector.x--;
+//			moveVector.x--;
 		}
 		if (buttons_state & PAD_BUTTON_UP)
 		{
@@ -233,15 +237,42 @@ int Map_ReactToButtons(Map_t* p, uint32_t buttons_state)
 //	- mario
 //	- NOWY TYP RENDEROWANIA (MUSISZ W DIRTYBOXA PRZECIWNIKA WPISAC FRAGMENTY NIERUCHOMYCH SPRITOW)
 
-int Map_CameraBasedRender(Map_t* p)
+int Map_FirstRender(Map_t* p)
 {
 	if (p == NULL)	{ return -1; }
 
-	p->cameraDiff.x = p->prevCameraPos.x - p->currCameraPos.x;
+	LCD_WriteVertScrollStartAddr(p->LCDOffsetX);
 
-	if (p->cameraDiff.x > 0)
+	Map_RenderFloor(p);
+
+	for (int i = 0; i < LCD_WIDTH/20; i++)
 	{
-		p->LCDOffsetX += p->cameraDiff.x;
+		Rect_t mapRect;
+		mapRect.p1.x = i * 20;
+		mapRect.p1.y = p->floorYLevel;
+		mapRect.p2.x = i * 20 + 20;
+		mapRect.p2.y = LCD_HEIGHT;
+
+		Rect_t screenRect = mapRect;
+
+		Map_RenderJedynka(p, mapRect, screenRect, p->LCDOffsetX, true, true);
+		Map_RenderDwojka(p, mapRect, screenRect, p->LCDOffsetX, true, true);
+	}
+
+	return 0;
+}
+
+int Map_ScrollRender(Map_t* p)
+{
+	if (p == NULL)	{ return -1; }
+
+	p->cameraDiff.x = p->currCameraPos.x - p->prevCameraPos.x;
+
+	if (p->cameraDiff.x != 0)
+	{
+		int prevLCDOffsetX = p->LCDOffsetX;
+
+		p->LCDOffsetX -= p->cameraDiff.x;
 		if (p->LCDOffsetX > 319)
 		{
 			p->LCDOffsetX = p->LCDOffsetX - 320;
@@ -250,9 +281,6 @@ int Map_CameraBasedRender(Map_t* p)
 		{
 			p->LCDOffsetX = 320 + p->LCDOffsetX;
 		}
-
-		LCD_WriteVertScrollStartAddr(p->LCDOffsetX);
-
 
 		Rect_t leftMapRect;
 		Rect_t rightMapRect;
@@ -264,40 +292,40 @@ int Map_CameraBasedRender(Map_t* p)
 		leftMapRect.p2.x = p->currCameraPos.x;
 		leftMapRect.p2.y = LCD_HEIGHT;
 
-		rightMapRect.p1.x = p->prevCameraPos.x + LCD_WIDTH;
+		rightMapRect.p1.x = p->prevCameraPos.x + LCD_WIDTH - 1;
 		rightMapRect.p1.y = p->floorYLevel;
-		rightMapRect.p2.x = p->currCameraPos.x + LCD_WIDTH;
+		rightMapRect.p2.x = p->currCameraPos.x + LCD_WIDTH - 1;
 		rightMapRect.p2.y = LCD_HEIGHT;
 
 		leftScreenRect.p1.x = 0;
 		leftScreenRect.p1.y = p->floorYLevel;
-		leftScreenRect.p2.x = p->cameraDiff.x;
+		leftScreenRect.p2.x = abs(p->cameraDiff.x);
 		leftScreenRect.p2.y = LCD_HEIGHT;
 
-		rightScreenRect.p1.x = LCD_WIDTH - p->cameraDiff.x;
+		rightScreenRect.p1.x = LCD_WIDTH - abs(p->cameraDiff.x) - 1;
 		rightScreenRect.p1.y = p->floorYLevel;
-		rightScreenRect.p2.x = LCD_WIDTH;
+		rightScreenRect.p2.x = LCD_WIDTH - 1;
 		rightScreenRect.p2.y = LCD_HEIGHT;
+
+		int baseRectArea, ret;
+
+		// LEFT
+		baseRectArea = CalcRectArea(leftScreenRect);
+		ret = RE_FillBackgroud(LCD_COLOR_BLUESKY, baseRectArea);
+		RE_SendRect(leftScreenRect, prevLCDOffsetX);
+
+		// SHIFT SCROLL
+		LCD_WriteVertScrollStartAddr(p->LCDOffsetX);
+
+		// RIGHT
+		baseRectArea = CalcRectArea(rightScreenRect);
+		ret = RE_FillBackgroud(LCD_COLOR_BLUESKY, baseRectArea);
+
+		Map_RenderJedynka(p, rightMapRect, rightScreenRect, p->LCDOffsetX, false, false);
+		Map_RenderDwojka(p, rightMapRect, rightScreenRect, p->LCDOffsetX, false, false);
+
+		RE_SendRect(rightScreenRect, p->LCDOffsetX);
 	}
-
-
-//	static Rect_t mapRectToDraw = {{0,32},{1,240}};
-	static Rect_t mapRectToDraw = {{80,120},{80+32,120+32}};
-	static Rect_t screenRect;
-
-//	mapRectToDraw.p1.x++;
-//	mapRectToDraw.p2.x++;
-//	if (mapRectToDraw.p1.x > 320)
-//	{
-//		mapRectToDraw.p1.x = 0;
-//	}
-//	if (mapRectToDraw.p2.x > 320)
-//	{
-//		mapRectToDraw.p2.x = 0;
-//	}
-	screenRect = mapRectToDraw;
-
-	Map_RenderJedynka2(p, mapRectToDraw, screenRect);
 
 
 	return 0;
@@ -317,104 +345,70 @@ int Map_CameraBasedRender(Map_t* p)
 //
 //}
 
-int Map_RenderJedynka2(Map_t* p, Rect_t mapRectToDraw, Rect_t screenRect)
+int Map_RenderJedynka(Map_t* p, Rect_t mapRectToDraw, Rect_t screenRect, int LCDOffsetX, bool render, bool fillBG)
 {
 	if (p == NULL)	{ return -1; }
 	Sprite_t* s = &p->jedynkaSprite;
 
-	Rect_t jedynkaPos;
-	jedynkaPos.p1.x = p->jedynkaPixelPos.x;
-	jedynkaPos.p1.y = p->jedynkaPixelPos.y;
-	jedynkaPos.p2.x = p->jedynkaPixelPos.x + s->size.x;
-	jedynkaPos.p2.y = p->jedynkaPixelPos.y + s->size.y;
-
 	Rect_t commonRect;
-	commonRect.p1.x = max(mapRectToDraw.p1.x, jedynkaPos.p1.x);
-	commonRect.p1.y = max(mapRectToDraw.p1.y, jedynkaPos.p1.y);
-	commonRect.p2.x = min(mapRectToDraw.p2.x, jedynkaPos.p2.x);
-	commonRect.p2.y = min(mapRectToDraw.p2.y, jedynkaPos.p2.y);
-
-	if (mapRectToDraw.p1.x == 90){
-		delay(1);
-	}
+	commonRect.p1.x = max(mapRectToDraw.p1.x, p->jedynkaPosRect.p1.x);
+	commonRect.p1.y = max(mapRectToDraw.p1.y, p->jedynkaPosRect.p1.y);
+	commonRect.p2.x = min(mapRectToDraw.p2.x, p->jedynkaPosRect.p2.x);
+	commonRect.p2.y = min(mapRectToDraw.p2.y, p->jedynkaPosRect.p2.y);
 
 	// czesc wspolna istnieje
 	if (commonRect.p1.x <= commonRect.p2.x && commonRect.p1.y <= commonRect.p2.y)
 	{
-		Rect_t baseRect = screenRect;
-//		baseRect.p1.x = p->jedynkaPixelPos.x;
-//		baseRect.p1.y = p->jedynkaPixelPos.y;
-//		baseRect.p2.x = p->jedynkaPixelPos.x + s->size.x;
-//		baseRect.p2.y = p->jedynkaPixelPos.y + s->size.y;
+		SpriteRender_t renderContext;
+		renderContext.commonRect = commonRect;
+		renderContext.baseRect = screenRect;
+		renderContext.baseToSpriteOffset.x = p->jedynkaPosRect.p1.x - mapRectToDraw.p1.x;
+		renderContext.baseToSpriteOffset.y = p->jedynkaPosRect.p1.y - mapRectToDraw.p1.y;
+		renderContext.LCDOffsetX = LCDOffsetX;
 
-		Point_t baseToSpriteOffset;
-		baseToSpriteOffset.x = jedynkaPos.p1.x - mapRectToDraw.p1.x;
-		baseToSpriteOffset.y = jedynkaPos.p1.y - mapRectToDraw.p1.y;
-
-		s->render.baseRect = baseRect;
-		s->render.baseToSpriteOffset = baseToSpriteOffset;
-
-		RE_RenderSprite(s, true);
+		if (render)
+		{
+			RE_RenderSprite(s, renderContext, fillBG);
+		}
+		else
+		{
+			RE_FillSprite3(s, renderContext);
+		}
 	}
 
 	return 0;
 }
 
-int Map_RenderJedynka(Map_t* p)
-{
-	if (p == NULL)	{ return -1; }
-	Sprite_t* s = &p->jedynkaSprite;
-
-	static int minus = 0;
-	minus++;
-	if (minus >= 32)
-	{
-		minus = 0;
-	}
-
-	Rect_t baseRect;
-	baseRect.p1.x = p->jedynkaPixelPos.x;
-	baseRect.p1.y = p->jedynkaPixelPos.y + minus;
-	baseRect.p2.x = p->jedynkaPixelPos.x + s->size.x;
-	baseRect.p2.y = p->jedynkaPixelPos.y + s->size.y;
-
-	Point_t baseToSpriteOffset;
-	baseToSpriteOffset.x = 0;
-	baseToSpriteOffset.y = -minus;
-
-	s->render.baseRect = baseRect;
-	s->render.baseToSpriteOffset = baseToSpriteOffset;
-
-	RE_RenderSprite(s, true);
-
-	return 0;
-}
-
-int Map_RenderDwojka(Map_t* p)
+int Map_RenderDwojka(Map_t* p, Rect_t mapRectToDraw, Rect_t screenRect, int LCDOffsetX, bool render, bool fillBG)
 {
 	if (p == NULL)	{ return -1; }
 	Sprite_t* s = &p->dwojkaSprite;
 
-	s->render.visiblePartRect.p1.x = 0;
-	s->render.visiblePartRect.p1.y = 0;
-	s->render.visiblePartRect.p2.x = s->size.x;
-	s->render.visiblePartRect.p2.y = s->size.y;
+	Rect_t commonRect;
+	commonRect.p1.x = max(mapRectToDraw.p1.x, p->dwojkaPosRect.p1.x);
+	commonRect.p1.y = max(mapRectToDraw.p1.y, p->dwojkaPosRect.p1.y);
+	commonRect.p2.x = min(mapRectToDraw.p2.x, p->dwojkaPosRect.p2.x);
+	commonRect.p2.y = min(mapRectToDraw.p2.y, p->dwojkaPosRect.p2.y);
 
-	Rect_t baseRect;
-	baseRect.p1.x = p->dwojkaPixelPos.x;
-	baseRect.p1.y = p->dwojkaPixelPos.y;
-	baseRect.p2.x = p->dwojkaPixelPos.x + p->dwojkaSprite.size.x;
-	baseRect.p2.y = p->dwojkaPixelPos.y + p->dwojkaSprite.size.y;
+	// czesc wspolna istnieje
+	if (commonRect.p1.x <= commonRect.p2.x && commonRect.p1.y <= commonRect.p2.y)
+	{
+		SpriteRender_t renderContext;
+		renderContext.commonRect = commonRect;
+		renderContext.baseRect = screenRect;
+		renderContext.baseToSpriteOffset.x = p->dwojkaPosRect.p1.x - mapRectToDraw.p1.x;
+		renderContext.baseToSpriteOffset.y = p->dwojkaPosRect.p1.y - mapRectToDraw.p1.y;
+		renderContext.LCDOffsetX = LCDOffsetX;
 
-	Point_t baseToSpriteOffset;
-	memset(&baseToSpriteOffset, 0, sizeof(baseToSpriteOffset));
-
-	p->dwojkaSprite.render.baseRect = baseRect;
-	p->dwojkaSprite.render.baseToSpriteOffset = baseToSpriteOffset;
-
-	LCD_DrawRect(p->dwojkaSprite.render.baseRect);
-
-	RE_RenderSprite(&p->dwojkaSprite, true);
+		if (render)
+		{
+			RE_RenderSprite(s, renderContext, fillBG);
+		}
+		else
+		{
+			RE_FillSprite3(s, renderContext);
+		}
+	}
 
 	return 0;
 }
@@ -424,31 +418,24 @@ int Map_RenderFloor(Map_t* p)
 	if (p == NULL)	{ return -1; }
 	Sprite_t* s = &p->floorSprite.sprite;
 
-	s->render.visiblePartRect.p1.x = 0;
-	s->render.visiblePartRect.p1.y = 0;
-	s->render.visiblePartRect.p2.x = s->size.x;
-	s->render.visiblePartRect.p2.y = s->size.y;
-
-	Rect_t baseRect;
-	Point_t baseToSpriteOffset;
+	SpriteRender_t renderContext;
 
 	for (int i = 0; i < p->floorSprite.mulVector.y; i++)
 	{
 		for (int j = 0; j < p->floorSprite.mulVector.x; j++)
 		{
-			baseRect.p1.x = j * p->floorSprite.sprite.size.x;
-			baseRect.p1.y = i * p->floorSprite.sprite.size.y;
-			baseRect.p2.x = baseRect.p1.x + p->floorSprite.sprite.size.x;
-			baseRect.p2.y = baseRect.p1.y + p->floorSprite.sprite.size.y;
+			renderContext.baseRect.p1.x = j * p->floorSprite.sprite.size.x;
+			renderContext.baseRect.p1.y = i * p->floorSprite.sprite.size.y;
+			renderContext.baseRect.p2.x = renderContext.baseRect.p1.x + p->floorSprite.sprite.size.x;
+			renderContext.baseRect.p2.y = renderContext.baseRect.p1.y + p->floorSprite.sprite.size.y;
 
-			memset(&baseToSpriteOffset, 0, sizeof(baseToSpriteOffset));
+			renderContext.commonRect = renderContext.baseRect;
 
-			p->floorSprite.sprite.render.baseRect = baseRect;
-			p->floorSprite.sprite.render.baseToSpriteOffset = baseToSpriteOffset;
+			renderContext.baseToSpriteOffset.x = 0;
+			renderContext.baseToSpriteOffset.y = 0;
+			renderContext.LCDOffsetX = 0;
 
-			LCD_DrawRect(baseRect);
-
-			RE_RenderSprite(&p->floorSprite.sprite, false);
+			RE_RenderSprite(s, renderContext, false);
 		}
 	}
 

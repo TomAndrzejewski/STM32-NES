@@ -46,8 +46,8 @@
 typedef enum
 {
 	LCD_WHITE,
-	LCD_BLUE,
 	LCD_RED,
+	LCD_BLUE,
 	LCD_GREEN,
 
 	LCD_NUMOF_COLORS,
@@ -55,7 +55,12 @@ typedef enum
 
 extern const uint16_t LCD_Colors[LCD_NUMOF_COLORS];
 
-#define LCD_COLOR_BLUE	(0x00F8)
+#define LCD_COLOR_WHITE		(0xFFFE)
+#define LCD_COLOR_BLACK		(0x0001)
+#define LCD_COLOR_RED		(0x00F8)
+#define LCD_COLOR_BLUE		(0xF800)
+#define LCD_COLOR_GREEN		(0xE007)
+#define LCD_COLOR_BLUESKY	(0x7F3C)
 
 
 void LCD_init();
@@ -74,7 +79,7 @@ void LCD_ReadDisplayMADCTL();
 void LCD_WriteDisplayMADCTL();
 void LCD_WriteVertScrollDef();
 void LCD_WriteVertScrollStartAddr(uint16_t startAddr);
-void LCD_DrawRect(Rect_t baseRect);
+void LCD_DrawRect(Rect_t baseRect, int LCDOffsetX);
 void LCD_PrepFillBackgroud();
 
 void DMA2_SPI1_Send_NoBlock(uint8_t* buffer, uint16_t length);

@@ -266,49 +266,31 @@ int main(void)
 	Map_Init(pMap);
 
 	uint32_t startTime = 0, elapsedUS = 0;
-	Rect_t mapRectToDraw;
-	Rect_t screenRect;
 
-	startTime = GetTimestamp();
-	Map_RenderFloor(pMap);
-	elapsedUS = CalcTimeUS(startTime);
-//		printf_v("Map_RenderFloor took: %d us\n", elapsedUS);
-
-	startTime = GetTimestamp();
-//	Map_RenderJedynka(pMap);
-	elapsedUS = CalcTimeUS(startTime);
-	printf_v("Map_RenderJedynka took: %d us\n", elapsedUS);
-
-	Map_RenderDwojka(pMap);
+	Map_FirstRender(pMap);
 
 	while(1)
 	{
+		startTime = GetTimestamp();
+
 		uint32_t buttons_state = 0;
 		buttons_state = GetButtonsState();
 		PrintButtons(buttons_state);
-
 
 		Mario_ReactToButton(pMario, buttons_state);
 
 		Map_ReactToButtons(pMap, buttons_state);
 
-		Map_CameraBasedRender(pMap);
+		Map_ScrollRender(pMap);
 
-//		LCD_PrepFillBackgroud();
-//		RE_RenderFullBackgroud(LCD_Colors[LCD_GREEN]);
+//		Mario_Render(pMario);
 
-//		startTime = GetTimestamp();
-//		Map_RenderJedynka(pMap);
-//		elapsedUS = CalcTimeUS(startTime);
-//		printf_c('\n');
-//		printf_v("Map_RenderJedynka took: %d us\n", elapsedUS);
-
-		startTime = GetTimestamp();
-		Mario_Render(pMario);
 		elapsedUS = CalcTimeUS(startTime);
-//		printf_v("Mario_Render took: %d us\n", elapsedUS);
-
-		delay(16);
+		int sleepTimeUS = 16000 - (int)elapsedUS;
+		if (sleepTimeUS > 0)
+		{
+			delayUS(sleepTimeUS);
+		}
 	}
 
     /* Loop forever */
