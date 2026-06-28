@@ -126,7 +126,7 @@ int SPI1_SendRead_U8(uint8_t data, uint8_t* output)
 // nie dziala, bo trzeba by przelaczac spi na gpio output i recznie machnac raz zegarem XD
 int SPI1_SendRead_U24(uint8_t data, uint8_t* output2, uint8_t* output1, uint8_t* output0)
 {
-	if (output2 == NULL || output1 == NULL || output0 == NULL)	{ return -1; }
+	if ((output2 == NULL) || (output1 == NULL) || (output0 == NULL))	{ return -1; }
 
 	// Czyszczenie SPI na start
 	volatile uint32_t dummy_read;
@@ -268,7 +268,7 @@ void LCD_WriteVertScrollStartAddr(uint16_t startAddr)
 void LCD_WriteDisplayMADCTL()
 {
 //	uint8_t madctl = 0b11100000;//tu ladnie renderowal sie mario
-	uint8_t madctl = 0b11100000;
+	uint8_t madctl = (uint8_t)0b11100000;
 	printf_v("LCD LCD_WriteDisplayMADCTL Start\n");
 	SPI1_SendCmd_U8(LCD_MADCTL);
 	SPI1_SendData_U8(madctl);
@@ -446,6 +446,10 @@ void LCD_DrawRect(Rect_t baseRect, int LCDOffsetX)
 	if (lcdRect.p1.x < 0 ||  lcdRect.p2.x < 0)
 	{
 		delay(1);
+	}
+	if (lcdRect.p1.x == lcdRect.p2.x + 1)
+	{
+		lcdRect.p2.x++;
 	}
 
 	uint16_t x = lcdRect.p1.x;

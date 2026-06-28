@@ -264,6 +264,7 @@ int main(void)
 
 	Mario_Init(pMario);
 	Map_Init(pMap);
+	Goomba_Init(pGoomba);
 
 	uint32_t startTime = 0, elapsedUS = 0;
 	uint32_t startTime2 = 0;
@@ -289,6 +290,9 @@ int main(void)
 		{
 			printf_uint(elapsedUS); printf_c('\n');
 		}
+
+
+		Map_RenderObjects(pMap);
 
 
 //		Mario_Render(pMario);

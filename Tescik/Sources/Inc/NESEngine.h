@@ -10,6 +10,7 @@
 
 #include "Mario.h"
 #include "Map.h"
+#include "Goomba.h"
 
 
 #ifdef DEFINE_NES_ENGINE
@@ -27,6 +28,9 @@
 
 GLOBAL_NES_ENGINE Mario_t 	gMario;
 GLOBAL_NES_ENGINE Mario_t*	pMario INIT_NES_ENGINE(&gMario);
+
+GLOBAL_NES_ENGINE Goomba_t 	gGoomba;
+GLOBAL_NES_ENGINE Goomba_t*	pGoomba INIT_NES_ENGINE(&gGoomba);
 
 GLOBAL_NES_ENGINE Map_t 	gMap;
 GLOBAL_NES_ENGINE Map_t*	pMap INIT_NES_ENGINE(&gMap);
