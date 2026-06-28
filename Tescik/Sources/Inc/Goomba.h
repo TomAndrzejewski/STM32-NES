@@ -20,7 +20,7 @@ typedef struct
 }Goomba_t;
 
 
-int 		Goomba_Init(Goomba_t* p);
+int 		Goomba_Init(Goomba_t* p, Point_t initMapPos);
 
 Sprite_t* 	Goomba_GetSprite(Goomba_t* p);
 

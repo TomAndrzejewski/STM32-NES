@@ -29,7 +29,7 @@ const uint16_t goomba_16x16_dma[256] = {
 		0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff
 	};
 
-int Goomba_Init(Goomba_t* p)
+int Goomba_Init(Goomba_t* p, Point_t initMapPos)
 {
 	if (p == NULL)	{ return -1; }
 
@@ -37,8 +37,8 @@ int Goomba_Init(Goomba_t* p)
 	p->sprite.size.x = 16;
 	p->sprite.size.y = 16;
 
-	p->currMapPos.x = 100;
-	p->currMapPos.y = 32;
+	p->currMapPos.x = initMapPos.x;
+	p->currMapPos.y = initMapPos.y;
 	p->prevMapPos = p->currMapPos;
 
 	return 0;

@@ -58,7 +58,7 @@ int Mario_Init(Mario_t* p)
 //	p->prevPixelPos = p->currPixelPos;
 
 	p->currMapPos.x = 0;
-	p->currMapPos.y = 32;
+	p->currMapPos.y = 40;
 	p->prevMapPos = p->currMapPos;
 
 	p->nextMove = MARIO_STANDSTILL;

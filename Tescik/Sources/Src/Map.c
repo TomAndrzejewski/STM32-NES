@@ -421,13 +421,41 @@ int Map_ScrollRender(Map_t* p)
 	return 0;
 }
 
+//__attribute__((optimize("-O3"), noinline))
+//void super_fast_memset(void *dest, uint32_t value, size_t bytes) {
+//    uint32_t *p = (uint32_t *)dest;
+//    size_t words = bytes >> 2;
+//
+//    while (words--) {
+//        *p++ = value;
+//        asm volatile("" : : : "memory"); // Szlaban dla optymalizatora kompilatora
+//    }
+//
+//    size_t tail = bytes & 3;
+//    if (tail) {
+//        uint8_t *p_tail = (uint8_t *)p;
+//        while (tail--) {
+//            *p_tail++ = (uint8_t)value;
+//        }
+//    }
+//}
+
 int Map_RenderObjects(Map_t* p)
 {
 	if (p == NULL)	{ return -1; }
 	int ret = 0;
 	int dirtyRectIndex = 0;
 
+	uint32_t startTime = 0, elapsedUS = 0;
+	startTime = GetTimestamp();
 	memset(&p->dirtyRects, 0, sizeof(p->dirtyRects));
+//	super_fast_memset(&p->dirtyRects, 0, sizeof(p->dirtyRects));
+	elapsedUS = CalcTimeUS(startTime);
+//	if (elapsedUS > 0)
+	{
+		printf_uint(elapsedUS); printf_c('\t');
+	}
+
 
 	Rect_t cameraRect;
 	cameraRect.p1.x = p->currCameraPos.x;
@@ -435,14 +463,28 @@ int Map_RenderObjects(Map_t* p)
 	cameraRect.p2.x = cameraRect.p1.x + LCD_WIDTH;
 	cameraRect.p2.y = cameraRect.p1.y + LCD_HEIGHT;
 
-
-	Rect_t goombaDirtyMapRect;
-	ret = Map_GetGoombaDirtyRect(cameraRect, &goombaDirtyMapRect);
-	if (!ret)
+	for (int i = 0; i < NUM_OF_GOOMBAS; i++)
 	{
-		p->dirtyRects[dirtyRectIndex].dirtyRect = goombaDirtyMapRect;
-		p->dirtyRects[dirtyRectIndex].objID[p->dirtyRects[dirtyRectIndex].objIDIndex++] = GOOMBA_OBJ_ID;
-		dirtyRectIndex++;
+		Goomba_t* goomba = NULL;
+		int ret = Enemies_GetGoomba(pEnemies, i, &goomba);
+		if (ret < 0)	{ continue; }
+
+		Rect_t dirtyRect;
+		if (Goomba_GetDirtyRect(goomba, &dirtyRect) < 0)	{ continue; }
+
+		Rect_t commonRect;
+		commonRect.p1.x = max(cameraRect.p1.x, dirtyRect.p1.x);
+		commonRect.p1.y = max(cameraRect.p1.y, dirtyRect.p1.y);
+		commonRect.p2.x = min(cameraRect.p2.x, dirtyRect.p2.x);
+		commonRect.p2.y = min(cameraRect.p2.y, dirtyRect.p2.y);
+
+		// czesc wspolna istnieje
+		if (commonRect.p1.x <= commonRect.p2.x && commonRect.p1.y <= commonRect.p2.y)
+		{
+			p->dirtyRects[dirtyRectIndex].dirtyRect = commonRect;
+			p->dirtyRects[dirtyRectIndex].objID[p->dirtyRects[dirtyRectIndex].objIDIndex++] = (ObjectID_t){ .objID = GOOMBA_OBJ_ID, .objIndex = i};
+			dirtyRectIndex++;
+		}
 	}
 
 	Rect_t marioDirtyMapRect;
@@ -450,10 +492,9 @@ int Map_RenderObjects(Map_t* p)
 	if (!ret)
 	{
 		p->dirtyRects[dirtyRectIndex].dirtyRect = marioDirtyMapRect;
-		p->dirtyRects[dirtyRectIndex].objID[p->dirtyRects[dirtyRectIndex].objIDIndex++] = MARIO_OBJ_ID;
+		p->dirtyRects[dirtyRectIndex].objID[p->dirtyRects[dirtyRectIndex].objIDIndex++] = (ObjectID_t){ .objID = MARIO_OBJ_ID, .objIndex = 0};
 		dirtyRectIndex++;
 	}
-
 
 	for (int i = 0; i < dirtyRectIndex; i++)
 	{
@@ -497,7 +538,6 @@ int Map_RenderObjects(Map_t* p)
 		}
 	}
 
-
 	for (int i = 0; i < dirtyRectIndex; i++)
 	{
 		if (p->dirtyRects[i].used)	{ continue; }
@@ -513,24 +553,37 @@ int Map_RenderObjects(Map_t* p)
 		int baseRectArea = CalcRectArea(dirtyRect->dirtyRect);
 		RE_FillBackgroud(LCD_COLOR_BLUESKY, baseRectArea);
 
-		for (int j = 0; j < dirtyRect->objIDIndex; j++)
+		for (int j = 0; j < NUM_OF_OBJ_IDS; j++)
 		{
-			int objID = dirtyRect->objID[j];
+			int currentPrioObject = ObjPriorities[j];
 
-			switch (objID)
+			for (int k = 0; k < dirtyRect->objIDIndex; k++)
 			{
-			case MARIO_OBJ_ID:
-			{
-				Map_RenderMario(p->currCameraPos, dirtyRect->dirtyRect, screenRect, p->LCDOffsetX);
-				break;
-			}
-			case GOOMBA_OBJ_ID:
-			{
-				Map_RenderGoomba(p->currCameraPos, dirtyRect->dirtyRect, screenRect, p->LCDOffsetX);
-				break;
-			}
-			default:
-				break;
+				int objID = dirtyRect->objID[k].objID;
+				if (objID != currentPrioObject)
+				{
+					continue;
+				}
+
+				switch (objID)
+				{
+				case MARIO_OBJ_ID:
+				{
+					Map_RenderMario(p->currCameraPos, dirtyRect->dirtyRect, screenRect, p->LCDOffsetX);
+					break;
+				}
+				case GOOMBA_OBJ_ID:
+				{
+					Goomba_t* goomba = NULL;
+					int ret = Enemies_GetGoomba(pEnemies, dirtyRect->objID[k].objIndex, &goomba);
+					if (ret < 0)	{ break; }
+
+					Map_RenderGoomba(goomba, p->currCameraPos, dirtyRect->dirtyRect, screenRect, p->LCDOffsetX);
+					break;
+				}
+				default:
+					break;
+				}
 			}
 		}
 
@@ -601,37 +654,39 @@ int Map_RenderMario(Point_t cameraPos, Rect_t dirtyMapRect, Rect_t screenRect, i
 	return 0;
 }
 
-int Map_GetGoombaDirtyRect(Rect_t cameraRect, Rect_t* dirtyMapRect)
+//int Map_GetGoombaDirtyRect(Rect_t cameraRect, Rect_t* dirtyMapRect)
+//{
+//	if (dirtyMapRect == NULL)	{ return -1; }
+//
+//	Rect_t dirtyRect;
+//	if (Goomba_GetDirtyRect(pGoomba, &dirtyRect) < 0)	{ return -5; }
+//
+//	Rect_t commonRect;
+//	commonRect.p1.x = max(cameraRect.p1.x, dirtyRect.p1.x);
+//	commonRect.p1.y = max(cameraRect.p1.y, dirtyRect.p1.y);
+//	commonRect.p2.x = min(cameraRect.p2.x, dirtyRect.p2.x);
+//	commonRect.p2.y = min(cameraRect.p2.y, dirtyRect.p2.y);
+//
+//	// czesc wspolna istnieje
+//	if (commonRect.p1.x <= commonRect.p2.x && commonRect.p1.y <= commonRect.p2.y)
+//	{
+//		*dirtyMapRect = commonRect;
+//		return 0;
+//	}
+//	else
+//	{
+//		return -10;
+//	}
+//}
+
+int Map_RenderGoomba(Goomba_t* goomba, Point_t cameraPos, Rect_t dirtyMapRect, Rect_t screenRect, int LCDOffsetX)
 {
-	if (dirtyMapRect == NULL)	{ return -1; }
+	if (goomba == NULL)	{ return -1; }
 
-	Rect_t dirtyRect;
-	if (Goomba_GetDirtyRect(pGoomba, &dirtyRect) < 0)	{ return -5; }
-
-	Rect_t commonRect;
-	commonRect.p1.x = max(cameraRect.p1.x, dirtyRect.p1.x);
-	commonRect.p1.y = max(cameraRect.p1.y, dirtyRect.p1.y);
-	commonRect.p2.x = min(cameraRect.p2.x, dirtyRect.p2.x);
-	commonRect.p2.y = min(cameraRect.p2.y, dirtyRect.p2.y);
-
-	// czesc wspolna istnieje
-	if (commonRect.p1.x <= commonRect.p2.x && commonRect.p1.y <= commonRect.p2.y)
-	{
-		*dirtyMapRect = commonRect;
-		return 0;
-	}
-	else
-	{
-		return -10;
-	}
-}
-
-int Map_RenderGoomba(Point_t cameraPos, Rect_t dirtyMapRect, Rect_t screenRect, int LCDOffsetX)
-{
 	Point_t mapPos;
-	if (Goomba_GetMapPos(pGoomba, &mapPos) < 0)	{ return -10; }
+	if (Goomba_GetMapPos(goomba, &mapPos) < 0)	{ return -10; }
 
-	Sprite_t* sprite = Goomba_GetSprite(pGoomba);
+	Sprite_t* sprite = Goomba_GetSprite(goomba);
 	if (sprite == NULL)	{ return -15; }
 
 	Rect_t posRect;

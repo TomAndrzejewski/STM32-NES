@@ -10,6 +10,7 @@
 
 #include "NES_Defs.h"
 #include "NES_Types.h"
+#include "Enemies.h"
 
 
 #define MAP_MAX_X					(1280)
@@ -65,12 +66,27 @@ typedef struct
 #define MARIO_OBJ_ID			(1)
 #define GOOMBA_OBJ_ID			(2)
 
+#define NUM_OF_OBJ_IDS			(2)
+
+// look at line numbers, lower line number -> higher priority
+static const int ObjPriorities[NUM_OF_OBJ_IDS] = {
+		GOOMBA_OBJ_ID,
+		MARIO_OBJ_ID,
+};
+
 typedef struct
 {
-	Rect_t 	dirtyRect;
-	int		objIDIndex;
-	int		objID[DIRTY_RECTS_OBJ_ID_SIZE];
-	bool	used;
+	int objID;
+	int objIndex;
+
+}ObjectID_t;
+
+typedef struct
+{
+	Rect_t 		dirtyRect;
+	int			objIDIndex;
+	ObjectID_t	objID[DIRTY_RECTS_OBJ_ID_SIZE];
+	int			used;
 
 }DirtyRect_t;
 
@@ -91,7 +107,7 @@ typedef struct
 	Sprite_t 	dwojkaSprite;
 	Sprite_t 	chmurkaSprite;
 
-	DirtyRect_t	dirtyRects[DIRTY_RECTS_SIZE];
+	DirtyRect_t	dirtyRects[DIRTY_RECTS_SIZE] __attribute__((aligned(4)));
 
 }Map_t;
 
@@ -109,7 +125,7 @@ int 	Map_RenderBgdSprite(Sprite_t* p, SpritePos_t spritePos, Rect_t mapRectToDra
 int		Map_RenderMario(Point_t cameraPos, Rect_t dirtyMapRect, Rect_t screenRect, int LCDOffsetX);
 int 	Map_GetMarioDirtyRect(Rect_t cameraRect, Rect_t* dirtyMapRect);
 
-int 	Map_RenderGoomba(Point_t cameraPos, Rect_t dirtyMapRect, Rect_t screenRect, int LCDOffsetX);
-int 	Map_GetGoombaDirtyRect(Rect_t cameraRect, Rect_t* dirtyMapRect);
+int 	Map_RenderGoomba(Goomba_t* goomba, Point_t cameraPos, Rect_t dirtyMapRect, Rect_t screenRect, int LCDOffsetX);
+//int 	Map_GetGoombaDirtyRect(Rect_t cameraRect, Rect_t* dirtyMapRect);
 
 #endif /* SOURCES_INC_MAP_H_ */

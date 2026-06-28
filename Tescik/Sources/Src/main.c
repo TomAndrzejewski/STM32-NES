@@ -264,7 +264,7 @@ int main(void)
 
 	Mario_Init(pMario);
 	Map_Init(pMap);
-	Goomba_Init(pGoomba);
+	Enemies_Init(pEnemies);
 
 	uint32_t startTime = 0, elapsedUS = 0;
 	uint32_t startTime2 = 0;
@@ -288,12 +288,16 @@ int main(void)
 		elapsedUS = CalcTimeUS(startTime2);
 		if (elapsedUS > 0)
 		{
-			printf_uint(elapsedUS); printf_c('\n');
+//			printf_uint(elapsedUS); printf_c('\t');
 		}
 
-
+		startTime2 = GetTimestamp();
 		Map_RenderObjects(pMap);
-
+		elapsedUS = CalcTimeUS(startTime2);
+		if (elapsedUS > 0)
+		{
+			printf_uint(elapsedUS); printf_c('\n');
+		}
 
 //		Mario_Render(pMario);
 
