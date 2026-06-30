@@ -42,6 +42,47 @@ uint32_t CalcTimeUS(uint32_t startTime)
 	return (elapsed_cycles / cycles_per_us);
 }
 
+uint32_t CalcTimeMS(uint32_t startTime)
+{
+	uint32_t current_cycles = DWT->CYCCNT;
+	uint32_t elapsed_cycles = current_cycles - startTime;
+
+	uint32_t cycles_per_us = (SYSCLOCK_MHZ / 1000UL);
+
+	return (elapsed_cycles / cycles_per_us);
+}
+
+__attribute__((optimize("-O3"), noinline))
+void fast_memset(void *dest, uint32_t value, size_t bytes)
+{
+    uint8_t *p_byte = (uint8_t *)dest;
+
+    // 1. Zapisuj bajt po bajcie, dopóki adres nie stanie się podzielny przez 4
+    //    oraz dopóki mamy jeszcze bajty do zapisania.
+    while (((uintptr_t)p_byte & 3) && bytes > 0) {
+        *p_byte++ = (uint8_t)value; // Można też zrekonstruować bajt z odpowiedniej pozycji 'value'
+        bytes--;
+    }
+
+    // 2. Teraz mamy pewność, że p_byte jest wyrównany do 4 bajtów!
+    //    Możemy bezpiecznie przejść na operacje 32-bitowe.
+    uint32_t *p_word = (uint32_t *)p_byte;
+    size_t words = bytes >> 2;
+
+    while (words--) {
+        *p_word++ = value;
+    }
+
+    // 3. Obsługa końcówki (ogona) – to co zostało (0 do 3 bajtów)
+    size_t tail = bytes & 3;
+    if (tail) {
+        p_byte = (uint8_t *)p_word;
+        while (tail--) {
+            *p_byte++ = (uint8_t)value;
+        }
+    }
+}
+
 int CalcRectArea(Rect_t rect)
 {
 	int a = abs(rect.p1.x - rect.p2.x);

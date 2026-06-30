@@ -49,7 +49,7 @@ int 		Mario_ReactToButton(Mario_t* p, uint32_t buttons_state);
 //int 		Mario_SetPixelPos(Mario_t* p, Point_t pos);
 //int			Mario_MovePixelPos(Mario_t* p, Point_t moveVector);
 int 		Mario_SetMapPos(Mario_t* p, Point_t pos);
-int			Mario_MoveMapPos(Mario_t* p, Point_t moveVector);
+int			Mario_MoveMapPos(Mario_t* p, Point_t moveVector, Point_t cameraPos);
 
 
 

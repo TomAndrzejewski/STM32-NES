@@ -45,7 +45,7 @@ int RE_SendFB(int pixelsToSend)
 		return -1;
 	}
 
-	DMA2_SPI1_Send_NoBlock(_FB, pixelsToSend*2);
+	DMA2_SPI1_Send_NoBlock(_FB, pixelsToSend*BYTES_PER_PIXEL);
 
 	if (_CurrFB == FB_0)
 	{

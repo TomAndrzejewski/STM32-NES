@@ -43,6 +43,11 @@ void FPU_init()
 	SCB->CPACR |= (0xF << 20);
 }
 
+void IRQ_DMA2_SPI1_TX_Init(void)
+{
+	NVIC_EnableIRQ(DMA2_Stream3_IRQn);
+}
+
 void DMA2_SPI1_TX_Init(void)
 {
     // 1. Włączenie zegara dla DMA2
@@ -81,6 +86,9 @@ void DMA2_SPI1_TX_Init(void)
 
     // 5. Włączenie żądania DMA ze strony SPI1 (SPI TX DMA Enable)
     SPI1->CR2 |= SPI_CR2_TXDMAEN;
+
+    // 6. Włącz przerwanie od zakończenia transferu
+    DMA2_Stream3->CR |= DMA_SxCR_TCIE;
 }
 
 void GPIO_init()
@@ -253,6 +261,7 @@ int main(void)
 	FPU_init();
 	Delay_init();
 	GPIO_init();
+	IRQ_DMA2_SPI1_TX_Init();
 	DMA2_SPI1_TX_Init();
 	printf_init();
 

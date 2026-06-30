@@ -83,7 +83,7 @@ typedef struct
 
 typedef struct
 {
-	Rect_t 		dirtyRect;
+	Rect_t 		rect;
 	int			objIDIndex;
 	ObjectID_t	objID[DIRTY_RECTS_OBJ_ID_SIZE];
 	int			used;
@@ -113,6 +113,7 @@ typedef struct
 
 int 	Map_Init(Map_t* p);
 int 	Map_ReactToButtons(Map_t* p, uint32_t buttons_state);
+Point_t	Map_GetCameraPos(Map_t* p);
 
 int 	Map_FirstRender(Map_t* p);
 int		Map_ScrollRender(Map_t* p);
@@ -126,6 +127,6 @@ int		Map_RenderMario(Point_t cameraPos, Rect_t dirtyMapRect, Rect_t screenRect, 
 int 	Map_GetMarioDirtyRect(Rect_t cameraRect, Rect_t* dirtyMapRect);
 
 int 	Map_RenderGoomba(Goomba_t* goomba, Point_t cameraPos, Rect_t dirtyMapRect, Rect_t screenRect, int LCDOffsetX);
-//int 	Map_GetGoombaDirtyRect(Rect_t cameraRect, Rect_t* dirtyMapRect);
+
 
 #endif /* SOURCES_INC_MAP_H_ */

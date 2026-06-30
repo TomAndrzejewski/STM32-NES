@@ -22,6 +22,8 @@
 #include "printf_logger.h"
 
 
+#define DMA_SPI_TIMEOUT_MS	(10)
+
 #define LCD_SLPOUT		(0x11)
 #define LCD_COLMOD		(0x3A)
 #define LCD_DISPON		(0x29)

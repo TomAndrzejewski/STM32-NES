@@ -200,6 +200,14 @@ int Map_Init(Map_t* p)
 	return 0;
 }
 
+Point_t	Map_GetCameraPos(Map_t* p)
+{
+	Point_t cameraPos = {};
+	if (p == NULL)	{ return cameraPos; }
+	cameraPos = p->currCameraPos;
+	return cameraPos;
+}
+
 int Map_ReactToButtons(Map_t* p, uint32_t buttons_state)
 {
 	if (p == NULL)	{ return -1; }
@@ -346,15 +354,15 @@ int Map_ScrollRender(Map_t* p)
 			p->LCDOffsetX = 320 + p->LCDOffsetX;
 		}
 
-		Rect_t leftMapRect;
+//		Rect_t leftMapRect;
 		Rect_t rightMapRect;
 		Rect_t leftScreenRect;
 		Rect_t rightScreenRect;
 
-		leftMapRect.p1.x = p->prevCameraPos.x;
-		leftMapRect.p1.y = p->floorYLevel;
-		leftMapRect.p2.x = p->currCameraPos.x;
-		leftMapRect.p2.y = LCD_HEIGHT;
+//		leftMapRect.p1.x = p->prevCameraPos.x;
+//		leftMapRect.p1.y = p->floorYLevel;
+//		leftMapRect.p2.x = p->currCameraPos.x;
+//		leftMapRect.p2.y = LCD_HEIGHT;
 
 		rightMapRect.p1.x = p->prevCameraPos.x + LCD_WIDTH - 1;
 		rightMapRect.p1.y = p->floorYLevel;
@@ -421,25 +429,6 @@ int Map_ScrollRender(Map_t* p)
 	return 0;
 }
 
-//__attribute__((optimize("-O3"), noinline))
-//void super_fast_memset(void *dest, uint32_t value, size_t bytes) {
-//    uint32_t *p = (uint32_t *)dest;
-//    size_t words = bytes >> 2;
-//
-//    while (words--) {
-//        *p++ = value;
-//        asm volatile("" : : : "memory"); // Szlaban dla optymalizatora kompilatora
-//    }
-//
-//    size_t tail = bytes & 3;
-//    if (tail) {
-//        uint8_t *p_tail = (uint8_t *)p;
-//        while (tail--) {
-//            *p_tail++ = (uint8_t)value;
-//        }
-//    }
-//}
-
 int Map_RenderObjects(Map_t* p)
 {
 	if (p == NULL)	{ return -1; }
@@ -448,8 +437,8 @@ int Map_RenderObjects(Map_t* p)
 
 	uint32_t startTime = 0, elapsedUS = 0;
 	startTime = GetTimestamp();
-	memset(&p->dirtyRects, 0, sizeof(p->dirtyRects));
-//	super_fast_memset(&p->dirtyRects, 0, sizeof(p->dirtyRects));
+//	memset(&p->dirtyRects, 0, sizeof(p->dirtyRects));
+	fast_memset(&p->dirtyRects, 0, sizeof(p->dirtyRects));
 	elapsedUS = CalcTimeUS(startTime);
 //	if (elapsedUS > 0)
 	{
@@ -481,7 +470,7 @@ int Map_RenderObjects(Map_t* p)
 		// czesc wspolna istnieje
 		if (commonRect.p1.x <= commonRect.p2.x && commonRect.p1.y <= commonRect.p2.y)
 		{
-			p->dirtyRects[dirtyRectIndex].dirtyRect = commonRect;
+			p->dirtyRects[dirtyRectIndex].rect = commonRect;
 			p->dirtyRects[dirtyRectIndex].objID[p->dirtyRects[dirtyRectIndex].objIDIndex++] = (ObjectID_t){ .objID = GOOMBA_OBJ_ID, .objIndex = i};
 			dirtyRectIndex++;
 		}
@@ -491,7 +480,7 @@ int Map_RenderObjects(Map_t* p)
 	ret = Map_GetMarioDirtyRect(cameraRect, &marioDirtyMapRect);
 	if (!ret)
 	{
-		p->dirtyRects[dirtyRectIndex].dirtyRect = marioDirtyMapRect;
+		p->dirtyRects[dirtyRectIndex].rect = marioDirtyMapRect;
 		p->dirtyRects[dirtyRectIndex].objID[p->dirtyRects[dirtyRectIndex].objIDIndex++] = (ObjectID_t){ .objID = MARIO_OBJ_ID, .objIndex = 0};
 		dirtyRectIndex++;
 	}
@@ -507,23 +496,23 @@ int Map_RenderObjects(Map_t* p)
 			if (p->dirtyRects[j].used)	{ continue; }
 
 			Rect_t commonRect;
-			commonRect.p1.x = max(p->dirtyRects[i].dirtyRect.p1.x, p->dirtyRects[j].dirtyRect.p1.x);
-			commonRect.p1.y = max(p->dirtyRects[i].dirtyRect.p1.y, p->dirtyRects[j].dirtyRect.p1.y);
-			commonRect.p2.x = min(p->dirtyRects[i].dirtyRect.p2.x, p->dirtyRects[j].dirtyRect.p2.x);
-			commonRect.p2.y = min(p->dirtyRects[i].dirtyRect.p2.y, p->dirtyRects[j].dirtyRect.p2.y);
+			commonRect.p1.x = max(p->dirtyRects[i].rect.p1.x, p->dirtyRects[j].rect.p1.x);
+			commonRect.p1.y = max(p->dirtyRects[i].rect.p1.y, p->dirtyRects[j].rect.p1.y);
+			commonRect.p2.x = min(p->dirtyRects[i].rect.p2.x, p->dirtyRects[j].rect.p2.x);
+			commonRect.p2.y = min(p->dirtyRects[i].rect.p2.y, p->dirtyRects[j].rect.p2.y);
 
 			// czesc wspolna istnieje
 			if (commonRect.p1.x <= commonRect.p2.x && commonRect.p1.y <= commonRect.p2.y)
 			{
 				Rect_t commonORRect;
-				commonORRect.p1.x = min(p->dirtyRects[i].dirtyRect.p1.x, p->dirtyRects[j].dirtyRect.p1.x);
-				commonORRect.p1.y = min(p->dirtyRects[i].dirtyRect.p1.y, p->dirtyRects[j].dirtyRect.p1.y);
-				commonORRect.p2.x = max(p->dirtyRects[i].dirtyRect.p2.x, p->dirtyRects[j].dirtyRect.p2.x);
-				commonORRect.p2.y = max(p->dirtyRects[i].dirtyRect.p2.y, p->dirtyRects[j].dirtyRect.p2.y);
+				commonORRect.p1.x = min(p->dirtyRects[i].rect.p1.x, p->dirtyRects[j].rect.p1.x);
+				commonORRect.p1.y = min(p->dirtyRects[i].rect.p1.y, p->dirtyRects[j].rect.p1.y);
+				commonORRect.p2.x = max(p->dirtyRects[i].rect.p2.x, p->dirtyRects[j].rect.p2.x);
+				commonORRect.p2.y = max(p->dirtyRects[i].rect.p2.y, p->dirtyRects[j].rect.p2.y);
 
 				commonRectFound = true;
 				p->dirtyRects[j].used = true;
-				p->dirtyRects[i].dirtyRect = commonORRect;
+				p->dirtyRects[i].rect = commonORRect;
 				for (int k = 0; k < p->dirtyRects[j].objIDIndex; k++)
 				{
 					p->dirtyRects[i].objID[p->dirtyRects[i].objIDIndex++] = p->dirtyRects[j].objID[k];
@@ -545,13 +534,43 @@ int Map_RenderObjects(Map_t* p)
 		DirtyRect_t* dirtyRect = &p->dirtyRects[i];
 
 		Rect_t screenRect;
-		screenRect.p1.x = dirtyRect->dirtyRect.p1.x - p->currCameraPos.x;
-		screenRect.p1.y = dirtyRect->dirtyRect.p1.y - p->currCameraPos.y;
-		screenRect.p2.x = dirtyRect->dirtyRect.p2.x - p->currCameraPos.x;
-		screenRect.p2.y = dirtyRect->dirtyRect.p2.y - p->currCameraPos.y;
+		screenRect.p1.x = dirtyRect->rect.p1.x - p->currCameraPos.x;
+		screenRect.p1.y = dirtyRect->rect.p1.y - p->currCameraPos.y;
+		screenRect.p2.x = dirtyRect->rect.p2.x - p->currCameraPos.x;
+		screenRect.p2.y = dirtyRect->rect.p2.y - p->currCameraPos.y;
 
-		int baseRectArea = CalcRectArea(dirtyRect->dirtyRect);
+		// BACKGROUND COLOR
+		int baseRectArea = CalcRectArea(dirtyRect->rect);
 		RE_FillBackgroud(LCD_COLOR_BLUESKY, baseRectArea);
+
+		// BACKGROUND SPRITES
+		int elementSize = sizeof(SpritePos_t);
+		if (elementSize > 0)
+		{
+			int numOfSprites = sizeof(MapSpriteLoc)/elementSize;
+			for (int i = 0; i < numOfSprites; i++)
+			{
+				SpritePos_t spritePos = MapSpriteLoc[i];
+				switch (spritePos.spriteID)
+				{
+				case JEDYNKA_SPRITE_ID:
+				{
+					Map_RenderBgdSprite(&p->jedynkaSprite, spritePos, dirtyRect->rect, screenRect, p->LCDOffsetX, false, false);
+					break;
+				}
+				case DWOJKA_SPRITE_ID:
+				{
+					Map_RenderBgdSprite(&p->dwojkaSprite, spritePos, dirtyRect->rect, screenRect, p->LCDOffsetX, false, false);
+					break;
+				}
+				case CHMURKA_SPRITE_ID:
+				{
+					Map_RenderBgdSprite(&p->chmurkaSprite, spritePos, dirtyRect->rect, screenRect, p->LCDOffsetX, false, false);
+					break;
+				}
+				}
+			}
+		}
 
 		for (int j = 0; j < NUM_OF_OBJ_IDS; j++)
 		{
@@ -569,7 +588,7 @@ int Map_RenderObjects(Map_t* p)
 				{
 				case MARIO_OBJ_ID:
 				{
-					Map_RenderMario(p->currCameraPos, dirtyRect->dirtyRect, screenRect, p->LCDOffsetX);
+					Map_RenderMario(p->currCameraPos, dirtyRect->rect, screenRect, p->LCDOffsetX);
 					break;
 				}
 				case GOOMBA_OBJ_ID:
@@ -578,7 +597,7 @@ int Map_RenderObjects(Map_t* p)
 					int ret = Enemies_GetGoomba(pEnemies, dirtyRect->objID[k].objIndex, &goomba);
 					if (ret < 0)	{ break; }
 
-					Map_RenderGoomba(goomba, p->currCameraPos, dirtyRect->dirtyRect, screenRect, p->LCDOffsetX);
+					Map_RenderGoomba(goomba, p->currCameraPos, dirtyRect->rect, screenRect, p->LCDOffsetX);
 					break;
 				}
 				default:

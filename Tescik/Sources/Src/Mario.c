@@ -80,6 +80,9 @@ int Mario_ReactToButton(Mario_t* p, uint32_t buttons_state)
 	Point_t setVector = {0};
 	bool useMove = true;
 
+	Point_t cameraPos = Map_GetCameraPos(pMap);
+
+
 	if (buttons_state & PAD_BUTTON_START)
 	{
 		setVector.x = 0;
@@ -114,7 +117,7 @@ int Mario_ReactToButton(Mario_t* p, uint32_t buttons_state)
 			moveVector.y -= 5;
 		}
 
-		Mario_MoveMapPos(p, moveVector);
+		Mario_MoveMapPos(p, moveVector, cameraPos);
 	}
 	else
 	{
@@ -212,14 +215,33 @@ int Mario_SetMapPos(Mario_t* p, Point_t pos)
 	return 0;
 }
 
-int Mario_MoveMapPos(Mario_t* p, Point_t moveVector)
+int Mario_MoveMapPos(Mario_t* p, Point_t moveVector, Point_t cameraPos)
 {
 	if (p == NULL)	{ return -1; }
 
 	p->prevMapPos = p->currMapPos;
 
-	Point_Move(&p->currMapPos, &moveVector);
-	Mario_LimitMapPos(p, &p->currMapPos);
+	Point_t newMapPos = p->currMapPos;
+
+	Point_Move(&newMapPos, &moveVector);
+	Mario_LimitMapPos(p, &newMapPos);
+
+	Rect_t cameraRect;
+	cameraRect.p1.x = cameraPos.x;
+	cameraRect.p1.y = cameraPos.y;
+	cameraRect.p2.x = cameraRect.p1.x + LCD_WIDTH;
+	cameraRect.p2.y = cameraRect.p1.y + LCD_HEIGHT;
+
+	if (newMapPos.x < cameraRect.p1.x)
+	{
+		newMapPos.x = cameraRect.p1.x;
+	}
+	if (newMapPos.y < cameraRect.p1.y)
+	{
+		newMapPos.y = cameraRect.p1.y;
+	}
+
+	p->currMapPos = newMapPos;
 
 	return 0;
 }

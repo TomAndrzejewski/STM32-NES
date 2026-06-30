@@ -10,6 +10,7 @@
 #include "LCDControl.h"
 #include "RenderEngine.h"
 #include "NES_Functions.h"
+#include "TimeoutTracker.h"
 
 
 uint16_t const LCD_Colors[LCD_NUMOF_COLORS] = {
@@ -19,11 +20,59 @@ uint16_t const LCD_Colors[LCD_NUMOF_COLORS] = {
 		0xE007
 };
 
+static volatile bool dma_done = true;
+static volatile uint32_t dma_startTimestamp = 0;
+static volatile uint32_t dma_transferTime = 0;
+
+void DMA2_Stream3_IRQHandler(void)
+{
+    if (DMA2->LISR & DMA_LISR_TCIF3)
+    {
+        // wyczyść flagę Transfer Complete
+        DMA2->LIFCR = DMA_LIFCR_CTCIF3;
+
+        TimeoutTracker_t timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
+    	while (SPI1->SR & SPI_SR_BSY) {
+    		if (timeout_has_expired(&timer)) {
+    			break;
+    		}
+    	}
+
+    	// --- DODAJ TE LINIE TUTAJ, ABY UBIĆ SZUM ---
+    	volatile uint8_t dummy_dr = *(volatile uint8_t *)&SPI1->DR;
+    	volatile uint32_t dummy_sr = SPI1->SR;
+    	(void)dummy_dr;
+    	(void)dummy_sr; // Te 4 linijki czyszczą flagę RXNE oraz kasują błąd Overrun (OVR)
+    	// -------------------------------------------
+
+    	LCD_CS_HIGH();
+
+        dma_done = true;
+
+        dma_transferTime = CalcTimeUS(dma_startTimestamp);
+        printf_uint(dma_transferTime); printf_c('\t');
+    }
+}
+
 void DMA2_SPI1_Send_NoBlock(uint8_t* buffer, uint16_t length)
 {
+    TimeoutTracker_t timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
+	while (!dma_done) {
+		if (timeout_has_expired(&timer)) {
+			break;
+		}
+	}
+	dma_done = false;
     // 1. Sprawdź, czy poprzedni transfer DMA się zakończył
     // Jeśli DMA jeszcze wysyła, musimy poczekać (lub zabezpieczyć to wyżej w kodzie)
-    while (DMA2_Stream3->CR & DMA_SxCR_EN);
+    timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
+	while (!DMA2_Stream3->CR & DMA_SxCR_EN) {
+		if (timeout_has_expired(&timer)) {
+			break;
+		}
+	}
+
+    dma_startTimestamp = GetTimestamp();
 
     // 2. Wyczyszczenie flag zakończenia poprzedniego transferu dla Strumienia 3 (rejestr LIFCR)
     DMA2->LIFCR = DMA_LIFCR_CTCIF3 | DMA_LIFCR_CTEIF3;
@@ -40,31 +89,55 @@ void DMA2_SPI1_Send_NoBlock(uint8_t* buffer, uint16_t length)
     // 4. Włączenie strumienia DMA - w tym momencie rusza ciągły zegar SPI na 36 MHz!
     DMA2_Stream3->CR |= DMA_SxCR_EN;
 
-	while (!(DMA2->LISR & DMA_LISR_TCIF3));
-	while (SPI1->SR & SPI_SR_BSY);
-
-	// --- DODAJ TE LINIE TUTAJ, ABY UBIĆ SZUM ---
-	volatile uint8_t dummy_dr = *(volatile uint8_t *)&SPI1->DR;
-	volatile uint32_t dummy_sr = SPI1->SR;
-	(void)dummy_dr;
-	(void)dummy_sr; // Te 4 linijki czyszczą flagę RXNE oraz kasują błąd Overrun (OVR)
-	// -------------------------------------------
-
-	LCD_CS_HIGH();
+//	while (!(DMA2->LISR & DMA_LISR_TCIF3));
+//	while (SPI1->SR & SPI_SR_BSY);
+//
+//	// --- DODAJ TE LINIE TUTAJ, ABY UBIĆ SZUM ---
+//	volatile uint8_t dummy_dr = *(volatile uint8_t *)&SPI1->DR;
+//	volatile uint32_t dummy_sr = SPI1->SR;
+//	(void)dummy_dr;
+//	(void)dummy_sr; // Te 4 linijki czyszczą flagę RXNE oraz kasują błąd Overrun (OVR)
+//	// -------------------------------------------
+//
+//	LCD_CS_HIGH();
 }
 
 uint8_t SPI1_Write(uint8_t data)
 {
-	while (!(SPI1->SR & SPI_SR_TXE)); // Czekaj na wolny bufor
+    TimeoutTracker_t timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
+	while (!dma_done) {
+		if (timeout_has_expired(&timer)) {
+			break;
+		}
+	}
+
+	timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
+	while (!(SPI1->SR & SPI_SR_TXE)) {	// Zakonczono wysylanie
+		if (timeout_has_expired(&timer)) {
+			break;
+		}
+	}
+
 	*(volatile uint8_t *)&SPI1->DR = data;
 
-	while (!(SPI1->SR & SPI_SR_RXNE));    // Czekaj na odebranie ostatniego bitu
+	timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
+	while (!(SPI1->SR & SPI_SR_RXNE)) { // Czekaj na odebranie ostatniego bitu
+		if (timeout_has_expired(&timer)) {
+			break;
+		}
+	}
 //	while ((SPI1->SR & SPI_SR_BSY));    // flaga busy
 	return *((volatile uint8_t*)&SPI1->DR);
 }
 
 void SPI1_SendCmd_U8(uint8_t data)
 {
+    TimeoutTracker_t timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
+	while (!dma_done) {
+		if (timeout_has_expired(&timer)) {
+			break;
+		}
+	}
 	// Czyszczenie SPI na start
 //	volatile uint32_t dummy_read;
 //	dummy_read = SPI1->DR;
@@ -82,6 +155,12 @@ void SPI1_SendCmd_U8(uint8_t data)
 
 void SPI1_SendData_U8(uint8_t data)
 {
+    TimeoutTracker_t timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
+	while (!dma_done) {
+		if (timeout_has_expired(&timer)) {
+			break;
+		}
+	}
 	// Czyszczenie SPI na start
 //	volatile uint32_t dummy_read;
 //	dummy_read = SPI1->DR;
@@ -100,6 +179,13 @@ void SPI1_SendData_U8(uint8_t data)
 int SPI1_SendRead_U8(uint8_t data, uint8_t* output)
 {
 	if (output == NULL)	{ return -1; }
+
+    TimeoutTracker_t timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
+	while (!dma_done) {
+		if (timeout_has_expired(&timer)) {
+			break;
+		}
+	}
 
 	// Czyszczenie SPI na start
 	volatile uint32_t dummy_read;
@@ -127,6 +213,13 @@ int SPI1_SendRead_U8(uint8_t data, uint8_t* output)
 int SPI1_SendRead_U24(uint8_t data, uint8_t* output2, uint8_t* output1, uint8_t* output0)
 {
 	if ((output2 == NULL) || (output1 == NULL) || (output0 == NULL))	{ return -1; }
+
+    TimeoutTracker_t timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
+	while (!dma_done) {
+		if (timeout_has_expired(&timer)) {
+			break;
+		}
+	}
 
 	// Czyszczenie SPI na start
 	volatile uint32_t dummy_read;
