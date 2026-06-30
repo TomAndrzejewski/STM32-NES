@@ -43,6 +43,32 @@ void FPU_init()
 	SCB->CPACR |= (0xF << 20);
 }
 
+volatile uint32_t tim10_t1 = 0;
+
+void Timer_init()
+{
+	RCC->APB2ENR |= RCC_APB2ENR_TIM10EN;
+
+	// 144MHz / ((23999 + 1) * (99 + 1)) = 60Hz
+	TIM10->ARR = 23999;
+	TIM10->PSC = 99;
+
+	// update shadow registers and clear irq pending bit
+	TIM10->EGR |= TIM_EGR_UG;
+	TIM10->SR &= ~TIM_SR_UIF;
+
+	tim10_t1 = GetTimestamp();
+
+	NVIC_EnableIRQ(TIM1_UP_TIM10_IRQn);
+
+	TIM10->DIER = 1; // UPDATE IRQ ENABLE AND CC IRQ DISABLE
+}
+
+void Timer_start()
+{
+	SET_FIELD_32(TIM10->CR1, TIM_CR1_CEN_Msk, TIM_CR1_CEN_Pos, 1);
+}
+
 void IRQ_DMA2_SPI1_TX_Init(void)
 {
 	NVIC_EnableIRQ(DMA2_Stream3_IRQn);
@@ -247,7 +273,34 @@ void Delay_init()
 	DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 }
 
+void GameLoop()
+{
+	uint32_t buttons_state = 0;
+	buttons_state = GetButtonsState();
+	PrintButtons(buttons_state);
 
+	Mario_ReactToButton(pMario, buttons_state);
+
+	Map_ReactToButtons(pMap, buttons_state);
+}
+
+volatile bool startRender = false;
+
+void TIM1_UP_TIM10_IRQHandler(void)
+{
+    if (TIM10->SR & TIM_SR_UIF_Msk)
+    {
+    	SET_FIELD_32(TIM10->SR, TIM_SR_UIF_Msk, TIM_SR_UIF_Pos, 0);
+
+//    	uint32_t tdiff = CalcTimeUS(tim10_t1);
+//    	tim10_t1 = GetTimestamp();
+//    	printf_v("\ntdiff: %d\n", tdiff);
+
+    	GameLoop();
+
+    	startRender = true;
+    }
+}
 
 void print_start()
 {
@@ -263,6 +316,7 @@ int main(void)
 	GPIO_init();
 	IRQ_DMA2_SPI1_TX_Init();
 	DMA2_SPI1_TX_Init();
+	Timer_init();
 	printf_init();
 
 	print_start();
@@ -280,17 +334,14 @@ int main(void)
 
 	Map_FirstRender(pMap);
 
+	Timer_start();
+
 	while(1)
 	{
 		startTime = GetTimestamp();
 
-		uint32_t buttons_state = 0;
-		buttons_state = GetButtonsState();
-		PrintButtons(buttons_state);
-
-		Mario_ReactToButton(pMario, buttons_state);
-
-		Map_ReactToButtons(pMap, buttons_state);
+		while(!startRender);
+		startRender = false;
 
 		startTime2 = GetTimestamp();
 		Map_ScrollRender(pMap);

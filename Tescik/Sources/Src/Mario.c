@@ -16,6 +16,7 @@
 #include "RenderEngine.h"
 #include "Map.h"
 #include "Mario.h"
+#include "NESEngine.h"
 
 
 // Kolory użyte w grafice (RGB565 MSB):
