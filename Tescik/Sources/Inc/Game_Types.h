@@ -55,13 +55,13 @@ typedef struct
 
 typedef struct
 {
-	const GameAsset_t* baseAsset;
+	GameAsset_t baseAsset;
 
 }BackgroundAsset_t;
 
 typedef struct
 {
-	const GameAsset_t* baseAsset;
+	GameAsset_t baseAsset;
 
 	Rect_t BBox; // p1 - offset from (0,0) in sprite, p2 - length
 
@@ -69,7 +69,7 @@ typedef struct
 
 typedef struct
 {
-	const GameAsset_t* baseAsset;
+	GameAsset_t baseAsset;
 
 	Rect_t BBox; // p1 - offset from (0,0) in sprite, p2 - length
 

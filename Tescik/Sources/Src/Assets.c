@@ -43,13 +43,11 @@ const uint16_t map_jedynka_32x32_dma_2[32*32] = {
 		0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xc318, 0xc318, 0xc318, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff
 };
 
-const GameAsset_t JEDYNKA_BASE_ASSET = {
-		.id = BG_JEDYNKA_OBJECT_ID,
-		.sprite = { .bitmap = map_jedynka_32x32_dma_2, .size = { .x = 32, .y = 32}},
-};
-
 const BackgroundAsset_t JEDYNKA_ASSET = {
-		.baseAsset = &JEDYNKA_BASE_ASSET,
+		.baseAsset.id = BG_JEDYNKA_OBJECT_ID,
+		.baseAsset.sprite.bitmap = map_jedynka_32x32_dma_2,
+		.baseAsset.sprite.size.x = 32,
+		.baseAsset.sprite.size.y = 32,
 };
 
 
@@ -88,15 +86,12 @@ const uint16_t map_dwojka_32x32_dma_2[32*32] = {
 		0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0x4108, 0x4108, 0x4108, 0x4108, 0x4108, 0x4108, 0x4108, 0x4108, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff
 };
 
-const GameAsset_t DWOJKA_BASE_ASSET = {
-		.id = BG_DWOJKA_OBJECT_ID,
-		.sprite = { .bitmap = map_dwojka_32x32_dma_2, .size = { .x = 32, .y = 32}},
-};
-
 const BackgroundAsset_t DWOJKA_ASSET = {
-		.baseAsset = &DWOJKA_BASE_ASSET,
+		.baseAsset.id = BG_DWOJKA_OBJECT_ID,
+		.baseAsset.sprite.bitmap = map_dwojka_32x32_dma_2,
+		.baseAsset.sprite.size.x = 32,
+		.baseAsset.sprite.size.y = 32,
 };
-
 
 const uint16_t map_chmurka_32x32_dma_2[32*32] = {
 		0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff,
@@ -133,13 +128,11 @@ const uint16_t map_chmurka_32x32_dma_2[32*32] = {
 		0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff
 };
 
-const GameAsset_t CHMURKA_BASE_ASSET = {
-		.id = BG_CHMURKA_OBJECT_ID,
-		.sprite = { .bitmap = map_chmurka_32x32_dma_2, .size = { .x = 32, .y = 32}},
-};
-
 const BackgroundAsset_t CHMURKA_ASSET = {
-		.baseAsset = &CHMURKA_BASE_ASSET,
+		.baseAsset.id = BG_CHMURKA_OBJECT_ID,
+		.baseAsset.sprite.bitmap = map_chmurka_32x32_dma_2,
+		.baseAsset.sprite.size.x = 32,
+		.baseAsset.sprite.size.y = 32,
 };
 
 
@@ -162,13 +155,11 @@ const uint16_t goomba_16x16_dma_2[256] = {
 		0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff
 	};
 
-const GameAsset_t GOOMBA_BASE_ASSET = {
-		.id = ENEMY_GOOMBA_ID,
-		.sprite = { .bitmap = goomba_16x16_dma_2, .size = { .x = 16, .y = 16}},
-};
-
 const EnemyAsset_t GOOMBA_ASSET = {
-		.baseAsset = &GOOMBA_BASE_ASSET,
+		.baseAsset.id = ENEMY_GOOMBA_ID,
+		.baseAsset.sprite.bitmap = goomba_16x16_dma_2,
+		.baseAsset.sprite.size.x = 16,
+		.baseAsset.sprite.size.y = 16,
 		.BBox.p1.x = 0,
 		.BBox.p1.y = 0,
 		.BBox.p2.x = 16,
