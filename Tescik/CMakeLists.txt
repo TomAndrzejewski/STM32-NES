@@ -41,7 +41,7 @@ set (PROJECT_TYPE             "exe")
 set (LINKER_SCRIPT            "../STM32F446RETX_FLASH.ld")
 set (MCPU                     "-mcpu=Cortex-M4")
 set (MFPU                 "-mfpu=fpv4-sp-d16")
-set (MFLOAT_ABI               "")
+set (MFLOAT_ABI               "-mfloat-abi=hard")
 set (RUNTIME_LIBRARY          "--specs=nano.specs")
 set (RUNTIME_LIBRARY_SYSCALLS "--specs=nosys.specs")
 

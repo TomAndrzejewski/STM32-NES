@@ -37,6 +37,9 @@
 #include "NESEngine.h"
 
 
+#include "Game.h"
+
+
 
 void FPU_init()
 {

@@ -23,77 +23,96 @@
 // - Assets.c
 // - Settings.c
 
+#define ENEMY_ID_START				(0x00000001)
+#define ENEMY_ID_END				(0x00000FFF)
+#define BACKGROUND_OBJECT_ID_START	(0x00001000)
+#define BACKGROUND_OBJECT_ID_END	(0x00001FFF)
+#define FOREGROUND_OBJECT_ID_START	(0x00002000)
+#define FOREGROUND_OBJECT_ID_END	(0x00002FFF)
 
 typedef enum
 {
-	ENEMY_GOOMBA_ID,
+	OBJECT_NOT_USED = -1,
 
-}EnemyID;
+	ENEMY_GOOMBA_ID = ENEMY_ID_START,
 
-typedef enum
-{
-	BG_JEDYNKA_OBJECT_ID,
+	BG_JEDYNKA_OBJECT_ID = BACKGROUND_OBJECT_ID_START,
 	BG_DWOJKA_OBJECT_ID,
+	BG_CHMURKA_OBJECT_ID,
 
-}BackgroundObjectID;
-
-typedef enum
-{
-	FG_RURA_OBJECT_ID,
+	FG_RURA_OBJECT_ID = FOREGROUND_OBJECT_ID_START,
 	FG_CEGLY_OBJECT_ID,
 
-}ForegroundObjectID;
+}GameObjectID;
 
 
 typedef struct
 {
-	// Sprite
-	// Collision BBox
-	// ID
-	Sprite_t	sprite;
-	Rect_t		BBox; // p1 - offset from (0,0) in sprite, p2 - length
-
-
+	Sprite_t sprite;
+	GameObjectID id;
 
 }GameAsset_t;
 
 typedef struct
 {
+	const GameAsset_t* baseAsset;
+
+}BackgroundAsset_t;
+
+typedef struct
+{
+	const GameAsset_t* baseAsset;
+
+	Rect_t BBox; // p1 - offset from (0,0) in sprite, p2 - length
+
+}ForegroundAsset_t;
+
+typedef struct
+{
+	const GameAsset_t* baseAsset;
+
+	Rect_t BBox; // p1 - offset from (0,0) in sprite, p2 - length
+
+}EnemyAsset_t;
+
+typedef struct
+{
 	Point_t		currMapPos;
 	Point_t		prevMapPos;
 
-	Point_t		vel;
+	float		vx;
+	float		vy;
 
 }PlayerState_t;
 
 typedef struct
 {
-	EnemyID		id;
+	GameObjectID id;
 
 	Point_t		currMapPos;
 	Point_t		prevMapPos;
 
-	Point_t		vel;
+	const EnemyAsset_t* asset;
 
 }EnemyState_t;
 
-
-
 typedef struct
 {
-	BackgroundObjectID id;
+	GameObjectID id;
 
-	Point_t		mapPos;
+	Point_t mapPos;
+
+	const BackgroundAsset_t* asset;
 
 }BackgroundObject_t;
 
-
-
 typedef struct
 {
-	ForegroundObjectID id;
+	GameObjectID id;
 
-	Point_t		mapPos;
+	Point_t mapPos;
+
+	const ForegroundAsset_t* asset;
 
 }ForegroundObject_t;
 
