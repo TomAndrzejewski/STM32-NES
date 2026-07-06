@@ -47,9 +47,9 @@ int 		RE_FillBackgroud(uint16_t pixel, int numOfPixels);
 
 int 		RE_FillSprite(const uint16_t* sprite, Rect_t baseRect, Rect_t spriteRect, Rect_t visibleRect);
 int 		RE_FillSprite2(Sprite_t* sprite, Rect_t baseRect, Point_t baseToSpriteOffset);
-int 		RE_FillSprite3(Sprite_t* sprite, SpriteRender_t renderContext);
+int 		RE_FillSprite3(const Sprite_t* sprite, SpriteRender_t renderContext);
 int 		RE_RenderMario(const uint16_t* sprite, Rect_t baseRect, Rect_t spriteRect, Point_t offset);
-int 		RE_RenderSprite(Sprite_t* sprite, SpriteRender_t renderContext, bool fillBG);
+int 		RE_RenderSprite(const Sprite_t* sprite, SpriteRender_t renderContext, bool fillBG);
 //int 		RE_RenderSprite(const uint16_t* sprite, Rect_t baseRect, Rect_t spriteRect, Point_t offset, bool fillBG);
 
 #endif /* SOURCES_INC_RENDERENGINE_H_ */

@@ -8,9 +8,17 @@
 #include "string.h"
 
 #include "Game_Types.h"
+#include "NES_Defs.h"
 
 #include "Level.h"
 
+
+const Rect_t LevelBoundaries = {
+		.p1.x = 0,
+		.p1.y = 0,
+		.p2.x = 6400,
+		.p2.y = 240
+};
 
 const ObjectLevelPos_t BGObjectsLevelPosition[] = {
 	    { .id = BG_DWOJKA_OBJECT_ID,	.x = 96,	.y = 208 },
@@ -26,6 +34,10 @@ const ObjectLevelPos_t BGObjectsLevelPosition[] = {
 
 const ObjectLevelPos_t EnemiesLevelPosition[] = {
 	    { .id = ENEMY_GOOMBA_ID,		.x = 40,	.y = 40 },
+};
+
+const RepObjectLevelPos_t BGRepObjectsLevelPosition[] = {
+	    { .id = BG_REP_FLOOR_ID,		.x = 0,	.y = 0,	.mulX = LCD_WIDTH/16,	.mulY = 2 },
 };
 
 
@@ -67,4 +79,31 @@ int LEVEL_GetEnemiesLocations(const ObjectLevelPos_t** posTable, int* numOfObjec
 	{
 		return -5;
 	}
+}
+
+int LEVEL_GetBGRepObjectsLocations(const RepObjectLevelPos_t** posTable, int* numOfObjects)
+{
+	if (posTable == NULL || numOfObjects == NULL)
+	{
+		return -1;
+	}
+
+	int elementSize = sizeof(RepObjectLevelPos_t);
+	if (elementSize > 0)
+	{
+		*numOfObjects = sizeof(BGRepObjectsLevelPosition)/elementSize;
+		*posTable = BGRepObjectsLevelPosition;
+		return 0;
+	}
+	else
+	{
+		return -5;
+	}
+}
+
+int LEVEL_GetLevelBoundaries(Rect_t* levelBoundaries)
+{
+	if (levelBoundaries == NULL) { return -1; }
+	*levelBoundaries = LevelBoundaries;
+	return 0;
 }

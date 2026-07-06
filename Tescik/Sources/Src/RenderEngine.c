@@ -193,7 +193,7 @@ int RE_SendRect(Rect_t baseRect, int LCDOffsetX)
 	return 0;
 }
 
-int RE_RenderSprite(Sprite_t* sprite, SpriteRender_t renderContext, bool fillBG)
+int RE_RenderSprite(const Sprite_t* sprite, SpriteRender_t renderContext, bool fillBG)
 {
 	if (sprite == NULL)
 	{
@@ -252,7 +252,7 @@ int RE_RenderSprite(Sprite_t* sprite, SpriteRender_t renderContext, bool fillBG)
 }
 
 OPTIMIZE_FOR_DEBUG
-int RE_FillSprite3(Sprite_t* sprite, SpriteRender_t renderContext)
+int RE_FillSprite3(const Sprite_t* sprite, SpriteRender_t renderContext)
 {
 	if (sprite == NULL)
 	{

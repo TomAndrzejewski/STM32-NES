@@ -328,6 +328,54 @@ int main(void)
 
 	LCD_init();
 
+	uint32_t startTime = 0, elapsedUS = 0;
+	uint32_t startTime2 = 0;
+	int ret = 0;
+
+//	Timer_start();
+
+	GAME_InitContext(pGameCtx);
+
+	RENDER_FirstRender(pGameCtx);
+
+	while(1)
+	{
+		uint32_t buttons_state = GetButtonsState();
+
+		ret = INPUT_SetButtonsState(&pGameCtx->input, buttons_state);
+		if (ret < 0)	{ delay(1); continue; }
+
+		ret = PHYSICS_Player_Movement(pGameCtx);
+		if (ret < 0)	{ delay(1); continue; }
+
+		ret = PHYSICS_Player_CalcMapPos(pGameCtx);
+		if (ret < 0)	{ delay(1); continue; }
+
+
+	}
+
+    /* Loop forever */
+	for(;;);
+}
+
+int mainppp(void)
+{
+	Flash_init();
+	Clock_init();
+	FPU_init();
+	Delay_init();
+	GPIO_init();
+	IRQ_DMA2_SPI1_TX_Init();
+	DMA2_SPI1_TX_Init();
+	Timer_init();
+	printf_init();
+
+	print_start();
+
+	RE_Init();
+
+	LCD_init();
+
 	Mario_Init(pMario);
 	Map_Init(pMap);
 	Enemies_Init(pEnemies);

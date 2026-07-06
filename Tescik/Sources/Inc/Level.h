@@ -19,10 +19,23 @@ typedef struct
 
 }ObjectLevelPos_t;
 
+typedef struct
+{
+	GameObjectID id;
+	int		x;
+	int		y;
+	int		mulX;
+	int		mulY;
+
+}RepObjectLevelPos_t;
 
 int LEVEL_GetBGObjectsLocations(const ObjectLevelPos_t** posTable, int* numOfObjects);
 
 int LEVEL_GetEnemiesLocations(const ObjectLevelPos_t** posTable, int* numOfObjects);
+
+int LEVEL_GetBGRepObjectsLocations(const RepObjectLevelPos_t** posTable, int* numOfObjects);
+
+int LEVEL_GetLevelBoundaries(Rect_t* levelBoundaries);
 
 
 #endif /* SOURCES_INC_LEVEL_H_ */

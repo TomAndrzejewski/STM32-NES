@@ -18,6 +18,11 @@ extern const BackgroundAsset_t DWOJKA_ASSET;
 extern const BackgroundAsset_t CHMURKA_ASSET;
 
 ///////////////////
+// BACKGROUND REP
+///////////////////
+extern const BackgroundAsset_t FLOOR_ASSET;
+
+///////////////////
 // ENEMIES
 ///////////////////
 extern const EnemyAsset_t GOOMBA_ASSET;

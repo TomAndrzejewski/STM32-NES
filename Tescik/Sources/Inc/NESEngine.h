@@ -11,6 +11,7 @@
 #include "Mario.h"
 #include "Map.h"
 #include "Enemies.h"
+#include "Game_Types.h"
 
 
 #ifdef DEFINE_NES_ENGINE
@@ -25,6 +26,8 @@
 
 #endif
 
+GLOBAL_NES_ENGINE GameContext_t 	gGameCtx;
+GLOBAL_NES_ENGINE GameContext_t*	pGameCtx INIT_NES_ENGINE(&gGameCtx);
 
 GLOBAL_NES_ENGINE Mario_t 	gMario;
 GLOBAL_NES_ENGINE Mario_t*	pMario INIT_NES_ENGINE(&gMario);

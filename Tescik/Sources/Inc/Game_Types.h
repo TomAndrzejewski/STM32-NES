@@ -23,12 +23,17 @@
 // - Assets.c
 // - Settings.c
 
-#define ENEMY_ID_START				(0x00000001)
-#define ENEMY_ID_END				(0x00000FFF)
-#define BACKGROUND_OBJECT_ID_START	(0x00001000)
-#define BACKGROUND_OBJECT_ID_END	(0x00001FFF)
-#define FOREGROUND_OBJECT_ID_START	(0x00002000)
-#define FOREGROUND_OBJECT_ID_END	(0x00002FFF)
+#define ENEMY_ID_START					(0x00000001)
+#define ENEMY_ID_END					(0x00000FFF)
+
+#define BACKGROUND_OBJECT_ID_START		(0x00001000)
+#define BACKGROUND_OBJECT_ID_END		(0x00001FFF)
+
+#define FOREGROUND_OBJECT_ID_START		(0x00002000)
+#define FOREGROUND_OBJECT_ID_END		(0x00002FFF)
+
+#define BACKGROUND_REP_OBJECT_ID_START	(0x00003000)
+#define FOREGROUND_REP_OBJECT_ID_END	(0x00003FFF)
 
 typedef enum
 {
@@ -42,6 +47,8 @@ typedef enum
 
 	FG_RURA_OBJECT_ID = FOREGROUND_OBJECT_ID_START,
 	FG_CEGLY_OBJECT_ID,
+
+	BG_REP_FLOOR_ID = BACKGROUND_REP_OBJECT_ID_START,
 
 }GameObjectID;
 
@@ -80,7 +87,10 @@ typedef struct
 	Point_t		currMapPos;
 	Point_t		prevMapPos;
 
-	float		vx;
+	float		subpixelX;
+	float		subpixelY;
+
+	float		vx;	// 0:1, 1 = 16 pixels in a second
 	float		vy;
 
 }PlayerState_t;
@@ -118,9 +128,35 @@ typedef struct
 
 typedef struct
 {
+	GameObjectID id;
+
+	Point_t mapPos;
+	Point_t	mulVector;
+
+	const BackgroundAsset_t* asset;
+
+}BackgroundRepObject_t;
+
+typedef struct
+{
 	Point_t cameraPos;
+	int LCDOffsetX;
+	int floorYLevel;
 
 }MapState_t;
+
+typedef struct
+{
+	uint32_t buttons_state;
+
+}InputState_t;
+
+typedef struct
+{
+	int frameTimeUS;
+	float frameTimeS; // same as frameTimeUS only in float and in S
+
+}FrameData_t;
 
 typedef struct
 {
@@ -136,13 +172,21 @@ typedef struct
 	// Visible background objects
 	// Visible enemies
 	// Visible collision objects
+	int activebgObjects;
 	BackgroundObject_t bgObjects[BACKGROUND_OBJECTS_MAX_SIZE];
 
+	int activefgObjects;
 	ForegroundObject_t fgObjects[FOREGROUND_OBJECTS_MAX_SIZE];
+
+	int activebgRepObjects;
+	BackgroundRepObject_t bgRepObjects[BACKGROUND_REP_OBJECTS_MAX_SIZE];
+	int floorIndex;
 
 	MapState_t map;
 
+	InputState_t input;
 
+	FrameData_t frameData;
 	// Game machine state enum
 
 	// Renderer data
