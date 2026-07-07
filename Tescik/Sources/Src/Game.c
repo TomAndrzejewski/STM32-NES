@@ -135,8 +135,8 @@ int GAME_InitContext(GameContext_t* ctx)
 	///////////////////
 	// MAP
 	///////////////////
-	ctx->map.cameraPos.x = 0;
-	ctx->map.cameraPos.y = 0;
+	ctx->map.currCameraPos.x = 0;
+	ctx->map.currCameraPos.y = 0;
 	ctx->map.LCDOffsetX = 0;
 	ctx->map.floorYLevel = ctx->bgRepObjects[ctx->floorIndex].asset->baseAsset.sprite.size.y * ctx->bgRepObjects[ctx->floorIndex].mulVector.y;
 
@@ -236,14 +236,14 @@ int PHYSICS_Player_CalcMapPos(GameContext_t* ctx)
 {
 	if (ctx == NULL) { return -1; }
 
-	Rect_t levelBounds;
+	const Rect_t* levelBounds;
 	int ret = LEVEL_GetLevelBoundaries(&levelBounds);
 	if (ret < 0) { return -5; }
 
 	ctx->player.prevMapPos = ctx->player.currMapPos;
 
 	// New map position
-	if (ctx->player.currMapPos.x < levelBounds.p2.x)
+	if (ctx->player.currMapPos.x < levelBounds->p2.x)
 	{
 		if (ctx->player.subpixelX >= 16)
 		{
@@ -403,6 +403,100 @@ int RENDER_RenderBgdSprite(const Sprite_t* p, Point_t spritePos, Rect_t mapRectT
 		{
 			RE_FillSprite3(p, renderContext);
 		}
+	}
+
+	return 0;
+}
+
+int REDNER_ScrollRender(GameContext_t* ctx)
+{
+	if (ctx == NULL) { return -1; }
+
+	Point_t cameraDiff = {0};
+	cameraDiff.x = ctx->map.currCameraPos.x - p->prevCameraPos.x;
+
+	if (cameraDiff.x > 0)
+	{
+		int prevLCDOffsetX = p->LCDOffsetX;
+
+	p->LCDOffsetX -= cameraDiff.x;
+		if (p->LCDOffsetX > 319)
+		{
+			p->LCDOffsetX = p->LCDOffsetX - 320;
+		}
+		if (p->LCDOffsetX < 0)
+		{
+			p->LCDOffsetX = 320 + p->LCDOffsetX;
+		}
+
+//		Rect_t leftMapRect;
+		Rect_t rightMapRect;
+		Rect_t leftScreenRect;
+		Rect_t rightScreenRect;
+
+//		leftMapRect.p1.x = p->prevCameraPos.x;
+//		leftMapRect.p1.y = p->floorYLevel;
+//		leftMapRect.p2.x = p->currCameraPos.x;
+//		leftMapRect.p2.y = LCD_HEIGHT;
+
+		rightMapRect.p1.x = p->prevCameraPos.x + LCD_WIDTH - 1;
+		rightMapRect.p1.y = p->floorYLevel;
+		rightMapRect.p2.x = p->currCameraPos.x + LCD_WIDTH - 1;
+		rightMapRect.p2.y = LCD_HEIGHT;
+
+		leftScreenRect.p1.x = 0;
+		leftScreenRect.p1.y = p->floorYLevel;
+		leftScreenRect.p2.x = p->cameraDiff.x;
+		leftScreenRect.p2.y = LCD_HEIGHT;
+
+		rightScreenRect.p1.x = LCD_WIDTH - p->cameraDiff.x - 1;
+		rightScreenRect.p1.y = p->floorYLevel;
+		rightScreenRect.p2.x = LCD_WIDTH - 1;
+		rightScreenRect.p2.y = LCD_HEIGHT;
+
+		int baseRectArea, ret;
+
+		// LEFT
+		baseRectArea = CalcRectArea(leftScreenRect);
+		ret = RE_FillBackgroud(LCD_COLOR_BLUESKY, baseRectArea);
+		RE_SendRect(leftScreenRect, prevLCDOffsetX);
+
+		// SHIFT SCROLL
+		LCD_WriteVertScrollStartAddr(p->LCDOffsetX);
+
+		// RIGHT
+		baseRectArea = CalcRectArea(rightScreenRect);
+		ret = RE_FillBackgroud(LCD_COLOR_BLUESKY, baseRectArea);
+
+		int elementSize = sizeof(SpritePos_t);
+		if (elementSize > 0)
+		{
+			int numOfSprites = sizeof(MapSpriteLoc)/elementSize;
+			for (int i = 0; i < numOfSprites; i++)
+			{
+				SpritePos_t spritePos = MapSpriteLoc[i];
+				switch (spritePos.spriteID)
+				{
+				case JEDYNKA_SPRITE_ID:
+				{
+					Map_RenderBgdSprite(&p->jedynkaSprite, spritePos, rightMapRect, rightScreenRect, p->LCDOffsetX, false, false);
+					break;
+				}
+				case DWOJKA_SPRITE_ID:
+				{
+					Map_RenderBgdSprite(&p->dwojkaSprite, spritePos, rightMapRect, rightScreenRect, p->LCDOffsetX, false, false);
+					break;
+				}
+				case CHMURKA_SPRITE_ID:
+				{
+					Map_RenderBgdSprite(&p->chmurkaSprite, spritePos, rightMapRect, rightScreenRect, p->LCDOffsetX, false, false);
+					break;
+				}
+				}
+			}
+		}
+
+		RE_SendRect(rightScreenRect, p->LCDOffsetX);
 	}
 
 	return 0;

@@ -35,7 +35,7 @@ int LEVEL_GetEnemiesLocations(const ObjectLevelPos_t** posTable, int* numOfObjec
 
 int LEVEL_GetBGRepObjectsLocations(const RepObjectLevelPos_t** posTable, int* numOfObjects);
 
-int LEVEL_GetLevelBoundaries(Rect_t* levelBoundaries);
+int LEVEL_GetLevelBoundaries(const Rect_t** levelBoundaries);
 
 
 #endif /* SOURCES_INC_LEVEL_H_ */

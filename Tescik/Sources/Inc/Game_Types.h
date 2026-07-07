@@ -139,7 +139,8 @@ typedef struct
 
 typedef struct
 {
-	Point_t cameraPos;
+	Point_t prevCameraPos;
+	Point_t currCameraPos;
 	int LCDOffsetX;
 	int floorYLevel;
 

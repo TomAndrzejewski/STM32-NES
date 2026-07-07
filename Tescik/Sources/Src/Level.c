@@ -101,9 +101,9 @@ int LEVEL_GetBGRepObjectsLocations(const RepObjectLevelPos_t** posTable, int* nu
 	}
 }
 
-int LEVEL_GetLevelBoundaries(Rect_t* levelBoundaries)
+int LEVEL_GetLevelBoundaries(const Rect_t** levelBoundaries)
 {
 	if (levelBoundaries == NULL) { return -1; }
-	*levelBoundaries = LevelBoundaries;
+	*levelBoundaries = &LevelBoundaries;
 	return 0;
 }
