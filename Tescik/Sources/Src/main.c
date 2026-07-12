@@ -370,6 +370,9 @@ int main(void)
 
 			ret = REDNER_ScrollRender(pGameCtx);
 			if (ret < 0)	{ delay(1); continue; }
+
+			ret = RENDER_RenderObjects(pGameCtx);
+			if (ret < 0)	{ delay(1); continue; }
 		}
 		timeSpentInLoopUS = CalcTimeUS(startLoopTime);
 	}

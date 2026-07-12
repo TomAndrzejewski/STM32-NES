@@ -40,6 +40,12 @@ const RepObjectLevelPos_t BGRepObjectsLevelPosition[] = {
 	    { .id = BG_REP_FLOOR_ID,		.x = 0,	.y = 0,	.mulX = LCD_WIDTH/16,	.mulY = 2 },
 };
 
+// look at line numbers, lower line number -> higher priority
+const int ObjRenderPriorities[] = {
+		ENEMY_GOOMBA_ID,
+		PLAYER_MARIO_ID,
+};
+
 
 int LEVEL_GetBGObjectsLocations(const ObjectLevelPos_t** posTable, int* numOfObjects)
 {
@@ -106,4 +112,24 @@ int LEVEL_GetLevelBoundaries(const Rect_t** levelBoundaries)
 	if (levelBoundaries == NULL) { return -1; }
 	*levelBoundaries = &LevelBoundaries;
 	return 0;
+}
+
+int LEVEL_GetObjRenderPriorities(const int** prioTable, int* numOfObjects)
+{
+	if (prioTable == NULL || numOfObjects == NULL)
+	{
+		return -1;
+	}
+
+	int elementSize = sizeof(int);
+	if (elementSize > 0)
+	{
+		*numOfObjects = sizeof(ObjRenderPriorities)/elementSize;
+		*prioTable = ObjRenderPriorities;
+		return 0;
+	}
+	else
+	{
+		return -5;
+	}
 }

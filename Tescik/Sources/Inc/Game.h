@@ -26,7 +26,7 @@ int ENEMIES_GetDirtyRect(const EnemyState_t* enemy, Rect_t* dirtyRect);
 
 int RENDER_FirstRender(const GameContext_t* ctx);
 int REDNER_ScrollRender(GameContext_t* ctx);
-
+int RENDER_RenderObjects(GameContext_t* ctx);
 int RENDER_RenderFloor(const BackgroundRepObject_t* floor);
 int RENDER_RenderBgdSprite(const Sprite_t* p, Point_t spritePos, Rect_t mapRectToDraw, Rect_t screenRect, int LCDOffsetX, bool render, bool fillBG);
 

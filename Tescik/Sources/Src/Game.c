@@ -158,7 +158,7 @@ int GAME_InitContext(GameContext_t* ctx)
 	///////////////////
 	ctx->player.asset = &MARIO_ASSET;
 	ctx->player.id = ctx->player.asset->baseAsset.id;
-	ctx->player.currMapPos.x = 32;
+	ctx->player.currMapPos.x = 80;
 	ctx->player.currMapPos.y = ctx->map.floorYLevel;
 	ctx->player.prevMapPos = ctx->player.currMapPos;
 	ctx->player.vx = 0.0f;
@@ -378,13 +378,13 @@ int RENDER_FirstRender(const GameContext_t* ctx)
 
 	LCD_WriteVertScrollStartAddr(ctx->map.LCDOffsetX);
 
+	//sanity check
+	if (ctx->map.floorYLevel < 0 || ctx->map.floorYLevel > 200) { return -10; }
+
 	RENDER_RenderFloor(&ctx->bgRepObjects[ctx->floorIndex]);
 
 	for (int i = 0; i < LCD_WIDTH/20; i++)
 	{
-		//sanity check
-		if (ctx->map.floorYLevel < 0 || ctx->map.floorYLevel > 200) { return -10; }
-
 		Rect_t mapRect;
 		mapRect.p1.x = i * 20;
 		mapRect.p1.y = ctx->map.floorYLevel;
@@ -510,7 +510,7 @@ int RENDER_RenderObjects(GameContext_t* ctx)
 		if (commonRect.p1.x <= commonRect.p2.x && commonRect.p1.y <= commonRect.p2.y)
 		{
 			ctx->dirtyRects[dirtyRectIndex].rect = commonRect;
-			ctx->dirtyRects[dirtyRectIndex].objects[ctx->dirtyRects[dirtyRectIndex].objectsSize++] = ctx->enemies.enemiesArr[i].id;
+			ctx->dirtyRects[dirtyRectIndex].objects[ctx->dirtyRects[dirtyRectIndex].objectsSize++] = (ObjectRef_t){ .id = ctx->enemies.enemiesArr[i].id, .index = i };
 			dirtyRectIndex++;
 		}
 	}
@@ -531,7 +531,7 @@ int RENDER_RenderObjects(GameContext_t* ctx)
 		if (commonRect.p1.x <= commonRect.p2.x && commonRect.p1.y <= commonRect.p2.y)
 		{
 			ctx->dirtyRects[dirtyRectIndex].rect = commonRect;
-			ctx->dirtyRects[dirtyRectIndex].objects[ctx->dirtyRects[dirtyRectIndex].objectsSize++] = ctx->player.id;
+			ctx->dirtyRects[dirtyRectIndex].objects[ctx->dirtyRects[dirtyRectIndex].objectsSize++] = (ObjectRef_t){ .id = ctx->player.id, .index = 0 };
 			dirtyRectIndex++;
 		}
 	}
@@ -595,74 +595,78 @@ int RENDER_RenderObjects(GameContext_t* ctx)
 		RE_FillBackgroud(LCD_COLOR_BLUESKY, baseRectArea);
 
 		// BACKGROUND SPRITES
-		int elementSize = sizeof(SpritePos_t);
-		if (elementSize > 0)
+		for (int j = 0; j < ctx->activebgObjects; j++)
 		{
-			int numOfSprites = sizeof(MapSpriteLoc)/elementSize;
-			for (int i = 0; i < numOfSprites; i++)
-			{
-				SpritePos_t spritePos = MapSpriteLoc[i];
-				switch (spritePos.spriteID)
-				{
-				case JEDYNKA_SPRITE_ID:
-				{
-					Map_RenderBgdSprite(&p->jedynkaSprite, spritePos, dirtyRect->rect, screenRect, p->LCDOffsetX, false, false);
-					break;
-				}
-				case DWOJKA_SPRITE_ID:
-				{
-					Map_RenderBgdSprite(&p->dwojkaSprite, spritePos, dirtyRect->rect, screenRect, p->LCDOffsetX, false, false);
-					break;
-				}
-				case CHMURKA_SPRITE_ID:
-				{
-					Map_RenderBgdSprite(&p->chmurkaSprite, spritePos, dirtyRect->rect, screenRect, p->LCDOffsetX, false, false);
-					break;
-				}
-				}
-			}
+			Point_t spritePos = ctx->bgObjects[j].mapPos;
+			RENDER_RenderBgdSprite(&ctx->bgObjects[j].asset->baseAsset.sprite, spritePos, dirtyRect->rect, screenRect, ctx->map.LCDOffsetX, false, false);
 		}
 
-		for (int j = 0; j < NUM_OF_OBJ_IDS; j++)
-		{
-			int currentPrioObject = ObjPriorities[j];
+		const int* prioArray = NULL;
+		int numOfPriorities = 0;
+		ret = LEVEL_GetObjRenderPriorities(&prioArray, &numOfPriorities);
+		if (ret < 0) { return -5; }
 
-			for (int k = 0; k < dirtyRect->objIDIndex; k++)
+		for (int j = 0; j < numOfPriorities; j++)
+		{
+			int currentPrioObject = prioArray[j];
+
+			for (int k = 0; k < dirtyRect->objectsSize; k++)
 			{
-				int objID = dirtyRect->objID[k].objID;
-				if (objID != currentPrioObject)
+				GameObjectID id = dirtyRect->objects[k].id;
+				if (id != currentPrioObject)
 				{
 					continue;
 				}
 
-				switch (objID)
+				switch (id)
 				{
-				case MARIO_OBJ_ID:
+				case PLAYER_MARIO_ID:
 				{
-					Map_RenderMario(p->currCameraPos, dirtyRect->rect, screenRect, p->LCDOffsetX);
-					break;
-				}
-				case GOOMBA_OBJ_ID:
-				{
-					Goomba_t* goomba = NULL;
-					int ret = Enemies_GetGoomba(pEnemies, dirtyRect->objID[k].objIndex, &goomba);
-					if (ret < 0)	{ break; }
+					Rect_t posRect;
+					posRect.p1.x = ctx->player.currMapPos.x;
+					posRect.p1.y = ctx->player.currMapPos.y;
+					posRect.p2.x = ctx->player.currMapPos.x + ctx->player.asset->baseAsset.sprite.size.x;
+					posRect.p2.y = ctx->player.currMapPos.y + ctx->player.asset->baseAsset.sprite.size.y;
 
-					Map_RenderGoomba(goomba, p->currCameraPos, dirtyRect->rect, screenRect, p->LCDOffsetX);
+					Rect_t commonRect;
+					commonRect.p1.x = max(dirtyRect->rect.p1.x, posRect.p1.x);
+					commonRect.p1.y = max(dirtyRect->rect.p1.y, posRect.p1.y);
+					commonRect.p2.x = min(dirtyRect->rect.p2.x, posRect.p2.x);
+					commonRect.p2.y = min(dirtyRect->rect.p2.y, posRect.p2.y);
+
+					// czesc wspolna istnieje
+					if (commonRect.p1.x <= commonRect.p2.x && commonRect.p1.y <= commonRect.p2.y)
+					{
+						SpriteRender_t renderContext;
+						renderContext.commonRect = commonRect;
+						renderContext.baseRect = screenRect;
+						renderContext.baseToSpriteOffset.x = ctx->player.currMapPos.x - dirtyRect->rect.p1.x;
+						renderContext.baseToSpriteOffset.y = ctx->player.currMapPos.y - dirtyRect->rect.p1.y;
+						renderContext.LCDOffsetX = ctx->map.LCDOffsetX;
+
+						RE_FillSprite3(&ctx->player.asset->baseAsset.sprite, renderContext);
+					}
 					break;
 				}
+//				case GOOMBA_OBJ_ID:
+//				{
+//					Goomba_t* goomba = NULL;
+//					int ret = Enemies_GetGoomba(pEnemies, dirtyRect->objID[k].objIndex, &goomba);
+//					if (ret < 0)	{ break; }
+//
+//					Map_RenderGoomba(goomba, p->currCameraPos, dirtyRect->rect, screenRect, p->LCDOffsetX);
+//					break;
+//				}
 				default:
 					break;
 				}
 			}
 		}
 
-		RE_SendRect(screenRect, p->LCDOffsetX);
+		RE_SendRect(screenRect, ctx->map.LCDOffsetX);
 	}
 
-
-
-
+	return 0;
 
 
 

@@ -266,8 +266,10 @@ int RE_FillSprite3(const Sprite_t* sprite, SpriteRender_t renderContext)
 	fbRect.p2.y = renderContext.baseRect.p2.y - renderContext.baseRect.p1.y;
 
 	RE_ResetFB();
-	const uint16_t (*s2d)[sprite->size.x] = (const uint16_t (*)[sprite->size.x])sprite->bitmap;
-	uint16_t (*fb)[fbRect.p2.x] = (uint16_t (*)[fbRect.p2.x])RE_GetFB();
+//	const uint16_t (*s2d)[sprite->size.x] = (const uint16_t (*)[sprite->size.x])sprite->bitmap;
+//	uint16_t (*fb)[fbRect.p2.x] = (uint16_t (*)[fbRect.p2.x])RE_GetFB();
+	const uint16_t (*s2d)[sprite->size.y] = (const uint16_t (*)[sprite->size.y])sprite->bitmap;
+	uint16_t (*fb)[fbRect.p2.y] = (uint16_t (*)[fbRect.p2.y])RE_GetFB();
 
 	Rect_t spriteFBRect;
 	spriteFBRect.p1.x = 0;
@@ -291,20 +293,35 @@ int RE_FillSprite3(const Sprite_t* sprite, SpriteRender_t renderContext)
 
 		int endY = CalcRectYLen(renderContext.commonRect);
 		int endX = CalcRectXLen(renderContext.commonRect);
-		for (int i = 0; i < endY; i++)
+		for (int i = 0; i < endX; i++)
 		{
-			for (int j = 0; j < endX; j++)
+			for (int j = 0; j < endY; j++)
 			{
-				int spriteIndY = i + spriteStartOffsetY;
-				int spriteIndX = j + spriteStartOffsetX;
-				int fbIndY = i + fbStartOffsetY;
-				int fbIndX = j + fbStartOffsetX;
-				if (s2d[spriteIndY][spriteIndX] != LCD_TRANSPARENT_COLOR)
+				int spriteIndY = j + spriteStartOffsetY;
+				int spriteIndX = i + spriteStartOffsetX;
+				int fbIndY = j + fbStartOffsetY;
+				int fbIndX = i + fbStartOffsetX;
+				if (s2d[spriteIndX][spriteIndY] != LCD_TRANSPARENT_COLOR)
 				{
-					fb[fbIndY][fbIndX] = s2d[spriteIndY][spriteIndX];
+					fb[fbIndX][fbIndY] = s2d[spriteIndX][spriteIndY];
 				}
 			}
 		}
+
+//		for (int i = 0; i < endY; i++)
+//		{
+//			for (int j = 0; j < endX; j++)
+//			{
+//				int spriteIndY = i + spriteStartOffsetY;
+//				int spriteIndX = j + spriteStartOffsetX;
+//				int fbIndY = i + fbStartOffsetY;
+//				int fbIndX = j + fbStartOffsetX;
+//				if (s2d[spriteIndY][spriteIndX] != LCD_TRANSPARENT_COLOR)
+//				{
+//					fb[fbIndY][fbIndX] = s2d[spriteIndY][spriteIndX];
+//				}
+//			}
+//		}
 	}
 
 	return 0;

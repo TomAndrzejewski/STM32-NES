@@ -23,6 +23,15 @@
 // - Assets.c
 // - Settings.c
 
+// Systems V2:
+//├── INPUT
+//├── PLAYER
+//├── ENEMIES
+//├── PHYSICS
+//├── WORLD
+//├── CAMERA
+//└── RENDER
+
 #define ENEMY_ID_START					(0x00000001)
 #define ENEMY_ID_END					(0x00000FFF)
 
@@ -183,16 +192,16 @@ typedef struct
 
 typedef struct
 {
-	int id;
+	GameObjectID id;
 	int index;
 
-}ObjectID_t;
+}ObjectRef_t;
 
 typedef struct
 {
 	Rect_t 			rect;
 	int				objectsSize;
-	GameObjectID	objects[DIRTY_RECTS_OBJ_ID_SIZE];
+	ObjectRef_t		objects[DIRTY_RECTS_OBJ_ID_SIZE];
 	int				used;
 
 }DirtyRect_t;

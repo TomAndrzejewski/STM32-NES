@@ -50,7 +50,7 @@ void DMA2_Stream3_IRQHandler(void)
         dma_done = true;
 
         dma_transferTime = CalcTimeUS(dma_startTimestamp);
-        printf_uint(dma_transferTime); printf_c('\t');
+//        printf_uint(dma_transferTime); printf_c('\t');
     }
 }
 
@@ -361,7 +361,7 @@ void LCD_WriteVertScrollStartAddr(uint16_t startAddr)
 void LCD_WriteDisplayMADCTL()
 {
 //	uint8_t madctl = 0b11100000;//tu ladnie renderowal sie mario
-	uint8_t madctl = (uint8_t)0b11100000;
+	uint8_t madctl = (uint8_t)0b11000000;
 	printf_v("LCD LCD_WriteDisplayMADCTL Start\n");
 	SPI1_SendCmd_U8(LCD_MADCTL);
 	SPI1_SendData_U8(madctl);
@@ -418,7 +418,8 @@ int LCD_SetRectToDraw(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
 	uint8_t lsb = 0;
 
 
-	SPI1_SendCmd_U8(LCD_CASET);
+//	SPI1_SendCmd_U8(LCD_CASET);
+	SPI1_SendCmd_U8(LCD_RASET);
 
 	msb = (uint8_t)(x >> 8);
 	lsb = (uint8_t)(x & 0xFF);
@@ -431,7 +432,8 @@ int LCD_SetRectToDraw(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
 	SPI1_SendData_U8(lsb);
 
 
-	SPI1_SendCmd_U8(LCD_RASET);
+//	SPI1_SendCmd_U8(LCD_RASET);
+	SPI1_SendCmd_U8(LCD_CASET);
 
 	msb = (uint8_t)(y >> 8);
 	lsb = (uint8_t)(y & 0xFF);
@@ -548,6 +550,7 @@ void LCD_DrawRect(Rect_t baseRect, int LCDOffsetX)
 	uint16_t x = lcdRect.p1.x;
 	uint16_t y = lcdRect.p1.y;
 	uint16_t w = lcdRect.p2.x-lcdRect.p1.x;
+//	uint16_t w = baseRect.p2.x - baseRect.p1.x;
 	uint16_t h = lcdRect.p2.y-lcdRect.p1.y;
 //	printf_v("SetRectToDraw: %d %d %d %d\n", x, y, w, h);
 	int ret = LCD_SetRectToDraw(x, y, w, h);
