@@ -11,6 +11,11 @@
 #include "Game_Types.h"
 
 ///////////////////
+// PLAYER
+///////////////////
+extern const PlayerAsset_t MARIO_ASSET;
+
+///////////////////
 // BACKGROUND
 ///////////////////
 extern const BackgroundAsset_t JEDYNKA_ASSET;

@@ -338,20 +338,40 @@ int main(void)
 
 	RENDER_FirstRender(pGameCtx);
 
+	u32 timeSpentInLoopUS = 0;
+	u32 targetFrameTimeUS = 1000000/TARGET_FRAMERATE_HZ;
+
 	while(1)
 	{
-		uint32_t buttons_state = GetButtonsState();
+		if (timeSpentInLoopUS < targetFrameTimeUS)
+		{
+			u32 timeToDelayUS = targetFrameTimeUS - timeSpentInLoopUS;
+			delayUS(timeToDelayUS);
+		}
 
-		ret = INPUT_SetButtonsState(&pGameCtx->input, buttons_state);
-		if (ret < 0)	{ delay(1); continue; }
+		u32 startLoopTime = GetTimestamp();
+		{
+			uint32_t buttons_state = GetButtonsState();
 
-		ret = PHYSICS_Player_Movement(pGameCtx);
-		if (ret < 0)	{ delay(1); continue; }
+			ret = INPUT_SetButtonsState(&pGameCtx->input, buttons_state);
+			if (ret < 0)	{ delay(1); continue; }
 
-		ret = PHYSICS_Player_CalcMapPos(pGameCtx);
-		if (ret < 0)	{ delay(1); continue; }
+			ret = INPUT_SetFrameTimeUS(&pGameCtx->frameData, targetFrameTimeUS);
+			if (ret < 0)	{ delay(1); continue; }
 
+			ret = PHYSICS_Player_Movement(pGameCtx);
+			if (ret < 0)	{ delay(1); continue; }
 
+			ret = PHYSICS_Player_CalcMapPos(pGameCtx);
+			if (ret < 0)	{ delay(1); continue; }
+
+			ret = CAMERA_CalcPos(pGameCtx);
+			if (ret < 0)	{ delay(1); continue; }
+
+			ret = REDNER_ScrollRender(pGameCtx);
+			if (ret < 0)	{ delay(1); continue; }
+		}
+		timeSpentInLoopUS = CalcTimeUS(startLoopTime);
 	}
 
     /* Loop forever */

@@ -8,7 +8,12 @@
 #ifndef SOURCES_INC_GAME_DEFS_H_
 #define SOURCES_INC_GAME_DEFS_H_
 
+///////////////////////////////////////////////////////////////////
+#define TARGET_FRAMERATE_HZ				(60)
 
+#define SUBPIXEL_RESOLUTION				(16)
+
+///////////////////////////////////////////////////////////////////
 #define ENEMIES_MAX_SIZE				(64)
 
 #define BACKGROUND_OBJECTS_MAX_SIZE		(64)
@@ -16,6 +21,10 @@
 #define FOREGROUND_OBJECTS_MAX_SIZE		(64)
 
 #define BACKGROUND_REP_OBJECTS_MAX_SIZE	(8)
+
+///////////////////////////////////////////////////////////////////
+#define DIRTY_RECTS_SIZE				(16)
+#define DIRTY_RECTS_OBJ_ID_SIZE			(16)
 
 
 #endif /* SOURCES_INC_GAME_DEFS_H_ */

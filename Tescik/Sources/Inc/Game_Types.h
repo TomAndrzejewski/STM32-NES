@@ -35,6 +35,9 @@
 #define BACKGROUND_REP_OBJECT_ID_START	(0x00003000)
 #define FOREGROUND_REP_OBJECT_ID_END	(0x00003FFF)
 
+#define PLAYER_ID_START					(0x00004000)
+#define PLAYER_ID_END					(0x00004FFF)
+
 typedef enum
 {
 	OBJECT_NOT_USED = -1,
@@ -49,6 +52,8 @@ typedef enum
 	FG_CEGLY_OBJECT_ID,
 
 	BG_REP_FLOOR_ID = BACKGROUND_REP_OBJECT_ID_START,
+
+	PLAYER_MARIO_ID = PLAYER_ID_START,
 
 }GameObjectID;
 
@@ -84,6 +89,16 @@ typedef struct
 
 typedef struct
 {
+	GameAsset_t baseAsset;
+
+	Rect_t BBox; // p1 - offset from (0,0) in sprite, p2 - length
+
+}PlayerAsset_t;
+
+typedef struct
+{
+	GameObjectID id;
+
 	Point_t		currMapPos;
 	Point_t		prevMapPos;
 
@@ -92,6 +107,8 @@ typedef struct
 
 	float		vx;	// 0:1, 1 = 16 pixels in a second
 	float		vy;
+
+	const PlayerAsset_t* asset;
 
 }PlayerState_t;
 
@@ -139,12 +156,17 @@ typedef struct
 
 typedef struct
 {
-	Point_t prevCameraPos;
-	Point_t currCameraPos;
 	int LCDOffsetX;
 	int floorYLevel;
 
 }MapState_t;
+
+typedef struct
+{
+	Point_t prevPos;
+	Point_t currPos;
+
+}CameraState_t;
 
 typedef struct
 {
@@ -161,13 +183,36 @@ typedef struct
 
 typedef struct
 {
+	int id;
+	int index;
+
+}ObjectID_t;
+
+typedef struct
+{
+	Rect_t 			rect;
+	int				objectsSize;
+	GameObjectID	objects[DIRTY_RECTS_OBJ_ID_SIZE];
+	int				used;
+
+}DirtyRect_t;
+
+typedef struct
+{
+	int activeEnemies;
+	EnemyState_t enemiesArr[ENEMIES_MAX_SIZE];
+
+}Enemies_t;
+
+typedef struct
+{
 	// Player position
 	// Player physics
 	PlayerState_t player;
 
 	// Enemies position
 	// Enemies physics
-	EnemyState_t enemies[ENEMIES_MAX_SIZE];
+	Enemies_t enemies;
 
 	// Current visible world
 	// Visible background objects
@@ -184,6 +229,7 @@ typedef struct
 	int floorIndex;
 
 	MapState_t map;
+	CameraState_t camera;
 
 	InputState_t input;
 
@@ -191,6 +237,7 @@ typedef struct
 	// Game machine state enum
 
 	// Renderer data
+	DirtyRect_t	dirtyRects[DIRTY_RECTS_SIZE] __attribute__((aligned(4)));
 
 
 }GameContext_t;

@@ -22,11 +22,11 @@ typedef struct
 {
 	Goomba_t	goombas[NUM_OF_GOOMBAS];
 
-}Enemies_t;
+}Enemies2_t;
 
 
-int 		Enemies_Init(Enemies_t* p);
+int 		Enemies_Init(Enemies2_t* p);
 
-int 		Enemies_GetGoomba(Enemies_t* p, int idx, Goomba_t** goomba);
+int 		Enemies_GetGoomba(Enemies2_t* p, int idx, Goomba_t** goomba);
 
 #endif /* SOURCES_INC_ENEMIES_H_ */

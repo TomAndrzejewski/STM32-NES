@@ -74,21 +74,21 @@ static const int ObjPriorities[NUM_OF_OBJ_IDS] = {
 		MARIO_OBJ_ID,
 };
 
-typedef struct
-{
-	int objID;
-	int objIndex;
-
-}ObjectID_t;
-
-typedef struct
-{
-	Rect_t 		rect;
-	int			objIDIndex;
-	ObjectID_t	objID[DIRTY_RECTS_OBJ_ID_SIZE];
-	int			used;
-
-}DirtyRect_t;
+//typedef struct
+//{
+//	int objID;
+//	int objIndex;
+//
+//}ObjectID_t;
+//
+//typedef struct
+//{
+//	Rect_t 		rect;
+//	int			objIDIndex;
+//	ObjectID_t	objID[DIRTY_RECTS_OBJ_ID_SIZE];
+//	int			used;
+//
+//}DirtyRect_t;
 
 typedef struct
 {
@@ -107,7 +107,7 @@ typedef struct
 	Sprite_t 	dwojkaSprite;
 	Sprite_t 	chmurkaSprite;
 
-	DirtyRect_t	dirtyRects[DIRTY_RECTS_SIZE] __attribute__((aligned(4)));
+//	DirtyRect_t	dirtyRects[DIRTY_RECTS_SIZE] __attribute__((aligned(4)));
 
 }Map_t;
 

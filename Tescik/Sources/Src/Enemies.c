@@ -10,7 +10,7 @@
 #include "Enemies.h"
 
 
-int Enemies_Init(Enemies_t* p)
+int Enemies_Init(Enemies2_t* p)
 {
 	if (p == NULL)	{ return -1; }
 
@@ -23,7 +23,7 @@ int Enemies_Init(Enemies_t* p)
 	return 0;
 }
 
-int Enemies_GetGoomba(Enemies_t* p, int idx, Goomba_t** goomba)
+int Enemies_GetGoomba(Enemies2_t* p, int idx, Goomba_t** goomba)
 {
 	if (p == NULL || goomba == NULL)	{ return -1; }
 	if (idx < 0 || idx >= NUM_OF_GOOMBAS)	{ return -5; }
