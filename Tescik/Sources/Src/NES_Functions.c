@@ -91,6 +91,16 @@ int CalcRectArea(Rect_t rect)
 	return area;
 }
 
+int CalcRectArea2(const Rect_t* rect)
+{
+	if (rect == NULL) { return 0; }
+
+	int a = abs(rect->p1.x - rect->p2.x) + 1;
+	int b = abs(rect->p1.y - rect->p2.y) + 1;
+	int area = a*b;
+	return area;
+}
+
 int CalcRectXLen(Rect_t rect)
 {
 	int a = abs(rect.p1.x - rect.p2.x);

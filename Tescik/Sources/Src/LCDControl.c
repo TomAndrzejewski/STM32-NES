@@ -528,24 +528,24 @@ void LCD_DrawRect(Rect_t baseRect, int LCDOffsetX)
 //	printf_v("LCD LCD_DrawMario Start\n");
 
 	Rect_t lcdRect = baseRect;
-	if (lcdRect.p2.x > lcdRect.p1.x)
-	{
-		baseRect.p2.x--;
-	}
-	if (lcdRect.p2.y > lcdRect.p1.y)
-	{
-		lcdRect.p2.y--;
-	}
+//	if (lcdRect.p2.x > lcdRect.p1.x)
+//	{
+//		baseRect.p2.x--;
+//	}
+//	if (lcdRect.p2.y > lcdRect.p1.y)
+//	{
+//		lcdRect.p2.y--;
+//	}
 	lcdRect.p1.x = (baseRect.p1.x + (LCD_WIDTH - LCDOffsetX)) % LCD_WIDTH;
 	lcdRect.p2.x = (baseRect.p2.x + (LCD_WIDTH - LCDOffsetX)) % LCD_WIDTH;
 	if (lcdRect.p1.x < 0 ||  lcdRect.p2.x < 0)
 	{
 		delay(1);
 	}
-	if (lcdRect.p1.x == lcdRect.p2.x + 1)
-	{
-		lcdRect.p2.x++;
-	}
+//	if (lcdRect.p1.x == lcdRect.p2.x + 1)
+//	{
+//		lcdRect.p2.x++;
+//	}
 
 	uint16_t x = lcdRect.p1.x;
 	uint16_t y = lcdRect.p1.y;

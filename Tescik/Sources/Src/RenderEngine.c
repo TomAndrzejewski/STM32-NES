@@ -61,6 +61,33 @@ int RE_SendFB(int pixelsToSend)
 	return 0;
 }
 
+int RE_SendFB_withOffset(int pixelsToSend, int pixelsOffset, bool exchangeFramebuffers)
+{
+	if (pixelsToSend <= 0 || pixelsOffset > FRAMEBUFFER_NUMOF_PIXELS)
+	{
+		return -1;
+	}
+
+	DMA2_SPI1_Send_NoBlock(_FB + pixelsOffset*BYTES_PER_PIXEL, pixelsToSend*BYTES_PER_PIXEL);
+
+	if (exchangeFramebuffers)
+	{
+		if (_CurrFB == FB_0)
+		{
+			_FB = _Framebuffer1;
+			_CurrFB = FB_1;
+		}
+		else
+		{
+			_FB = _Framebuffer0;
+			_CurrFB = FB_0;
+		}
+	}
+
+
+	return 0;
+}
+
 uint8_t* RE_GetFB()
 {
 	return _FB;
@@ -178,16 +205,62 @@ int RE_RenderMario(const uint16_t* sprite, Rect_t baseRect, Rect_t spriteRect, P
 	return 0;
 }
 
-int RE_SendRect(Rect_t baseRect, int LCDOffsetX)
+int RE_SendRect(Rect_t inputRect, int LCDOffsetX)
 {
-	int baseRectArea = CalcRectArea(baseRect);
-	LCD_DrawRect(baseRect, LCDOffsetX);
-
-	int ret = RE_SendFB(baseRectArea);
-	RE_ResetFB();
-	if (ret < 0)
+	Rect_t baseRect = inputRect;
+	// Translate to LCD coordinates
+	if (baseRect.p2.x > 0)
 	{
-		return -15;
+		baseRect.p2.x--;
+	}
+	if (baseRect.p2.y > 0)
+	{
+		baseRect.p2.y--;
+	}
+
+	if (baseRect.p1.x < LCDOffsetX && baseRect.p2.x >= LCDOffsetX)
+	{
+		// Draw two rectangles divided by vertical scroll
+
+		// left rectangle
+		Rect_t leftRect = baseRect;
+		leftRect.p2.x = LCDOffsetX - 1;
+
+		int leftRectArea = CalcRectArea2(&leftRect);
+		LCD_DrawRect(leftRect, LCDOffsetX);
+
+		int ret = RE_SendFB_withOffset(leftRectArea, 0, false);
+		if (ret < 0)
+		{
+			printf_v("\nRE_SendRect leftRect error: %d", ret);
+		}
+
+		// right rectangle
+		Rect_t rightRect = baseRect;
+		rightRect.p1.x = LCDOffsetX;
+
+		int rightRectArea = CalcRectArea2(&rightRect);
+		LCD_DrawRect(rightRect, LCDOffsetX);
+
+		ret = RE_SendFB_withOffset(rightRectArea, leftRectArea, true);
+		RE_ResetFB();
+		if (ret < 0)
+		{
+			printf_v("\nRE_SendRect rightRect error: %d", ret);
+		}
+	}
+	else
+	{
+		// Draw one rectangle
+		int baseRectArea = CalcRectArea2(&baseRect);
+		LCD_DrawRect(baseRect, LCDOffsetX);
+
+		int ret = RE_SendFB(baseRectArea);
+		RE_ResetFB();
+		if (ret < 0)
+		{
+			return -15;
+		}
 	}
 
 	return 0;
@@ -200,13 +273,11 @@ int RE_RenderSprite(const Sprite_t* sprite, SpriteRender_t renderContext, bool f
 		return -1;
 	}
 
-
 	RE_ResetFB();
 
 	int ret = 0;
 	int baseRectArea = CalcRectArea(renderContext.baseRect);
 
-	uint32_t startTime = GetTimestamp();
 	if (fillBG)
 	{
 		int ret = RE_FillBackgroud(LCD_COLOR_BLUESKY, baseRectArea);
@@ -215,33 +286,21 @@ int RE_RenderSprite(const Sprite_t* sprite, SpriteRender_t renderContext, bool f
 			return -10;
 		}
 	}
-	uint32_t elapsedUS = CalcTimeUS(startTime);
-	printf_uint(elapsedUS);
-	printf_c('\t');
 
-
-//	RE_FillSprite(sprite->bitmap, sprite->render.baseRect, movedSpriteRect, sprite->render.visiblePartRect);
-	startTime = GetTimestamp();
-//	RE_FillSprite2(sprite, renderContext.baseRect, renderContext.baseToSpriteOffset);
 	RE_FillSprite3(sprite, renderContext);
-	elapsedUS = CalcTimeUS(startTime);
-	printf_uint(elapsedUS);
-	printf_c('\n');
 
-//	startTime = GetTimestamp();
-//	Rect_t lcdRect = renderContext.baseRect;
-//	lcdRect.p1.x = (renderContext.baseRect.p1.x + renderContext.LCDOffsetX) % LCD_WIDTH;
-//	lcdRect.p2.x = (renderContext.baseRect.p2.x + renderContext.LCDOffsetX) % LCD_WIDTH;
+	// Translate to LCD coordinates
+	if (renderContext.baseRect.p2.x > 0)
+	{
+		renderContext.baseRect.p2.x--;
+	}
+	if (renderContext.baseRect.p2.y > 0)
+	{
+		renderContext.baseRect.p2.y--;
+	}
 	LCD_DrawRect(renderContext.baseRect, renderContext.LCDOffsetX);
-//	elapsedUS = CalcTimeUS(startTime);
-//	printf_uint(elapsedUS);
-//	printf_c('\t');
 
-//	startTime = GetTimestamp();
 	ret = RE_SendFB(baseRectArea);
-//	elapsedUS = CalcTimeUS(startTime);
-//	printf_uint(elapsedUS);
-//	printf_c('\t');
 	RE_ResetFB();
 	if (ret < 0)
 	{

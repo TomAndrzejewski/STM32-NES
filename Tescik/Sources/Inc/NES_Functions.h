@@ -21,6 +21,7 @@ uint32_t CalcTimeMS(uint32_t startTime);
 void fast_memset(void *dest, uint32_t value, size_t bytes);
 
 int CalcRectArea(Rect_t rect);
+int CalcRectArea2(const Rect_t* rect);
 int CalcRectXLen(Rect_t rect);
 int CalcRectYLen(Rect_t rect);
 

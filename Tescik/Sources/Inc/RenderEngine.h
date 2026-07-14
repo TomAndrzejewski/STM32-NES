@@ -36,8 +36,9 @@
 void 		RE_Init();
 void 		RE_ResetFB();
 uint8_t* 	RE_GetFB();
-int 		RE_SendFB();
-int 		RE_SendRect(Rect_t baseRect, int LCDOffsetX);
+int 		RE_SendFB(int pixelsToSend);
+int 		RE_SendFB_withOffset(int pixelsToSend, int pixelsOffset, bool exchangeFramebuffers);
+int 		RE_SendRect(Rect_t inputRect, int LCDOffsetX);
 
 int 		RE_FillPixel(uint16_t pixel);
 int 		RE_OmmitPixel();

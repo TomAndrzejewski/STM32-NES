@@ -28,7 +28,8 @@ const ObjectLevelPos_t BGObjectsLevelPosition[] = {
 	    { .id = BG_CHMURKA_OBJECT_ID, 	.x = 96,	.y = 128 },
 	    { .id = BG_CHMURKA_OBJECT_ID, 	.x = 176,	.y = 96 },
 	    { .id = BG_JEDYNKA_OBJECT_ID, 	.x = 272,	.y = 80 },
-	    { .id = BG_JEDYNKA_OBJECT_ID, 	.x = 64,	.y = 32 }
+	    { .id = BG_JEDYNKA_OBJECT_ID, 	.x = 64,	.y = 32 },
+	    { .id = BG_CHMURKA_OBJECT_ID,	.x = 800,	.y = 208 },
 };
 
 
