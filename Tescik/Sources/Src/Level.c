@@ -20,6 +20,10 @@ const Rect_t LevelBoundaries = {
 		.p2.y = 240
 };
 
+const ObjectLevelPos_t FGObjectsLevelPosition[] = {
+		{ .id = FG_BRICKS_OBJECT_ID,		.x = 240,	.y = 80 },
+};
+
 const ObjectLevelPos_t BGObjectsLevelPosition[] = {
 	    { .id = BG_DWOJKA_OBJECT_ID,	.x = 96,	.y = 208 },
 	    { .id = BG_CHMURKA_OBJECT_ID,	.x = 192,	.y = 208 },
@@ -34,7 +38,29 @@ const ObjectLevelPos_t BGObjectsLevelPosition[] = {
 
 
 const ObjectLevelPos_t EnemiesLevelPosition[] = {
-	    { .id = ENEMY_GOOMBA_ID,		.x = 40,	.y = 40 },
+	    { .id = ENEMY_GOOMBA_ID,		.x = 0,	.y = 40 },
+		{ .id = ENEMY_GOOMBA_ID,		.x = 30,	.y = 40 },
+		{ .id = ENEMY_GOOMBA_ID,		.x = 60,	.y = 40 },
+		{ .id = ENEMY_GOOMBA_ID,		.x = 90,	.y = 40 },
+		{ .id = ENEMY_GOOMBA_ID,		.x = 120,	.y = 40 },
+		{ .id = ENEMY_GOOMBA_ID,		.x = 150,	.y = 40 },
+		{ .id = ENEMY_GOOMBA_ID,		.x = 180,	.y = 40 },
+		{ .id = ENEMY_GOOMBA_ID,		.x = 210,	.y = 40 },
+		{ .id = ENEMY_GOOMBA_ID,		.x = 240,	.y = 40 },
+		{ .id = ENEMY_GOOMBA_ID,		.x = 270,	.y = 40 },
+		{ .id = ENEMY_GOOMBA_ID,		.x = 300,	.y = 40 },
+		{ .id = ENEMY_GOOMBA_ID,		.x = 330,	.y = 40 },
+		{ .id = ENEMY_GOOMBA_ID,		.x = 360,	.y = 40 },
+		{ .id = ENEMY_GOOMBA_ID,		.x = 390,	.y = 40 },
+		{ .id = ENEMY_GOOMBA_ID,		.x = 420,	.y = 40 },
+		{ .id = ENEMY_GOOMBA_ID,		.x = 450,	.y = 40 },
+		{ .id = ENEMY_GOOMBA_ID,		.x = 480,	.y = 40 },
+		{ .id = ENEMY_GOOMBA_ID,		.x = 510,	.y = 40 },
+		{ .id = ENEMY_GOOMBA_ID,		.x = 540,	.y = 40 },
+		{ .id = ENEMY_GOOMBA_ID,		.x = 570,	.y = 40 },
+		{ .id = ENEMY_GOOMBA_ID,		.x = 600,	.y = 40 },
+		{ .id = ENEMY_GOOMBA_ID,		.x = 630,	.y = 40 },
+		{ .id = ENEMY_GOOMBA_ID,		.x = 660,	.y = 40 },
 };
 
 const RepObjectLevelPos_t BGRepObjectsLevelPosition[] = {
@@ -43,10 +69,30 @@ const RepObjectLevelPos_t BGRepObjectsLevelPosition[] = {
 
 // look at line numbers, lower line number -> higher priority
 const int ObjRenderPriorities[] = {
+		FG_BRICKS_OBJECT_ID,
 		ENEMY_GOOMBA_ID,
 		PLAYER_MARIO_ID,
 };
 
+int LEVEL_GetFGObjectsLocations(const ObjectLevelPos_t** posTable, int* numOfObjects)
+{
+	if (posTable == NULL || numOfObjects == NULL)
+	{
+		return -1;
+	}
+
+	int elementSize = sizeof(ObjectLevelPos_t);
+	if (elementSize > 0)
+	{
+		*numOfObjects = sizeof(FGObjectsLevelPosition)/elementSize;
+		*posTable = FGObjectsLevelPosition;
+		return 0;
+	}
+	else
+	{
+		return -5;
+	}
+}
 
 int LEVEL_GetBGObjectsLocations(const ObjectLevelPos_t** posTable, int* numOfObjects)
 {

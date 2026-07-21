@@ -16,6 +16,11 @@
 extern const PlayerAsset_t MARIO_ASSET;
 
 ///////////////////
+// FOREGROUND
+///////////////////
+extern const ForegroundAsset_t BRICKS_ASSET;
+
+///////////////////
 // BACKGROUND
 ///////////////////
 extern const BackgroundAsset_t JEDYNKA_ASSET;

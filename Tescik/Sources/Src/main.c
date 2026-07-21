@@ -336,7 +336,7 @@ int main(void)
 
 	GAME_InitContext(pGameCtx);
 
-	RENDER_FirstRender(pGameCtx);
+	RENDERER_FirstRender(pGameCtx);
 
 	u32 timeSpentInLoopUS = 0;
 	u32 targetFrameTimeUS = 1000000/TARGET_FRAMERATE_HZ;
@@ -351,27 +351,25 @@ int main(void)
 
 		u32 startLoopTime = GetTimestamp();
 		{
-			uint32_t buttons_state = GetButtonsState();
-
-			ret = INPUT_SetButtonsState(&pGameCtx->input, buttons_state);
+			ret = INPUT_Update(&pGameCtx->input, pGameCtx, targetFrameTimeUS);
 			if (ret < 0)	{ delay(1); continue; }
 
-			ret = INPUT_SetFrameTimeUS(&pGameCtx->frameData, targetFrameTimeUS);
+			ret = CAMERA_Update(&pGameCtx->camera, pGameCtx);
 			if (ret < 0)	{ delay(1); continue; }
 
-			ret = PHYSICS_Player_Movement(pGameCtx);
+			ret = ENEMIES_UpdateFlags(&pGameCtx->enemies, pGameCtx);
 			if (ret < 0)	{ delay(1); continue; }
 
-			ret = PHYSICS_Player_CalcMapPos(pGameCtx);
+			ret = PHYSICS_Update(pGameCtx);
 			if (ret < 0)	{ delay(1); continue; }
 
-			ret = CAMERA_CalcPos(pGameCtx);
+			ret = PLAYER_ClearFlags(&pGameCtx->player);
 			if (ret < 0)	{ delay(1); continue; }
 
-			ret = REDNER_ScrollRender(pGameCtx);
+			ret = COLLISION_Update(pGameCtx);
 			if (ret < 0)	{ delay(1); continue; }
 
-			ret = RENDER_RenderObjects(pGameCtx);
+			ret = RENDERER_Update(pGameCtx);
 			if (ret < 0)	{ delay(1); continue; }
 		}
 		timeSpentInLoopUS = CalcTimeUS(startLoopTime);

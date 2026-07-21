@@ -8,6 +8,8 @@
 #ifndef SOURCES_INC_NES_FUNCTIONS_H_
 #define SOURCES_INC_NES_FUNCTIONS_H_
 
+#include <stdbool.h>
+
 #include "NES_Defs.h"
 #include "NES_Types.h"
 
@@ -27,6 +29,10 @@ int CalcRectYLen(Rect_t rect);
 
 int Point_Move(Point_t* src, Point_t* moveVector);
 
+void	Rect_GetIntersection(const Rect_t *r1, const Rect_t *r2, Rect_t *result);
+bool 	Rect_IsIntersection(const Rect_t* commonRect);
+void	Rect_GetUnion(const Rect_t *r1, const Rect_t *r2, Rect_t *result);
+int		Rect_Intersect_AND(Rect_t* a, Rect_t* b);
 
 
 #endif /* SOURCES_INC_NES_FUNCTIONS_H_ */

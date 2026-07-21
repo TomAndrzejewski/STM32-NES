@@ -97,3 +97,10 @@ target_compile_options(${PROJECT_NAME} PRIVATE
     $<$<CONFIG:Debug>:-O0 -g3>
     $<$<CONFIG:Release>:-O2>
 )
+
+# .list files with assembly
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_OBJCOPY} -O ihex $<TARGET_FILE:${PROJECT_NAME}> $<TARGET_FILE_DIR:${PROJECT_NAME}>/${PROJECT_NAME}.hex
+    COMMAND ${CMAKE_OBJDUMP} -h -S $<TARGET_FILE:${PROJECT_NAME}> > $<TARGET_FILE_DIR:${PROJECT_NAME}>/${PROJECT_NAME}.list
+    COMMENT "Generowanie pliku HEX oraz listingu ASM (.list) dla ${PROJECT_NAME}..."
+)

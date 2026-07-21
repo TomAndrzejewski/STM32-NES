@@ -8,6 +8,8 @@
 #ifndef SOURCES_INC_GAME_TYPES_H_
 #define SOURCES_INC_GAME_TYPES_H_
 
+#include <stdbool.h>
+
 #include "NES_Defs.h"
 #include "NES_Types.h"
 
@@ -28,6 +30,7 @@
 //├── PLAYER
 //├── ENEMIES
 //├── PHYSICS
+//├── COLLISION
 //├── WORLD
 //├── CAMERA
 //└── RENDER
@@ -58,7 +61,7 @@ typedef enum
 	BG_CHMURKA_OBJECT_ID,
 
 	FG_RURA_OBJECT_ID = FOREGROUND_OBJECT_ID_START,
-	FG_CEGLY_OBJECT_ID,
+	FG_BRICKS_OBJECT_ID,
 
 	BG_REP_FLOOR_ID = BACKGROUND_REP_OBJECT_ID_START,
 
@@ -106,18 +109,70 @@ typedef struct
 
 typedef struct
 {
-	GameObjectID id;
-
-	Point_t		currMapPos;
-	Point_t		prevMapPos;
-
 	float		subpixelX;
 	float		subpixelY;
 
 	float		vx;	// 0:1, 1 = 16 pixels in a second
 	float		vy;
 
+}Body_t;
+
+typedef struct
+{
+	GameObjectID id;
+	int index;
+
+}GameObjectRef_t;
+
+typedef enum
+{
+	PLAYER_BUMP_ENEMY,
+	PLAYER_BUMP_FG_OBJECT,
+	PLAYER_BUMP_FLOOR,
+
+}BumpID_t;
+
+typedef struct
+{
+	BumpID_t bumpID;
+	GameObjectRef_t actor1;
+	GameObjectRef_t actor2;
+	Rect_t bumpRect;
+
+}Bump_t;
+
+typedef struct
+{
+	int size;
+	Bump_t bumps[COLLISIONS_SIZE] __attribute__((aligned(4)));
+
+}CollState_t;
+
+typedef struct
+{
+	int size;
+	int bumps[COLLISION_CONTEXTS_SIZE];
+
+}CollContext_t;
+
+typedef struct
+{
+	GameObjectID id;
+
+	Point_t		currMapPos;
+	Point_t		prevMapPos;
+
+	Body_t body;
+
+	CollContext_t collCtx;
+
 	const PlayerAsset_t* asset;
+
+	int lifePoints;
+
+	bool IsImmune;
+	bool damageTaken;
+	bool IsGrounded;
 
 }PlayerState_t;
 
@@ -129,6 +184,9 @@ typedef struct
 	Point_t		prevMapPos;
 
 	const EnemyAsset_t* asset;
+
+	bool IsAlive;
+	bool IsOnScreen;
 
 }EnemyState_t;
 
@@ -150,6 +208,9 @@ typedef struct
 
 	const ForegroundAsset_t* asset;
 
+	bool IsAlive;
+	bool IsOnScreen;
+
 }ForegroundObject_t;
 
 typedef struct
@@ -165,7 +226,6 @@ typedef struct
 
 typedef struct
 {
-	int LCDOffsetX;
 	int floorYLevel;
 
 }MapState_t;
@@ -175,13 +235,9 @@ typedef struct
 	Point_t prevPos;
 	Point_t currPos;
 
+	Rect_t screenRect;
+
 }CameraState_t;
-
-typedef struct
-{
-	uint32_t buttons_state;
-
-}InputState_t;
 
 typedef struct
 {
@@ -189,6 +245,15 @@ typedef struct
 	float frameTimeS; // same as frameTimeUS only in float and in S
 
 }FrameData_t;
+
+typedef struct
+{
+	uint32_t buttons_state;
+	uint32_t prev_buttons_state;
+
+	FrameData_t frameData;
+
+}InputState_t;
 
 typedef struct
 {
@@ -209,9 +274,18 @@ typedef struct
 typedef struct
 {
 	int activeEnemies;
-	EnemyState_t enemiesArr[ENEMIES_MAX_SIZE];
+	EnemyState_t pool[ENEMIES_MAX_SIZE];
 
 }Enemies_t;
+
+typedef struct
+{
+	int LCDOffsetX;
+
+	DirtyRect_t	dirtyRects[DIRTY_RECTS_SIZE] __attribute__((aligned(4)));
+
+}RendererState_t;
+
 
 typedef struct
 {
@@ -242,12 +316,12 @@ typedef struct
 
 	InputState_t input;
 
-	FrameData_t frameData;
 	// Game machine state enum
 
 	// Renderer data
-	DirtyRect_t	dirtyRects[DIRTY_RECTS_SIZE] __attribute__((aligned(4)));
+	RendererState_t	renderer;
 
+	CollState_t coll;
 
 }GameContext_t;
 

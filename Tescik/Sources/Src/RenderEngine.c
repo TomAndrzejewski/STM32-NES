@@ -354,15 +354,20 @@ int RE_FillSprite3(const Sprite_t* sprite, SpriteRender_t renderContext)
 		int endX = CalcRectXLen(renderContext.commonRect);
 		for (int i = 0; i < endX; i++)
 		{
+			int spriteIndX = i + spriteStartOffsetX;
+			int fbIndX = i + fbStartOffsetX;
+
+			const uint16_t* srcColumn = s2d[spriteIndX];
+			uint16_t* destColumn = fb[fbIndX];
+
 			for (int j = 0; j < endY; j++)
 			{
 				int spriteIndY = j + spriteStartOffsetY;
-				int spriteIndX = i + spriteStartOffsetX;
 				int fbIndY = j + fbStartOffsetY;
-				int fbIndX = i + fbStartOffsetX;
-				if (s2d[spriteIndX][spriteIndY] != LCD_TRANSPARENT_COLOR)
+
+				if (srcColumn[spriteIndY] != LCD_TRANSPARENT_COLOR)
 				{
-					fb[fbIndX][fbIndY] = s2d[spriteIndX][spriteIndY];
+					destColumn[fbIndY] = srcColumn[spriteIndY];
 				}
 			}
 		}

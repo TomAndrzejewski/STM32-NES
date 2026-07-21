@@ -609,7 +609,7 @@ int Map_RenderObjects(Map_t* p)
 //		RE_SendRect(screenRect, p->LCDOffsetX);
 //	}
 //
-//	return 0;
+	return 0;
 }
 
 int Map_GetMarioDirtyRect(Rect_t cameraRect, Rect_t* dirtyMapRect)

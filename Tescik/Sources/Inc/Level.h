@@ -29,6 +29,9 @@ typedef struct
 
 }RepObjectLevelPos_t;
 
+
+int LEVEL_GetFGObjectsLocations(const ObjectLevelPos_t** posTable, int* numOfObjects);
+
 int LEVEL_GetBGObjectsLocations(const ObjectLevelPos_t** posTable, int* numOfObjects);
 
 int LEVEL_GetEnemiesLocations(const ObjectLevelPos_t** posTable, int* numOfObjects);

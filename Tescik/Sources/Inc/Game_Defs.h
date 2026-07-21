@@ -26,5 +26,7 @@
 #define DIRTY_RECTS_SIZE				(16)
 #define DIRTY_RECTS_OBJ_ID_SIZE			(16)
 
+#define COLLISIONS_SIZE					(128)
+#define COLLISION_CONTEXTS_SIZE			(8)
 
 #endif /* SOURCES_INC_GAME_DEFS_H_ */
