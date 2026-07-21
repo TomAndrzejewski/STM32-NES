@@ -22,6 +22,8 @@ const Rect_t LevelBoundaries = {
 
 const ObjectLevelPos_t FGObjectsLevelPosition[] = {
 		{ .id = FG_BRICKS_OBJECT_ID,		.x = 240,	.y = 80 },
+		{ .id = FG_BRICKS_OBJECT_ID,		.x = 256,	.y = 80 },
+		{ .id = FG_BRICKS_OBJECT_ID,		.x = 272,	.y = 80 },
 };
 
 const ObjectLevelPos_t BGObjectsLevelPosition[] = {

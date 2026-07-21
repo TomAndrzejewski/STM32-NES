@@ -105,12 +105,6 @@ int GAME_InitContext(GameContext_t* ctx)
 			continue;
 		}
 
-		ctx->fgObjects[i].id = FGObjectsPos[i].id;
-		ctx->fgObjects[i].mapPos.x = FGObjectsPos[i].x;
-		ctx->fgObjects[i].mapPos.y = FGObjectsPos[i].y;
-		ctx->fgObjects[i].IsAlive = true;
-		ctx->fgObjects[i].IsOnScreen = true;
-
 		switch (FGObjectsPos[i].id)
 		{
 		case FG_BRICKS_OBJECT_ID: {
@@ -120,6 +114,14 @@ int GAME_InitContext(GameContext_t* ctx)
 		default:
 			break;
 		}
+
+		ctx->fgObjects[i].id = FGObjectsPos[i].id;
+		ctx->fgObjects[i].mapPos.x = FGObjectsPos[i].x;
+		ctx->fgObjects[i].mapPos.y = FGObjectsPos[i].y;
+		ctx->fgObjects[i].BBoxCenter.x = FGObjectsPos[i].x + (ctx->fgObjects[i].asset->BBox.p1.x + ctx->fgObjects[i].asset->BBox.p2.x) / 2;
+		ctx->fgObjects[i].BBoxCenter.y = FGObjectsPos[i].y + (ctx->fgObjects[i].asset->BBox.p1.y + ctx->fgObjects[i].asset->BBox.p2.y) / 2;
+		ctx->fgObjects[i].IsAlive = true;
+		ctx->fgObjects[i].IsOnScreen = true;
 
 		ctx->activefgObjects++;
 	}
@@ -213,6 +215,8 @@ int GAME_InitContext(GameContext_t* ctx)
 	ctx->player.IsImmune = false;
 	ctx->player.damageTaken = false;
 	ctx->player.IsGrounded = true;
+	ctx->player.JustKilledFGObject = false;
+	ctx->player.playerLevel = PLAYER_LITTLE;
 
 	///////////////////
 	// ENEMIES
@@ -360,6 +364,7 @@ int	COLLISION_Calculate(CollState_t* coll, const GameContext_t* ctx)
 		if (!fgObject->IsOnScreen) {
 			continue;
 		}
+		if (!fgObject->IsAlive) { continue; }
 
 		Rect_t objRect;
 		objRect.p1.x = fgObject->mapPos.x + fgObject->asset->BBox.p1.x;
@@ -455,31 +460,101 @@ int COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t* obj, co
 {
 	if (player == NULL || obj == NULL || bump == NULL || ctx == NULL) { return -1; }
 
-	int bumpLenX = CalcRectXLen(bump->bumpRect);
-	int bumpLenY = CalcRectYLen(bump->bumpRect);
+	const int bumpLenX = CalcRectXLen(bump->bumpRect);
+	const int bumpLenY = CalcRectYLen(bump->bumpRect);
 
-	if (bumpLenX >= bumpLenY) { // gora lub dol
-		int halfObjY = obj->mapPos.y + (obj->asset->BBox.p1.y + obj->asset->BBox.p2.y) / 2;
-		int halfBumpY = (bump->bumpRect.p1.y + bump->bumpRect.p2.y) / 2;
-		if (halfBumpY > halfObjY) { // gora
+	const int COLLISION_THRESHOLD_VERTICAL = 3;
+	const int COLLISION_THRESHOLD_HORIZONTAL = 1;
+
+	// 1. VERTICAL COLLISION (UP/DOWN)
+	if (bumpLenX >= bumpLenY) {
+		if (bumpLenX <= COLLISION_THRESHOLD_VERTICAL) return 0;
+
+		int bumpCenterY = (bump->bumpRect.p1.y + bump->bumpRect.p2.y) / 2;
+
+		// LANDING ON OBJECT (TOP OF THE OBJECT)
+		if (bumpCenterY > obj->BBoxCenter.y) {
 			if (!player->IsGrounded) {
 				player->IsGrounded = true;
 				player->currMapPos.y = obj->mapPos.y + obj->asset->BBox.p2.y;
 				player->body.subpixelY = 0.0f;
 				player->body.vy = 0.0f;
 			}
-		} else { // dol
-
 		}
-	} else { // prawa lub lewa
-		int halfObjX = obj->mapPos.x + (obj->asset->BBox.p1.x + obj->asset->BBox.p2.x) / 2;
-		int halfBumpX = (bump->bumpRect.p1.x + bump->bumpRect.p2.x) / 2;
-		if (halfBumpX > halfObjX) { // prawa
+		// BUMPING FROM THE BOTTOM
+		else {
+			player->body.vy = -0.5f;
+			player->currMapPos.y = obj->mapPos.y - player->asset->BBox.p2.y;
 
-		} else { // lewa
-
+			bool isPlayerBig = (player->playerLevel == PLAYER_BIG || player->playerLevel == PLAYER_SHOOTING) ? true : false;
+			if (isPlayerBig && !player->JustKilledFGObject) {
+				player->JustKilledFGObject = true;
+				obj->IsAlive = false;
+			}
 		}
 	}
+	// 2. HORIZONTAL COLLISION (LEFT/RIGHT)
+	else {
+		if (bumpLenY <= COLLISION_THRESHOLD_HORIZONTAL) return 0;
+
+		int centerBumpX = (bump->bumpRect.p1.x + bump->bumpRect.p2.x) / 2;
+
+		player->body.vx = 0.0f;
+		player->body.subpixelX = 0.0f;
+
+		// BUMPING FROM RIGHT
+		if (centerBumpX > obj->BBoxCenter.x) {
+			player->currMapPos.x = obj->mapPos.x + obj->asset->BBox.p2.x;
+		}
+		// BUMPING FROM LEFT
+		else {
+			player->currMapPos.x = obj->mapPos.x - player->asset->BBox.p2.x;
+		}
+	}
+
+//	if (bumpLenX >= bumpLenY) { // gora lub dol
+//		int halfObjY = obj->mapPos.y + (obj->asset->BBox.p1.y + obj->asset->BBox.p2.y) / 2;
+//		int halfBumpY = (bump->bumpRect.p1.y + bump->bumpRect.p2.y) / 2;
+//		if (halfBumpY > halfObjY) { // gora
+//			if (bumpLenX > 3) {
+//				if (!player->IsGrounded) {
+//					player->IsGrounded = true;
+//					player->currMapPos.y = obj->mapPos.y + obj->asset->baseAsset.sprite.size.y;
+//					player->body.subpixelY = 0.0f;
+//					player->body.vy = 0.0f;
+//				}
+//			}
+//		} else { // dol
+//			if (bumpLenX > 3) {
+//				player->body.vy = -0.5f;
+//				if (obj->mapPos.y - player->asset->baseAsset.sprite.size.y > 0) {
+//					player->currMapPos.y = obj->mapPos.y - player->asset->baseAsset.sprite.size.y;
+//				}
+//				if ((player->playerLevel == PLAYER_BIG || player->playerLevel == PLAYER_SHOOTING) && !player->JustKilledFGObject) {
+//					player->JustKilledFGObject = true;
+//					obj->IsAlive = false;
+//				}
+//			}
+//		}
+//	} else { // prawa lub lewa
+//		int halfObjX = obj->mapPos.x + (obj->asset->BBox.p1.x + obj->asset->BBox.p2.x) / 2;
+//		int halfBumpX = (bump->bumpRect.p1.x + bump->bumpRect.p2.x) / 2;
+//		if (halfBumpX > halfObjX) { // prawa
+//			if (bumpLenX > 1) {
+//				player->currMapPos.x = obj->mapPos.x + obj->asset->baseAsset.sprite.size.x;
+//				player->body.vx = 0.0f;
+//				player->body.subpixelX = 0.0f;
+//			}
+//		} else { // lewa
+//			if (bumpLenX > 1) {
+//				if (obj->mapPos.x - player->asset->baseAsset.sprite.size.x > 0) {
+//					player->currMapPos.x = obj->mapPos.x - player->asset->baseAsset.sprite.size.x;
+//				}
+//				player->body.vx = 0.0f;
+//				player->body.subpixelX = 0.0f;
+//			}
+//		}
+//	}
 
 	return 0;
 }
@@ -726,6 +801,7 @@ int PLAYER_ClearFlags(PlayerState_t* player)
 	if (player == NULL) { return -1; }
 
 	player->IsGrounded = false;
+	player->JustKilledFGObject = false;
 
 	return 0;
 }
@@ -1238,6 +1314,7 @@ int RENDERER_RenderObjects(RendererState_t* renderer, const GameContext_t* ctx)
 					}
 
 					const ForegroundObject_t* obj = &ctx->fgObjects[dirtyRect->objects[k].index];
+					if (!obj->IsAlive) { break; }
 
 					Rect_t posRect;
 					posRect.p1.x = obj->mapPos.x;

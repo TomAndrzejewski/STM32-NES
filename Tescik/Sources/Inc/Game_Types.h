@@ -155,6 +155,13 @@ typedef struct
 
 }CollContext_t;
 
+typedef enum
+{
+	PLAYER_LITTLE,
+	PLAYER_BIG,
+	PLAYER_SHOOTING,
+}PlayerLevel;
+
 typedef struct
 {
 	GameObjectID id;
@@ -168,11 +175,13 @@ typedef struct
 
 	const PlayerAsset_t* asset;
 
+	PlayerLevel	playerLevel;
 	int lifePoints;
 
 	bool IsImmune;
 	bool damageTaken;
 	bool IsGrounded;
+	bool JustKilledFGObject;
 
 }PlayerState_t;
 
@@ -205,6 +214,7 @@ typedef struct
 	GameObjectID id;
 
 	Point_t mapPos;
+	Point_t BBoxCenter;
 
 	const ForegroundAsset_t* asset;
 
