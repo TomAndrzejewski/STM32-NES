@@ -277,17 +277,8 @@ typedef struct
 
 typedef struct
 {
-	GameObjectID id;
-	int index;
-
-}ObjectRef_t;
-
-typedef struct
-{
-	Rect_t 			rect;
-	int				objectsSize;
-	ObjectRef_t		objects[DIRTY_RECTS_OBJ_ID_SIZE];
-	int				used;
+	Rect_t 	rect;
+	int		used;
 
 }DirtyRect_t;
 

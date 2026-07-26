@@ -71,33 +71,8 @@ const ObjectLevelInstance_t Objects_level_1[] =
     {FG_PYRAMID_BLOCK_OBJECT_ID, 928, 32, 0x00000010},
     {FG_PYRAMID_BLOCK_OBJECT_ID, 928, 48, 0x00000019},
     {FG_PYRAMID_BLOCK_OBJECT_ID, 944, 32, 0x00000019},
-};
-
-
-const ObjectLevelInstance_t EnemiesLevelPosition[] = {
-	    { .id = ENEMY_GOOMBA_ID,		.x = 0,		.y = 40,	.flags = 0 },
-		{ .id = ENEMY_GOOMBA_ID,		.x = 30,	.y = 40,	.flags = 0 },
-		{ .id = ENEMY_GOOMBA_ID,		.x = 60,	.y = 40,	.flags = 0 },
-//		{ .id = ENEMY_GOOMBA_ID,		.x = 90,	.y = 40 },
-//		{ .id = ENEMY_GOOMBA_ID,		.x = 120,	.y = 40 },
-//		{ .id = ENEMY_GOOMBA_ID,		.x = 150,	.y = 40 },
-//		{ .id = ENEMY_GOOMBA_ID,		.x = 180,	.y = 40 },
-//		{ .id = ENEMY_GOOMBA_ID,		.x = 210,	.y = 40 },
-//		{ .id = ENEMY_GOOMBA_ID,		.x = 240,	.y = 40 },
-//		{ .id = ENEMY_GOOMBA_ID,		.x = 270,	.y = 40 },
-//		{ .id = ENEMY_GOOMBA_ID,		.x = 300,	.y = 40 },
-//		{ .id = ENEMY_GOOMBA_ID,		.x = 330,	.y = 40 },
-//		{ .id = ENEMY_GOOMBA_ID,		.x = 360,	.y = 40 },
-//		{ .id = ENEMY_GOOMBA_ID,		.x = 390,	.y = 40 },
-//		{ .id = ENEMY_GOOMBA_ID,		.x = 420,	.y = 40 },
-//		{ .id = ENEMY_GOOMBA_ID,		.x = 450,	.y = 40 },
-//		{ .id = ENEMY_GOOMBA_ID,		.x = 480,	.y = 40 },
-//		{ .id = ENEMY_GOOMBA_ID,		.x = 510,	.y = 40 },
-//		{ .id = ENEMY_GOOMBA_ID,		.x = 540,	.y = 40 },
-//		{ .id = ENEMY_GOOMBA_ID,		.x = 570,	.y = 40 },
-//		{ .id = ENEMY_GOOMBA_ID,		.x = 600,	.y = 40 },
-//		{ .id = ENEMY_GOOMBA_ID,		.x = 630,	.y = 40 },
-//		{ .id = ENEMY_GOOMBA_ID,		.x = 660,	.y = 40 },
+    {ENEMY_GOOMBA_ID, 240, 32, 0 },
+	{ENEMY_GOOMBA_ID, 160, 32, 0 },
 };
 
 const RepObjectLevelPos_t BGRepObjectsLevelPosition[] = {
@@ -105,7 +80,7 @@ const RepObjectLevelPos_t BGRepObjectsLevelPosition[] = {
 };
 
 // look at line numbers, lower line number -> higher priority
-const int ObjRenderPriorities[] = {
+const GameObjectID ObjRenderPriorities[] = {
 		FG_PYRAMID_BLOCK_OBJECT_ID,
 		FG_RURA_DOL_OBJECT_ID,
 		FG_RURA_GORA_OBJECT_ID,
@@ -127,46 +102,6 @@ int LEVEL_GetObjectsLocations(const ObjectLevelInstance_t** posTable, int* numOf
 	{
 		*numOfObjects = sizeof(Objects_level_1)/elementSize;
 		*posTable = Objects_level_1;
-		return 0;
-	}
-	else
-	{
-		return -5;
-	}
-}
-
-//int LEVEL_GetBGObjectsLocations(const ObjectLevelInstance_t** posTable, int* numOfObjects)
-//{
-//	if (posTable == NULL || numOfObjects == NULL)
-//	{
-//		return -1;
-//	}
-//
-//	int elementSize = sizeof(ObjectLevelInstance_t);
-//	if (elementSize > 0)
-//	{
-//		*numOfObjects = sizeof(BGObjectsLevelPosition)/elementSize;
-//		*posTable = BGObjectsLevelPosition;
-//		return 0;
-//	}
-//	else
-//	{
-//		return -5;
-//	}
-//}
-
-int LEVEL_GetEnemiesLocations(const ObjectLevelInstance_t** posTable, int* numOfObjects)
-{
-	if (posTable == NULL || numOfObjects == NULL)
-	{
-		return -1;
-	}
-
-	int elementSize = sizeof(ObjectLevelInstance_t);
-	if (elementSize > 0)
-	{
-		*numOfObjects = sizeof(EnemiesLevelPosition)/elementSize;
-		*posTable = EnemiesLevelPosition;
 		return 0;
 	}
 	else
@@ -202,14 +137,14 @@ int LEVEL_GetLevelBoundaries(const Rect_t** levelBoundaries)
 	return 0;
 }
 
-int LEVEL_GetObjRenderPriorities(const int** prioTable, int* numOfObjects)
+int LEVEL_GetObjRenderPriorities(const GameObjectID** prioTable, int* numOfObjects)
 {
 	if (prioTable == NULL || numOfObjects == NULL)
 	{
 		return -1;
 	}
 
-	int elementSize = sizeof(int);
+	int elementSize = sizeof(GameObjectID);
 	if (elementSize > 0)
 	{
 		*numOfObjects = sizeof(ObjRenderPriorities)/elementSize;

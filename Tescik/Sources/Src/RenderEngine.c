@@ -209,6 +209,14 @@ int RE_SendRect(Rect_t inputRect, int LCDOffsetX)
 {
 	Rect_t baseRect = inputRect;
 	// Translate to LCD coordinates
+	if (baseRect.p1.x == LCD_WIDTH)
+	{
+		baseRect.p1.x = LCD_WIDTH - 1;
+	}
+	if (baseRect.p1.y == LCD_HEIGHT)
+	{
+		baseRect.p1.y = LCD_HEIGHT - 1;
+	}
 	if (baseRect.p2.x > 0)
 	{
 		baseRect.p2.x--;

@@ -45,15 +45,13 @@ typedef struct
 
 int LEVEL_GetObjectsLocations(const ObjectLevelInstance_t** posTable, int* numOfObjects);
 
-//int LEVEL_GetBGObjectsLocations(const ObjectLevelInstance_t** posTable, int* numOfObjects);
-
-int LEVEL_GetEnemiesLocations(const ObjectLevelInstance_t** posTable, int* numOfObjects);
+//int LEVEL_GetEnemiesLocations(const ObjectLevelInstance_t** posTable, int* numOfObjects);
 
 int LEVEL_GetBGRepObjectsLocations(const RepObjectLevelPos_t** posTable, int* numOfObjects);
 
 int LEVEL_GetLevelBoundaries(const Rect_t** levelBoundaries);
 
-int LEVEL_GetObjRenderPriorities(const int** prioTable, int* numOfObjects);
+int LEVEL_GetObjRenderPriorities(const GameObjectID** prioTable, int* numOfObjects);
 
 
 #endif /* SOURCES_INC_LEVEL_H_ */
