@@ -293,7 +293,8 @@ typedef struct
 {
 	int LCDOffsetX;
 
-	DirtyRect_t	dirtyRects[DIRTY_RECTS_SIZE] __attribute__((aligned(4)));
+	int activeDirtyRects;
+	DirtyRect_t	dirtyRects[DIRTY_RECTS_SIZE];
 
 }RendererState_t;
 

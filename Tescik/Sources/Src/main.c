@@ -31,13 +31,13 @@
 #include "LCDControl.h"
 #include "PADControl.h"
 #include "RenderEngine.h"
-#include "Mario.h"
+
+#include "Game.h"
 
 #define DEFINE_NES_ENGINE
 #include "NESEngine.h"
 
 
-#include "Game.h"
 
 
 
@@ -276,17 +276,6 @@ void Delay_init()
 	DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 }
 
-void GameLoop()
-{
-	uint32_t buttons_state = 0;
-	buttons_state = GetButtonsState();
-	PrintButtons(buttons_state);
-
-	Mario_ReactToButton(pMario, buttons_state);
-
-	Map_ReactToButtons(pMap, buttons_state);
-}
-
 volatile bool startRender = false;
 
 void TIM1_UP_TIM10_IRQHandler(void)
@@ -298,8 +287,6 @@ void TIM1_UP_TIM10_IRQHandler(void)
 //    	uint32_t tdiff = CalcTimeUS(tim10_t1);
 //    	tim10_t1 = GetTimestamp();
 //    	printf_v("\ntdiff: %d\n", tdiff);
-
-    	GameLoop();
 
     	startRender = true;
     }
@@ -356,45 +343,45 @@ int main(void)
 		{
 			timeSteps = 0;
 
-			startTime[0] = GetTimestamp();
+			startTime[timeSteps] = GetTimestamp();
 			ret = INPUT_Update(&pGameCtx->input, pGameCtx, targetFrameTimeUS);
-			finishTime[0] = GetTimestamp();
+			finishTime[timeSteps] = GetTimestamp();
 			if (ret < 0)	{ delay(1); continue; }
 			timeSteps++;
 
-			startTime[1] = GetTimestamp();
-			ret = CAMERA_Update(&pGameCtx->camera, pGameCtx);
-			finishTime[1] = GetTimestamp();
-			if (ret < 0)	{ delay(1); continue; }
-			timeSteps++;
-
-			startTime[2] = GetTimestamp();
+			startTime[timeSteps] = GetTimestamp();
 			ret = ENEMIES_UpdateFlags(&pGameCtx->enemies, pGameCtx);
-			finishTime[2] = GetTimestamp();
+			finishTime[timeSteps] = GetTimestamp();
 			if (ret < 0)	{ delay(1); continue; }
 			timeSteps++;
 
-			startTime[3] = GetTimestamp();
+			startTime[timeSteps] = GetTimestamp();
 			ret = PHYSICS_Update(pGameCtx);
-			finishTime[3] = GetTimestamp();
+			finishTime[timeSteps] = GetTimestamp();
 			if (ret < 0)	{ delay(1); continue; }
 			timeSteps++;
 
-			startTime[4] = GetTimestamp();
+			startTime[timeSteps] = GetTimestamp();
+			ret = CAMERA_Update(&pGameCtx->camera, pGameCtx);
+			finishTime[timeSteps] = GetTimestamp();
+			if (ret < 0)	{ delay(1); continue; }
+			timeSteps++;
+
+			startTime[timeSteps] = GetTimestamp();
 			ret = PLAYER_ClearFlags(&pGameCtx->player);
-			finishTime[4] = GetTimestamp();
+			finishTime[timeSteps] = GetTimestamp();
 			if (ret < 0)	{ delay(1); continue; }
 			timeSteps++;
 
-			startTime[5] = GetTimestamp();
+			startTime[timeSteps] = GetTimestamp();
 			ret = COLLISION_Update(pGameCtx);
-			finishTime[5] = GetTimestamp();
+			finishTime[timeSteps] = GetTimestamp();
 			if (ret < 0)	{ delay(1); continue; }
 			timeSteps++;
 
-			startTime[6] = GetTimestamp();
+			startTime[timeSteps] = GetTimestamp();
 			ret = RENDERER_Update(pGameCtx);
-			finishTime[6] = GetTimestamp();
+			finishTime[timeSteps] = GetTimestamp();
 			if (ret < 0)	{ delay(1); continue; }
 			timeSteps++;
 
@@ -415,68 +402,3 @@ int main(void)
 	for(;;);
 }
 
-int mainppp(void)
-{
-	Flash_init();
-	Clock_init();
-	FPU_init();
-	Delay_init();
-	GPIO_init();
-	IRQ_DMA2_SPI1_TX_Init();
-	DMA2_SPI1_TX_Init();
-	Timer_init();
-	printf_init();
-
-	print_start();
-
-	RE_Init();
-
-	LCD_init();
-
-	Mario_Init(pMario);
-	Map_Init(pMap);
-	Enemies_Init(pEnemies);
-
-	uint32_t startTime = 0, elapsedUS = 0;
-	uint32_t startTime2 = 0;
-
-	Map_FirstRender(pMap);
-
-	Timer_start();
-
-	while(1)
-	{
-		startTime = GetTimestamp();
-
-		while(!startRender);
-		startRender = false;
-
-		startTime2 = GetTimestamp();
-		Map_ScrollRender(pMap);
-		elapsedUS = CalcTimeUS(startTime2);
-		if (elapsedUS > 0)
-		{
-//			printf_uint(elapsedUS); printf_c('\t');
-		}
-
-		startTime2 = GetTimestamp();
-		Map_RenderObjects(pMap);
-		elapsedUS = CalcTimeUS(startTime2);
-		if (elapsedUS > 0)
-		{
-			printf_uint(elapsedUS); printf_c('\n');
-		}
-
-//		Mario_Render(pMario);
-
-		elapsedUS = CalcTimeUS(startTime);
-		int sleepTimeUS = 16000 - (int)elapsedUS;
-		if (sleepTimeUS > 0)
-		{
-			delayUS(sleepTimeUS);
-		}
-	}
-
-    /* Loop forever */
-	for(;;);
-}

@@ -31,22 +31,28 @@ int 	PHYSICS_Player_CalcMapPos(PlayerState_t* player, const GameContext_t* ctx);
 int 	CAMERA_Update(CameraState_t* camera, const GameContext_t* ctx);
 int 	CAMERA_CalcPos(CameraState_t* camera, const PlayerState_t* player);
 int 	CAMERA_CalcScreenRect(CameraState_t* camera);
-int 	PLAYER_ClearFlags(PlayerState_t* player);
 
-int 	PLAYER_TakeDamage(PlayerState_t* player, int damage);
+bool 	MISC_IsThisPlayerID(const GameObjectID id);
+bool 	MISC_IsThisEnemyID(const GameObjectID id);
+bool 	MISC_IsThisFGID(const GameObjectID id);
+bool 	MISC_IsThisBGID(const GameObjectID id);
+
+int 	PLAYER_ClearFlags(PlayerState_t* player);
 int 	PLAYER_GetDirtyRect(const PlayerState_t* player, Rect_t* dirtyRect);
 
 int		ENEMIES_UpdateFlags(Enemies_t* enemies, const GameContext_t* ctx);
 int		ENEMIES_GetDirtyRect(const EnemyState_t* enemy, Rect_t* dirtyRect);
 bool	ENEMIES_CalcIsOnScreen(const EnemyState_t* enemy, const Rect_t* screenRect);
 
-//int 	FGOBJECTS_GetDirtyRect(const ForegroundObject_t* obj, Rect_t* dirtyRect);
-
 int 	RENDERER_Update(GameContext_t* ctx);
 int 	RENDERER_FirstRender(const GameContext_t* ctx);
 int 	RENDERER_ScrollRender(RendererState_t* renderer, const GameContext_t* ctx);
-int 	RENDERER_RenderObjects(RendererState_t* renderer, const GameContext_t* ctx);
+int		RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_t* ctx);
+int		RENDERER_DirtyRects_Render(RendererState_t* renderer, const GameContext_t* ctx);
 int 	RENDERER_RenderFloor(const BackgroundRepObject_t* floor);
-int 	RENDERER_RenderBgdSprite(const Sprite_t* p, Point_t spritePos, Rect_t mapRectToDraw, Rect_t screenRect, int LCDOffsetX, bool render, bool fillBG);
+int 	RENDERER_RenderBGObject(const BackgroundObject_t* obj, const Rect_t* mapRectToDraw, const Rect_t* screenRect, const int LCDOffsetX);
+int		RENDERER_RenderFGObject(const ForegroundObject_t* obj, const Rect_t* mapRectToDraw, const Rect_t* screenRect, const int LCDOffsetX);
+int		RENDERER_RenderEnemy(const EnemyState_t* enemy, const Rect_t* mapRectToDraw, const Rect_t* screenRect, const int LCDOffsetX);
+int		RENDERER_RenderPlayer(const PlayerState_t* player, const Rect_t* mapRectToDraw, const Rect_t* screenRect, const int LCDOffsetX);
 
 #endif /* SOURCES_INC_GAME_H_ */

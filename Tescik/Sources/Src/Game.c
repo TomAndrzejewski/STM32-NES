@@ -47,7 +47,7 @@ int GAME_InitContext(GameContext_t* ctx)
 	ctx->activebgObjects = 0;
 	for (int i = 0; i < numOfObjects; i++)
 	{
-		if (ObjectsPos[i].id < BACKGROUND_OBJECT_ID_START || ObjectsPos[i].id > BACKGROUND_OBJECT_ID_END)
+		if (!MISC_IsThisBGID(ObjectsPos[i].id))
 		{
 			continue;
 		}
@@ -95,7 +95,7 @@ int GAME_InitContext(GameContext_t* ctx)
 	ctx->activefgObjects = 0;
 	for (int i = 0; i < numOfObjects; i++)
 	{
-		if (ObjectsPos[i].id < FOREGROUND_OBJECT_ID_START || ObjectsPos[i].id > FOREGROUND_OBJECT_ID_END)
+		if (!MISC_IsThisFGID(ObjectsPos[i].id))
 		{
 			continue;
 		}
@@ -156,7 +156,7 @@ int GAME_InitContext(GameContext_t* ctx)
 	ctx->enemies.activeEnemies = 0;
 	for (int i = 0; i < numOfObjects; i++)
 	{
-		if (ObjectsPos[i].id < ENEMY_ID_START || ObjectsPos[i].id > ENEMY_ID_END)
+		if (!MISC_IsThisEnemyID(ObjectsPos[i].id))
 		{
 			continue;
 		}
@@ -486,8 +486,8 @@ int COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t* obj, co
 
 	if (!(obj->flags & COLL_ANY_ENABLED)) { return 0; }
 
-	const int bumpLenX = CalcRectXLen(bump->bumpRect);
-	const int bumpLenY = CalcRectYLen(bump->bumpRect);
+	const int bumpLenX = CalcRectXLen(&bump->bumpRect);
+	const int bumpLenY = CalcRectYLen(&bump->bumpRect);
 
 	const int COLLISION_THRESHOLD_VERTICAL = 3;
 	const int COLLISION_THRESHOLD_HORIZONTAL = 1;
@@ -567,36 +567,6 @@ int COLLISION_Player_Floor(PlayerState_t* player, const Bump_t* bump, const Game
 int COLLISION_Player_Enemy(PlayerState_t* player, EnemyState_t* enemy, const Bump_t* bump, const GameContext_t* ctx)
 {
 	if (player == NULL || enemy == NULL || bump == NULL || ctx == NULL) { return -1; }
-
-	PLAYER_TakeDamage(player, 1);
-
-	return 0;
-}
-
-int COLLISION_Player_Resolve(PlayerState_t* player, const CollState_t* coll, const GameContext_t* ctx)
-{
-	if (player == NULL || coll == NULL || ctx == NULL) { return -1; }
-
-	for (int i = 0; i < coll->size; i++)
-	{
-		const Bump_t* bump = &coll->bumps[i];
-		if (bump->actor1.id != player->id || bump->actor2.id != player->id) {
-			continue;
-		}
-
-		const GameObjectRef_t* actor = (bump->actor1.id == player->id) ? &bump->actor2 : &bump->actor1;
-
-		switch (actor->id)
-		{
-		case ENEMY_GOOMBA_ID: {
-			player->lifePoints--;
-			if (player->lifePoints <= 0) {
-				//???
-			}
-			break;
-		}
-		}
-	}
 
 	return 0;
 }
@@ -770,7 +740,6 @@ int CAMERA_CalcPos(CameraState_t* camera, const PlayerState_t* player)
 		if (player->currMapPos.x - camera->currPos.x >= 80) {
 			camera->currPos.x += diff;
 		}
-
 	}
 
 	return 0;
@@ -787,6 +756,38 @@ int CAMERA_CalcScreenRect(CameraState_t* camera)
 	return 0;
 }
 
+bool MISC_IsThisPlayerID(const GameObjectID id)
+{
+	if (id >= PLAYER_ID_START && id <= PLAYER_ID_END) {
+		return true;
+	}
+	return false;
+}
+
+bool MISC_IsThisEnemyID(const GameObjectID id)
+{
+	if (id >= ENEMY_ID_START && id <= ENEMY_ID_END) {
+		return true;
+	}
+	return false;
+}
+
+bool MISC_IsThisFGID(const GameObjectID id)
+{
+	if (id >= FOREGROUND_OBJECT_ID_START && id <= FOREGROUND_OBJECT_ID_END) {
+		return true;
+	}
+	return false;
+}
+
+bool MISC_IsThisBGID(const GameObjectID id)
+{
+	if (id >= BACKGROUND_OBJECT_ID_START && id <= BACKGROUND_OBJECT_ID_END) {
+		return true;
+	}
+	return false;
+}
+
 int PLAYER_ClearFlags(PlayerState_t* player)
 {
 	if (player == NULL) { return -1; }
@@ -796,19 +797,6 @@ int PLAYER_ClearFlags(PlayerState_t* player)
 
 	return 0;
 }
-
-int PLAYER_TakeDamage(PlayerState_t* player, int damage)
-{
-	if (player == NULL) { return -1; }
-
-	if (player->IsImmune && player->lifePoints > 0) {
-		player->lifePoints--;
-		player->damageTaken = true;
-	}
-
-	return 0;
-}
-
 
 
 int PLAYER_GetDirtyRect(const PlayerState_t* player, Rect_t* dirtyRect)
@@ -846,7 +834,6 @@ int PLAYER_GetDirtyRect(const PlayerState_t* player, Rect_t* dirtyRect)
 int	ENEMIES_UpdateFlags(Enemies_t* enemies, const GameContext_t* ctx)
 {
 	if (enemies == NULL || ctx == NULL) { return -1; }
-	int ret = 0;
 
 	for (int i = 0; i < enemies->activeEnemies; i++)
 	{
@@ -907,38 +894,6 @@ bool ENEMIES_CalcIsOnScreen(const EnemyState_t* enemy, const Rect_t* screenRect)
 	}
 }
 
-//int FGOBJECTS_GetDirtyRect(const ForegroundObject_t* obj, Rect_t* dirtyRect)
-//{
-//	if (obj == NULL || dirtyRect == NULL) { return -1; }
-//
-//	Rect_t prevDirtyRect;
-//	prevDirtyRect.p1 = obj->prevMapPos;
-//	prevDirtyRect.p2.x = obj->prevMapPos.x + obj->asset->baseAsset.sprite.size.x;
-//	prevDirtyRect.p2.y = obj->prevMapPos.y + obj->asset->baseAsset.sprite.size.y;
-//
-//	Rect_t currDirtyRect;
-//	currDirtyRect.p1 = obj->currMapPos;
-//	currDirtyRect.p2.x = obj->currMapPos.x + obj->asset->baseAsset.sprite.size.x;
-//	currDirtyRect.p2.y = obj->currMapPos.y + obj->asset->baseAsset.sprite.size.y;
-//
-//	Rect_t commonDirtyRect;
-//	commonDirtyRect.p1.x = min(prevDirtyRect.p1.x, currDirtyRect.p1.x);
-//	commonDirtyRect.p1.y = min(prevDirtyRect.p1.y, currDirtyRect.p1.y);
-//	commonDirtyRect.p2.x = max(prevDirtyRect.p2.x, currDirtyRect.p2.x);
-//	commonDirtyRect.p2.y = max(prevDirtyRect.p2.y, currDirtyRect.p2.y);
-//
-//	if (commonDirtyRect.p1.x <= commonDirtyRect.p2.x && commonDirtyRect.p1.y <= commonDirtyRect.p2.y)
-//	{
-//		*dirtyRect = commonDirtyRect;
-//	}
-//	else
-//	{
-//		return -5;
-//	}
-//
-//	return 0;
-//}
-
 int RENDERER_Update(GameContext_t* ctx)
 {
 	if (ctx == NULL) { return -1; }
@@ -947,7 +902,10 @@ int RENDERER_Update(GameContext_t* ctx)
 	ret = RENDERER_ScrollRender(&ctx->renderer, ctx);
 	if (ret < 0) { return -1; }
 
-	ret = RENDERER_RenderObjects(&ctx->renderer, ctx);
+	ret = RENDERER_DirtyRects_Calculate(&ctx->renderer, ctx);
+	if (ret < 0) { return -1; }
+
+	ret = RENDERER_DirtyRects_Render(&ctx->renderer, ctx);
 	if (ret < 0) { return -1; }
 
 	return 0;
@@ -980,8 +938,7 @@ int RENDERER_FirstRender(const GameContext_t* ctx)
 
 		for (int j = 0; j < ctx->activebgObjects; j++)
 		{
-			Point_t spritePos = ctx->bgObjects[j].mapPos;
-			RENDERER_RenderBgdSprite(&ctx->bgObjects[j].asset->baseAsset.sprite, spritePos, mapRect, screenRect, ctx->renderer.LCDOffsetX, false, false);
+			RENDERER_RenderBGObject(&ctx->bgObjects[j], &mapRect, &screenRect, ctx->renderer.LCDOffsetX);
 		}
 
 		RE_SendRect(screenRect, ctx->renderer.LCDOffsetX);
@@ -1049,8 +1006,7 @@ int RENDERER_ScrollRender(RendererState_t* renderer, const GameContext_t* ctx)
 
 		for (int i = 0; i < ctx->activebgObjects; i++)
 		{
-			Point_t spritePos = ctx->bgObjects[i].mapPos;
-			RENDERER_RenderBgdSprite(&ctx->bgObjects[i].asset->baseAsset.sprite, spritePos, rightMapRect, rightScreenRect, renderer->LCDOffsetX, false, false);
+			RENDERER_RenderBGObject(&ctx->bgObjects[i], &rightMapRect, &rightScreenRect, renderer->LCDOffsetX);
 		}
 
 
@@ -1071,30 +1027,7 @@ int RENDERER_ScrollRender(RendererState_t* renderer, const GameContext_t* ctx)
 				if (!obj->IsAlive) { continue; }
 				if (!(obj->flags & FG_SCROLL_RENDER)) { continue; }
 
-				Rect_t posRect;
-				posRect.p1.x = obj->mapPos.x;
-				posRect.p1.y = obj->mapPos.y;
-				posRect.p2.x = obj->mapPos.x + obj->asset->baseAsset.sprite.size.x;
-				posRect.p2.y = obj->mapPos.y + obj->asset->baseAsset.sprite.size.y;
-
-				Rect_t commonRect;
-				commonRect.p1.x = max(rightMapRect.p1.x, posRect.p1.x);
-				commonRect.p1.y = max(rightMapRect.p1.y, posRect.p1.y);
-				commonRect.p2.x = min(rightMapRect.p2.x, posRect.p2.x);
-				commonRect.p2.y = min(rightMapRect.p2.y, posRect.p2.y);
-
-				// czesc wspolna istnieje
-				if (commonRect.p1.x <= commonRect.p2.x && commonRect.p1.y <= commonRect.p2.y)
-				{
-					SpriteRender_t renderContext;
-					renderContext.commonRect = commonRect;
-					renderContext.baseRect = rightScreenRect;
-					renderContext.baseToSpriteOffset.x = obj->mapPos.x - rightMapRect.p1.x;
-					renderContext.baseToSpriteOffset.y = obj->mapPos.y - rightMapRect.p1.y;
-					renderContext.LCDOffsetX = renderer->LCDOffsetX;
-
-					RE_FillSprite3(&obj->asset->baseAsset.sprite, renderContext);
-				}
+				RENDERER_RenderFGObject(obj, &rightMapRect, &rightScreenRect, renderer->LCDOffsetX);
 			}
 		}
 
@@ -1104,13 +1037,11 @@ int RENDERER_ScrollRender(RendererState_t* renderer, const GameContext_t* ctx)
 	return 0;
 }
 
-int RENDERER_RenderObjects(RendererState_t* renderer, const GameContext_t* ctx)
+int	RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_t* ctx)
 {
 	if (renderer == NULL || ctx == NULL) { return -1; }
 
-	int ret = 0;
-	int dirtyRectIndex = 0;
-
+	renderer->activeDirtyRects = 0;
 	DirtyRect_t* dirtyRects = renderer->dirtyRects;
 
 	fast_memset(dirtyRects, 0, sizeof(renderer->dirtyRects));
@@ -1133,17 +1064,17 @@ int RENDERER_RenderObjects(RendererState_t* renderer, const GameContext_t* ctx)
 		dirtyRect.p2.x = ctx->fgObjects[i].mapPos.x + ctx->fgObjects[i].asset->baseAsset.sprite.size.x;
 		dirtyRect.p2.y = ctx->fgObjects[i].mapPos.y + ctx->fgObjects[i].asset->baseAsset.sprite.size.y;
 
-		Rect_t commonRect;
-		commonRect.p1.x = max(cameraRect.p1.x, dirtyRect.p1.x);
-		commonRect.p1.y = max(cameraRect.p1.y, dirtyRect.p1.y);
-		commonRect.p2.x = min(cameraRect.p2.x, dirtyRect.p2.x);
-		commonRect.p2.y = min(cameraRect.p2.y, dirtyRect.p2.y);
+		Rect_t commonRect = {0};
+		Rect_GetIntersection(&cameraRect, &dirtyRect, &commonRect);
 
-		// czesc wspolna istnieje
-		if (commonRect.p1.x <= commonRect.p2.x && commonRect.p1.y <= commonRect.p2.y)
+		if (Rect_IsIntersection(&commonRect))
 		{
-			dirtyRects[dirtyRectIndex].rect = commonRect;
-			dirtyRectIndex++;
+			if (renderer->activeDirtyRects >= DIRTY_RECTS_SIZE) {
+				printf_s("\n### activeDirtyRects exeeds DIRTY_RECTS_SIZE ###\n");
+			} else {
+				dirtyRects[renderer->activeDirtyRects].rect = commonRect;
+				renderer->activeDirtyRects++;
+			}
 		}
 	}
 
@@ -1155,17 +1086,17 @@ int RENDERER_RenderObjects(RendererState_t* renderer, const GameContext_t* ctx)
 		Rect_t dirtyRect;
 		if (ENEMIES_GetDirtyRect(&ctx->enemies.pool[i], &dirtyRect) < 0) { continue; }
 
-		Rect_t commonRect;
-		commonRect.p1.x = max(cameraRect.p1.x, dirtyRect.p1.x);
-		commonRect.p1.y = max(cameraRect.p1.y, dirtyRect.p1.y);
-		commonRect.p2.x = min(cameraRect.p2.x, dirtyRect.p2.x);
-		commonRect.p2.y = min(cameraRect.p2.y, dirtyRect.p2.y);
+		Rect_t commonRect = {0};
+		Rect_GetIntersection(&cameraRect, &dirtyRect, &commonRect);
 
-		// czesc wspolna istnieje
-		if (commonRect.p1.x <= commonRect.p2.x && commonRect.p1.y <= commonRect.p2.y)
+		if (Rect_IsIntersection(&commonRect))
 		{
-			dirtyRects[dirtyRectIndex].rect = commonRect;
-			dirtyRectIndex++;
+			if (renderer->activeDirtyRects >= DIRTY_RECTS_SIZE) {
+				printf_s("\n### activeDirtyRects exeeds DIRTY_RECTS_SIZE ###\n");
+			} else {
+				dirtyRects[renderer->activeDirtyRects].rect = commonRect;
+				renderer->activeDirtyRects++;
+			}
 		}
 	}
 
@@ -1175,17 +1106,17 @@ int RENDERER_RenderObjects(RendererState_t* renderer, const GameContext_t* ctx)
 	Rect_t dirtyRect;
 	if (!PLAYER_GetDirtyRect(&ctx->player, &dirtyRect))
 	{
-		Rect_t commonRect;
-		commonRect.p1.x = max(cameraRect.p1.x, dirtyRect.p1.x);
-		commonRect.p1.y = max(cameraRect.p1.y, dirtyRect.p1.y);
-		commonRect.p2.x = min(cameraRect.p2.x, dirtyRect.p2.x);
-		commonRect.p2.y = min(cameraRect.p2.y, dirtyRect.p2.y);
+		Rect_t commonRect = {0};
+		Rect_GetIntersection(&cameraRect, &dirtyRect, &commonRect);
 
-		// czesc wspolna istnieje
-		if (commonRect.p1.x <= commonRect.p2.x && commonRect.p1.y <= commonRect.p2.y)
+		if (Rect_IsIntersection(&commonRect))
 		{
-			dirtyRects[dirtyRectIndex].rect = commonRect;
-			dirtyRectIndex++;
+			if (renderer->activeDirtyRects >= DIRTY_RECTS_SIZE) {
+				printf_s("\n### activeDirtyRects exeeds DIRTY_RECTS_SIZE ###\n");
+			} else {
+				dirtyRects[renderer->activeDirtyRects].rect = commonRect;
+				renderer->activeDirtyRects++;
+			}
 		}
 	}
 
@@ -1193,24 +1124,20 @@ int RENDERER_RenderObjects(RendererState_t* renderer, const GameContext_t* ctx)
 	//////////////////////////
 	// COMPOUNDING OVERLAPPING DIRTY RECTS
 	//////////////////////////
-	for (int i = 0; i < dirtyRectIndex; i++)
+	for (int i = 0; i < renderer->activeDirtyRects; i++)
 	{
 		if (dirtyRects[i].used)	{ continue; }
 
 		bool commonRectFound = false;
-		for (int j = 0; j < dirtyRectIndex; j++)
+		for (int j = 0; j < renderer->activeDirtyRects; j++)
 		{
 			if (i == j)	{ continue; }
 			if (dirtyRects[j].used)	{ continue; }
 
-			Rect_t commonRect;
-			commonRect.p1.x = max(dirtyRects[i].rect.p1.x, dirtyRects[j].rect.p1.x);
-			commonRect.p1.y = max(dirtyRects[i].rect.p1.y, dirtyRects[j].rect.p1.y);
-			commonRect.p2.x = min(dirtyRects[i].rect.p2.x, dirtyRects[j].rect.p2.x);
-			commonRect.p2.y = min(dirtyRects[i].rect.p2.y, dirtyRects[j].rect.p2.y);
+			Rect_t commonRect = {0};
+			Rect_GetIntersection(&dirtyRects[i].rect, &dirtyRects[j].rect, &commonRect);
 
-			// czesc wspolna istnieje
-			if (commonRect.p1.x <= commonRect.p2.x && commonRect.p1.y <= commonRect.p2.y)
+			if (Rect_IsIntersection(&commonRect))
 			{
 				Rect_t commonORRect;
 				commonORRect.p1.x = min(dirtyRects[i].rect.p1.x, dirtyRects[j].rect.p1.x);
@@ -1231,7 +1158,17 @@ int RENDERER_RenderObjects(RendererState_t* renderer, const GameContext_t* ctx)
 		}
 	}
 
-	for (int i = 0; i < dirtyRectIndex; i++)
+	return 0;
+}
+
+int	RENDERER_DirtyRects_Render(RendererState_t* renderer, const GameContext_t* ctx)
+{
+	if (renderer == NULL || ctx == NULL) { return -1; }
+	int ret = 0;
+
+	DirtyRect_t* dirtyRects = renderer->dirtyRects;
+
+	for (int i = 0; i < renderer->activeDirtyRects; i++)
 	{
 		if (dirtyRects[i].used)	{ continue; }
 
@@ -1254,8 +1191,7 @@ int RENDERER_RenderObjects(RendererState_t* renderer, const GameContext_t* ctx)
 		//-----------------------
 		for (int j = 0; j < ctx->activebgObjects; j++)
 		{
-			Point_t spritePos = ctx->bgObjects[j].mapPos;
-			RENDERER_RenderBgdSprite(&ctx->bgObjects[j].asset->baseAsset.sprite, spritePos, dirtyRect->rect, screenRect, renderer->LCDOffsetX, false, false);
+			RENDERER_RenderBGObject(&ctx->bgObjects[j], &dirtyRect->rect, &screenRect, renderer->LCDOffsetX);
 		}
 
 		const GameObjectID* prioArray = NULL;
@@ -1270,7 +1206,7 @@ int RENDERER_RenderObjects(RendererState_t* renderer, const GameContext_t* ctx)
 			//-----------------------
 			// FOREGROUND OBJECTS
 			//-----------------------
-			if (currentPrioObject >= FOREGROUND_OBJECT_ID_START && currentPrioObject <= FOREGROUND_OBJECT_ID_END)
+			if (MISC_IsThisFGID(currentPrioObject))
 			{
 				for (int k = 0; k < ctx->activefgObjects; k++)
 				{
@@ -1279,36 +1215,13 @@ int RENDERER_RenderObjects(RendererState_t* renderer, const GameContext_t* ctx)
 					if (obj->id != currentPrioObject) { continue; }
 					if (!obj->IsAlive) { continue; }
 
-					Rect_t posRect;
-					posRect.p1.x = obj->mapPos.x;
-					posRect.p1.y = obj->mapPos.y;
-					posRect.p2.x = obj->mapPos.x + obj->asset->baseAsset.sprite.size.x;
-					posRect.p2.y = obj->mapPos.y + obj->asset->baseAsset.sprite.size.y;
-
-					Rect_t commonRect;
-					commonRect.p1.x = max(dirtyRect->rect.p1.x, posRect.p1.x);
-					commonRect.p1.y = max(dirtyRect->rect.p1.y, posRect.p1.y);
-					commonRect.p2.x = min(dirtyRect->rect.p2.x, posRect.p2.x);
-					commonRect.p2.y = min(dirtyRect->rect.p2.y, posRect.p2.y);
-
-					// czesc wspolna istnieje
-					if (commonRect.p1.x <= commonRect.p2.x && commonRect.p1.y <= commonRect.p2.y)
-					{
-						SpriteRender_t renderContext;
-						renderContext.commonRect = commonRect;
-						renderContext.baseRect = screenRect;
-						renderContext.baseToSpriteOffset.x = obj->mapPos.x - dirtyRect->rect.p1.x;
-						renderContext.baseToSpriteOffset.y = obj->mapPos.y - dirtyRect->rect.p1.y;
-						renderContext.LCDOffsetX = renderer->LCDOffsetX;
-
-						RE_FillSprite3(&obj->asset->baseAsset.sprite, renderContext);
-					}
+					RENDERER_RenderFGObject(obj, &dirtyRect->rect, &screenRect, renderer->LCDOffsetX);
 				}
 			}
 			//-----------------------
 			// ENEMIES
 			//-----------------------
-			else if (currentPrioObject >= ENEMY_ID_START && currentPrioObject <= ENEMY_ID_START)
+			else if (MISC_IsThisEnemyID(currentPrioObject))
 			{
 				for (int k = 0; k < ctx->enemies.activeEnemies; k++)
 				{
@@ -1316,146 +1229,17 @@ int RENDERER_RenderObjects(RendererState_t* renderer, const GameContext_t* ctx)
 
 					if (enemy->id != currentPrioObject) { continue; }
 
-					Rect_t posRect;
-					posRect.p1.x = enemy->currMapPos.x;
-					posRect.p1.y = enemy->currMapPos.y;
-					posRect.p2.x = enemy->currMapPos.x + enemy->asset->baseAsset.sprite.size.x;
-					posRect.p2.y = enemy->currMapPos.y + enemy->asset->baseAsset.sprite.size.y;
-
-					Rect_t commonRect;
-					commonRect.p1.x = max(dirtyRect->rect.p1.x, posRect.p1.x);
-					commonRect.p1.y = max(dirtyRect->rect.p1.y, posRect.p1.y);
-					commonRect.p2.x = min(dirtyRect->rect.p2.x, posRect.p2.x);
-					commonRect.p2.y = min(dirtyRect->rect.p2.y, posRect.p2.y);
-
-					// czesc wspolna istnieje
-					if (commonRect.p1.x <= commonRect.p2.x && commonRect.p1.y <= commonRect.p2.y)
-					{
-						SpriteRender_t renderContext;
-						renderContext.commonRect = commonRect;
-						renderContext.baseRect = screenRect;
-						renderContext.baseToSpriteOffset.x = enemy->currMapPos.x - dirtyRect->rect.p1.x;
-						renderContext.baseToSpriteOffset.y = enemy->currMapPos.y - dirtyRect->rect.p1.y;
-						renderContext.LCDOffsetX = renderer->LCDOffsetX;
-
-						RE_FillSprite3(&enemy->asset->baseAsset.sprite, renderContext);
-					}
+					RENDERER_RenderEnemy(enemy, &dirtyRect->rect, &screenRect, renderer->LCDOffsetX);
 				}
 			}
 			//-----------------------
 			// PLAYER
 			//-----------------------
-			else if (currentPrioObject >= PLAYER_ID_START && currentPrioObject <= PLAYER_ID_END)
+			else if (MISC_IsThisPlayerID(currentPrioObject))
 			{
-				Rect_t posRect;
-				posRect.p1.x = ctx->player.currMapPos.x;
-				posRect.p1.y = ctx->player.currMapPos.y;
-				posRect.p2.x = ctx->player.currMapPos.x + ctx->player.asset->baseAsset.sprite.size.x;
-				posRect.p2.y = ctx->player.currMapPos.y + ctx->player.asset->baseAsset.sprite.size.y;
-
-				Rect_t commonRect;
-				commonRect.p1.x = max(dirtyRect->rect.p1.x, posRect.p1.x);
-				commonRect.p1.y = max(dirtyRect->rect.p1.y, posRect.p1.y);
-				commonRect.p2.x = min(dirtyRect->rect.p2.x, posRect.p2.x);
-				commonRect.p2.y = min(dirtyRect->rect.p2.y, posRect.p2.y);
-
-				// czesc wspolna istnieje
-				if (commonRect.p1.x <= commonRect.p2.x && commonRect.p1.y <= commonRect.p2.y)
-				{
-					SpriteRender_t renderContext;
-					renderContext.commonRect = commonRect;
-					renderContext.baseRect = screenRect;
-					renderContext.baseToSpriteOffset.x = ctx->player.currMapPos.x - dirtyRect->rect.p1.x;
-					renderContext.baseToSpriteOffset.y = ctx->player.currMapPos.y - dirtyRect->rect.p1.y;
-					renderContext.LCDOffsetX = renderer->LCDOffsetX;
-
-					RE_FillSprite3(&ctx->player.asset->baseAsset.sprite, renderContext);
-				}
+				RENDERER_RenderPlayer(&ctx->player, &dirtyRect->rect, &screenRect, renderer->LCDOffsetX);
 			}
 		}
-
-//		for (int j = 0; j < numOfPriorities; j++)
-//		{
-//			int currentPrioObject = prioArray[j];
-//
-//			for (int k = 0; k < dirtyRect->objectsSize; k++)
-//			{
-//				GameObjectID id = dirtyRect->objects[k].id;
-//				if (id != currentPrioObject)
-//				{
-//					continue;
-//				}
-//
-//				switch (id)
-//				{
-//				case PLAYER_MARIO_ID:
-//				{
-//					Rect_t posRect;
-//					posRect.p1.x = ctx->player.currMapPos.x;
-//					posRect.p1.y = ctx->player.currMapPos.y;
-//					posRect.p2.x = ctx->player.currMapPos.x + ctx->player.asset->baseAsset.sprite.size.x;
-//					posRect.p2.y = ctx->player.currMapPos.y + ctx->player.asset->baseAsset.sprite.size.y;
-//
-//					Rect_t commonRect;
-//					commonRect.p1.x = max(dirtyRect->rect.p1.x, posRect.p1.x);
-//					commonRect.p1.y = max(dirtyRect->rect.p1.y, posRect.p1.y);
-//					commonRect.p2.x = min(dirtyRect->rect.p2.x, posRect.p2.x);
-//					commonRect.p2.y = min(dirtyRect->rect.p2.y, posRect.p2.y);
-//
-//					// czesc wspolna istnieje
-//					if (commonRect.p1.x <= commonRect.p2.x && commonRect.p1.y <= commonRect.p2.y)
-//					{
-//						SpriteRender_t renderContext;
-//						renderContext.commonRect = commonRect;
-//						renderContext.baseRect = screenRect;
-//						renderContext.baseToSpriteOffset.x = ctx->player.currMapPos.x - dirtyRect->rect.p1.x;
-//						renderContext.baseToSpriteOffset.y = ctx->player.currMapPos.y - dirtyRect->rect.p1.y;
-//						renderContext.LCDOffsetX = renderer->LCDOffsetX;
-//
-//						RE_FillSprite3(&ctx->player.asset->baseAsset.sprite, renderContext);
-//					}
-//					break;
-//				}
-//				case ENEMY_GOOMBA_ID:
-//				{
-//					if (dirtyRect->objects[k].index < 0 || dirtyRect->objects[k].index >= ENEMIES_MAX_SIZE)
-//					{
-//						break;
-//					}
-//
-//					const EnemyState_t* enemy = &ctx->enemies.pool[dirtyRect->objects[k].index];
-//
-//					Rect_t posRect;
-//					posRect.p1.x = enemy->currMapPos.x;
-//					posRect.p1.y = enemy->currMapPos.y;
-//					posRect.p2.x = enemy->currMapPos.x + enemy->asset->baseAsset.sprite.size.x;
-//					posRect.p2.y = enemy->currMapPos.y + enemy->asset->baseAsset.sprite.size.y;
-//
-//					Rect_t commonRect;
-//					commonRect.p1.x = max(dirtyRect->rect.p1.x, posRect.p1.x);
-//					commonRect.p1.y = max(dirtyRect->rect.p1.y, posRect.p1.y);
-//					commonRect.p2.x = min(dirtyRect->rect.p2.x, posRect.p2.x);
-//					commonRect.p2.y = min(dirtyRect->rect.p2.y, posRect.p2.y);
-//
-//					// czesc wspolna istnieje
-//					if (commonRect.p1.x <= commonRect.p2.x && commonRect.p1.y <= commonRect.p2.y)
-//					{
-//						SpriteRender_t renderContext;
-//						renderContext.commonRect = commonRect;
-//						renderContext.baseRect = screenRect;
-//						renderContext.baseToSpriteOffset.x = enemy->currMapPos.x - dirtyRect->rect.p1.x;
-//						renderContext.baseToSpriteOffset.y = enemy->currMapPos.y - dirtyRect->rect.p1.y;
-//						renderContext.LCDOffsetX = renderer->LCDOffsetX;
-//
-//						RE_FillSprite3(&enemy->asset->baseAsset.sprite, renderContext);
-//					}
-//					break;
-//				}
-//				default:
-//					break;
-//				}
-//			}
-//		}
 
 		RE_SendRect(screenRect, renderer->LCDOffsetX);
 	}
@@ -1492,42 +1276,116 @@ int RENDERER_RenderFloor(const BackgroundRepObject_t* floor)
 	return 0;
 }
 
-int RENDERER_RenderBgdSprite(const Sprite_t* p, Point_t spritePos, Rect_t mapRectToDraw, Rect_t screenRect, int LCDOffsetX, bool render, bool fillBG)
+int RENDERER_RenderBGObject(const BackgroundObject_t* obj, const Rect_t* mapRectToDraw, const Rect_t* screenRect, const int LCDOffsetX)
 {
-	if (p == NULL)	{ return -1; }
+	if (obj == NULL || mapRectToDraw == NULL || screenRect == NULL)	{ return -1; }
 
 	Rect_t posRect;
-	posRect.p1.x = spritePos.x;
-	posRect.p1.y = spritePos.y;
-	posRect.p2.x = spritePos.x + p->size.x;
-	posRect.p2.y = spritePos.y + p->size.y;
+	posRect.p1.x = obj->mapPos.x;
+	posRect.p1.y = obj->mapPos.y;
+	posRect.p2.x = obj->mapPos.x + obj->asset->baseAsset.sprite.size.x;
+	posRect.p2.y = obj->mapPos.y + obj->asset->baseAsset.sprite.size.y;
 
-	Rect_t commonRect;
-	commonRect.p1.x = max(mapRectToDraw.p1.x, posRect.p1.x);
-	commonRect.p1.y = max(mapRectToDraw.p1.y, posRect.p1.y);
-	commonRect.p2.x = min(mapRectToDraw.p2.x, posRect.p2.x);
-	commonRect.p2.y = min(mapRectToDraw.p2.y, posRect.p2.y);
+	Rect_t commonRect = {0};
+	Rect_GetIntersection(mapRectToDraw, &posRect, &commonRect);
 
-	// czesc wspolna istnieje
-	if (commonRect.p1.x <= commonRect.p2.x && commonRect.p1.y <= commonRect.p2.y)
+	if (Rect_IsIntersection(&commonRect))
 	{
 		SpriteRender_t renderContext;
 		renderContext.commonRect = commonRect;
-		renderContext.baseRect = screenRect;
-		renderContext.baseToSpriteOffset.x = posRect.p1.x - mapRectToDraw.p1.x;
-		renderContext.baseToSpriteOffset.y = posRect.p1.y - mapRectToDraw.p1.y;
+		renderContext.baseRect = *screenRect;
+		renderContext.baseToSpriteOffset.x = posRect.p1.x - mapRectToDraw->p1.x;
+		renderContext.baseToSpriteOffset.y = posRect.p1.y - mapRectToDraw->p1.y;
 		renderContext.LCDOffsetX = LCDOffsetX;
 
-		if (render)
-		{
-			RE_RenderSprite(p, renderContext, fillBG);
-		}
-		else
-		{
-			RE_FillSprite3(p, renderContext);
-		}
+		RE_FillSprite(&obj->asset->baseAsset.sprite, &renderContext);
 	}
 
 	return 0;
 }
+
+int	RENDERER_RenderFGObject(const ForegroundObject_t* obj, const Rect_t* mapRectToDraw, const Rect_t* screenRect, const int LCDOffsetX)
+{
+	if (obj == NULL || mapRectToDraw == NULL || screenRect == NULL) { return -1; }
+
+	Rect_t posRect;
+	posRect.p1.x = obj->mapPos.x;
+	posRect.p1.y = obj->mapPos.y;
+	posRect.p2.x = obj->mapPos.x + obj->asset->baseAsset.sprite.size.x;
+	posRect.p2.y = obj->mapPos.y + obj->asset->baseAsset.sprite.size.y;
+
+	Rect_t commonRect = {0};
+	Rect_GetIntersection(mapRectToDraw, &posRect, &commonRect);
+
+	if (Rect_IsIntersection(&commonRect))
+	{
+		SpriteRender_t renderContext = {0};
+		renderContext.commonRect = commonRect;
+		renderContext.baseRect = *screenRect;
+		renderContext.baseToSpriteOffset.x = obj->mapPos.x - mapRectToDraw->p1.x;
+		renderContext.baseToSpriteOffset.y = obj->mapPos.y - mapRectToDraw->p1.y;
+		renderContext.LCDOffsetX = LCDOffsetX;
+
+		RE_FillSprite(&obj->asset->baseAsset.sprite, &renderContext);
+	}
+
+	return 0;
+}
+
+int	RENDERER_RenderEnemy(const EnemyState_t* enemy, const Rect_t* mapRectToDraw, const Rect_t* screenRect, const int LCDOffsetX)
+{
+	if (enemy == NULL || mapRectToDraw == NULL || screenRect == NULL) { return -1; }
+
+	Rect_t posRect;
+	posRect.p1.x = enemy->currMapPos.x;
+	posRect.p1.y = enemy->currMapPos.y;
+	posRect.p2.x = enemy->currMapPos.x + enemy->asset->baseAsset.sprite.size.x;
+	posRect.p2.y = enemy->currMapPos.y + enemy->asset->baseAsset.sprite.size.y;
+
+	Rect_t commonRect = {0};
+	Rect_GetIntersection(mapRectToDraw, &posRect, &commonRect);
+
+	if (Rect_IsIntersection(&commonRect))
+	{
+		SpriteRender_t renderContext;
+		renderContext.commonRect = commonRect;
+		renderContext.baseRect = *screenRect;
+		renderContext.baseToSpriteOffset.x = enemy->currMapPos.x - mapRectToDraw->p1.x;
+		renderContext.baseToSpriteOffset.y = enemy->currMapPos.y - mapRectToDraw->p1.y;
+		renderContext.LCDOffsetX = LCDOffsetX;
+
+		RE_FillSprite(&enemy->asset->baseAsset.sprite, &renderContext);
+	}
+
+	return 0;
+}
+
+int	RENDERER_RenderPlayer(const PlayerState_t* player, const Rect_t* mapRectToDraw, const Rect_t* screenRect, const int LCDOffsetX)
+{
+	if (player == NULL || mapRectToDraw == NULL || screenRect == NULL) { return -1; }
+
+	Rect_t posRect;
+	posRect.p1.x = player->currMapPos.x;
+	posRect.p1.y = player->currMapPos.y;
+	posRect.p2.x = player->currMapPos.x + player->asset->baseAsset.sprite.size.x;
+	posRect.p2.y = player->currMapPos.y + player->asset->baseAsset.sprite.size.y;
+
+	Rect_t commonRect = {0};
+	Rect_GetIntersection(mapRectToDraw, &posRect, &commonRect);
+
+	if (Rect_IsIntersection(&commonRect))
+	{
+		SpriteRender_t renderContext;
+		renderContext.commonRect = commonRect;
+		renderContext.baseRect = *screenRect;
+		renderContext.baseToSpriteOffset.x = player->currMapPos.x - mapRectToDraw->p1.x;
+		renderContext.baseToSpriteOffset.y = player->currMapPos.y - mapRectToDraw->p1.y;
+		renderContext.LCDOffsetX = LCDOffsetX;
+
+		RE_FillSprite(&player->asset->baseAsset.sprite, &renderContext);
+	}
+
+	return 0;
+}
+
 
