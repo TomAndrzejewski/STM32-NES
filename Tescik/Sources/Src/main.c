@@ -310,6 +310,8 @@ void print_start()
  	printf_v("Welcome!\n");
 }
 
+#define TIMESTAMPS_SIZE		16
+
 int main(void)
 {
 	Flash_init();
@@ -328,8 +330,9 @@ int main(void)
 
 	LCD_init();
 
-	uint32_t startTime = 0, elapsedUS = 0;
-	uint32_t startTime2 = 0;
+	uint32_t startTime[TIMESTAMPS_SIZE] = {0}, finishTime[TIMESTAMPS_SIZE] = {0};
+	int timeSteps = 0;
+	uint32_t frameNumber = 0;
 	int ret = 0;
 
 //	Timer_start();
@@ -351,26 +354,59 @@ int main(void)
 
 		u32 startLoopTime = GetTimestamp();
 		{
+			timeSteps = 0;
+
+			startTime[0] = GetTimestamp();
 			ret = INPUT_Update(&pGameCtx->input, pGameCtx, targetFrameTimeUS);
+			finishTime[0] = GetTimestamp();
 			if (ret < 0)	{ delay(1); continue; }
+			timeSteps++;
 
+			startTime[1] = GetTimestamp();
 			ret = CAMERA_Update(&pGameCtx->camera, pGameCtx);
+			finishTime[1] = GetTimestamp();
 			if (ret < 0)	{ delay(1); continue; }
+			timeSteps++;
 
+			startTime[2] = GetTimestamp();
 			ret = ENEMIES_UpdateFlags(&pGameCtx->enemies, pGameCtx);
+			finishTime[2] = GetTimestamp();
 			if (ret < 0)	{ delay(1); continue; }
+			timeSteps++;
 
+			startTime[3] = GetTimestamp();
 			ret = PHYSICS_Update(pGameCtx);
+			finishTime[3] = GetTimestamp();
 			if (ret < 0)	{ delay(1); continue; }
+			timeSteps++;
 
+			startTime[4] = GetTimestamp();
 			ret = PLAYER_ClearFlags(&pGameCtx->player);
+			finishTime[4] = GetTimestamp();
 			if (ret < 0)	{ delay(1); continue; }
+			timeSteps++;
 
+			startTime[5] = GetTimestamp();
 			ret = COLLISION_Update(pGameCtx);
+			finishTime[5] = GetTimestamp();
 			if (ret < 0)	{ delay(1); continue; }
+			timeSteps++;
 
+			startTime[6] = GetTimestamp();
 			ret = RENDERER_Update(pGameCtx);
+			finishTime[6] = GetTimestamp();
 			if (ret < 0)	{ delay(1); continue; }
+			timeSteps++;
+
+//			printf_v("Frame %d time: %d us, timestamps:\n", frameNumber, CalcTimeUS2(startTime[0], finishTime[6]));
+//			for (int i = 0; i < timeSteps; i++)
+//			{
+//				printf_uint(CalcTimeUS2(startTime[i], finishTime[i]));
+//				printf_c('\t');
+//			}
+//			printf_c('\n');
+
+			frameNumber++;
 		}
 		timeSpentInLoopUS = CalcTimeUS(startLoopTime);
 	}

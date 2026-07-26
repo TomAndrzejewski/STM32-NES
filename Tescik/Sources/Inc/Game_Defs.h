@@ -23,7 +23,7 @@
 #define BACKGROUND_REP_OBJECTS_MAX_SIZE	(8)
 
 ///////////////////////////////////////////////////////////////////
-#define DIRTY_RECTS_SIZE				(16)
+#define DIRTY_RECTS_SIZE				(32)
 #define DIRTY_RECTS_OBJ_ID_SIZE			(16)
 
 #define COLLISIONS_SIZE					(128)

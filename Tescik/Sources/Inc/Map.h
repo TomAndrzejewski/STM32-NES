@@ -60,7 +60,7 @@ typedef struct
 }ImmovableSprite_t;
 
 
-#define DIRTY_RECTS_SIZE		(16)
+//#define DIRTY_RECTS_SIZE		(16)
 #define DIRTY_RECTS_OBJ_ID_SIZE	(16)
 
 #define MARIO_OBJ_ID			(1)

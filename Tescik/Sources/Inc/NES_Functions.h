@@ -18,6 +18,7 @@ void delayUS(uint32_t us);
 
 uint32_t GetTimestamp();
 uint32_t CalcTimeUS(uint32_t startTime);
+uint32_t CalcTimeUS2(uint32_t startTime, uint32_t finishTime);
 uint32_t CalcTimeMS(uint32_t startTime);
 
 void fast_memset(void *dest, uint32_t value, size_t bytes);

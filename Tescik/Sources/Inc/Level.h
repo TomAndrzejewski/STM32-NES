@@ -10,14 +10,27 @@
 
 #include "Game_Types.h"
 
+//todotomka flagi gdzies indziej trzeba dac
+#define COLL_TOP_ENABLED					(0x00000001)
+#define COLL_DOWN_ENABLED					(0x00000002)
+#define COLL_LEFT_ENABLED					(0x00000004)
+#define COLL_RIGHT_ENABLED					(0x00000008)
+#define COLL_ANY_ENABLED					( COLL_TOP_ENABLED \
+											| COLL_DOWN_ENABLED \
+											| COLL_LEFT_ENABLED \
+											| COLL_RIGHT_ENABLED)
+#define FG_SCROLL_RENDER					(0x00000010)
+
+
 
 typedef struct
 {
 	GameObjectID id;
 	int		x;
 	int		y;
+	uint32_t flags;
 
-}ObjectLevelPos_t;
+}ObjectLevelInstance_t;
 
 typedef struct
 {
@@ -30,11 +43,11 @@ typedef struct
 }RepObjectLevelPos_t;
 
 
-int LEVEL_GetFGObjectsLocations(const ObjectLevelPos_t** posTable, int* numOfObjects);
+int LEVEL_GetObjectsLocations(const ObjectLevelInstance_t** posTable, int* numOfObjects);
 
-int LEVEL_GetBGObjectsLocations(const ObjectLevelPos_t** posTable, int* numOfObjects);
+//int LEVEL_GetBGObjectsLocations(const ObjectLevelInstance_t** posTable, int* numOfObjects);
 
-int LEVEL_GetEnemiesLocations(const ObjectLevelPos_t** posTable, int* numOfObjects);
+int LEVEL_GetEnemiesLocations(const ObjectLevelInstance_t** posTable, int* numOfObjects);
 
 int LEVEL_GetBGRepObjectsLocations(const RepObjectLevelPos_t** posTable, int* numOfObjects);
 

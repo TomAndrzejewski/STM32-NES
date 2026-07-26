@@ -28,6 +28,15 @@ int GAME_InitContext(GameContext_t* ctx)
 	memset(ctx, 0, sizeof(GameContext_t));
 
 	///////////////////
+	// LEVEL DEFINITION
+	///////////////////
+	const ObjectLevelInstance_t* ObjectsPos = NULL;
+	int numOfObjects = 0;
+	ret = LEVEL_GetObjectsLocations(&ObjectsPos, &numOfObjects);
+	if (ret < 0) { return -5; }
+	if (ObjectsPos == NULL) { return -10; }
+
+	///////////////////
 	// BACKGROUND
 	///////////////////
 	for (int i = 0; i < BACKGROUND_OBJECTS_MAX_SIZE; i++)
@@ -35,44 +44,40 @@ int GAME_InitContext(GameContext_t* ctx)
 		ctx->bgObjects[i].id = OBJECT_NOT_USED;
 	}
 
-	const ObjectLevelPos_t* BGObjectsPos = NULL;
-	int numOfBGObjects = 0;
-	ret = LEVEL_GetBGObjectsLocations(&BGObjectsPos, &numOfBGObjects);
-	if (ret < 0) { return -5; }
-	if (BGObjectsPos == NULL) { return -10; }
-
-	if (numOfBGObjects > BACKGROUND_OBJECTS_MAX_SIZE)
-	{
-		numOfBGObjects = BACKGROUND_OBJECTS_MAX_SIZE;
-	}
-
 	ctx->activebgObjects = 0;
-	for (int i = 0; i < numOfBGObjects; i++)
+	for (int i = 0; i < numOfObjects; i++)
 	{
-		if (BGObjectsPos[i].id < BACKGROUND_OBJECT_ID_START || BGObjectsPos[i].id > BACKGROUND_OBJECT_ID_END)
+		if (ObjectsPos[i].id < BACKGROUND_OBJECT_ID_START || ObjectsPos[i].id > BACKGROUND_OBJECT_ID_END)
 		{
 			continue;
 		}
 
-		ctx->bgObjects[i].id = BGObjectsPos[i].id;
-		ctx->bgObjects[i].mapPos.x = BGObjectsPos[i].x;
-		ctx->bgObjects[i].mapPos.y = BGObjectsPos[i].y;
+		BackgroundObject_t* bgObject = &ctx->bgObjects[ctx->activebgObjects];
 
-		switch (BGObjectsPos[i].id)
+		bgObject->id = ObjectsPos[i].id;
+		bgObject->mapPos.x = ObjectsPos[i].x;
+		bgObject->mapPos.y = ObjectsPos[i].y;
+
+		switch (ObjectsPos[i].id)
 		{
 		case BG_JEDYNKA_OBJECT_ID: {
-			ctx->bgObjects[i].asset = &JEDYNKA_ASSET;
+			bgObject->asset = &JEDYNKA_ASSET;
 			break;
 		}
 		case BG_DWOJKA_OBJECT_ID: {
-			ctx->bgObjects[i].asset = &DWOJKA_ASSET;
+			bgObject->asset = &DWOJKA_ASSET;
 			break;
 		}
 		case BG_CHMURKA_OBJECT_ID: {
-			ctx->bgObjects[i].asset = &CHMURKA_ASSET;
+			bgObject->asset = &CHMURKA_ASSET;
 			break;
 		}
 		default:
+			break;
+		}
+
+		if (ctx->activebgObjects >= BACKGROUND_OBJECTS_MAX_SIZE - 1) {
+			printf_s("\n### ERROR, max FGObjects reached ###\n");
 			break;
 		}
 
@@ -87,41 +92,55 @@ int GAME_InitContext(GameContext_t* ctx)
 		ctx->fgObjects[i].id = OBJECT_NOT_USED;
 	}
 
-	const ObjectLevelPos_t* FGObjectsPos = NULL;
-	int numOfFGObjects = 0;
-	ret = LEVEL_GetFGObjectsLocations(&FGObjectsPos, &numOfFGObjects);
-	if (ret < 0) { return -11; }
-	if (FGObjectsPos == NULL) { return -12; }
-
-	if (numOfFGObjects > FOREGROUND_OBJECTS_MAX_SIZE) {
-		numOfFGObjects = FOREGROUND_OBJECTS_MAX_SIZE;
-	}
-
 	ctx->activefgObjects = 0;
-	for (int i = 0; i < numOfFGObjects; i++)
+	for (int i = 0; i < numOfObjects; i++)
 	{
-		if (FGObjectsPos[i].id < FOREGROUND_OBJECT_ID_START || FGObjectsPos[i].id > FOREGROUND_OBJECT_ID_END)
+		if (ObjectsPos[i].id < FOREGROUND_OBJECT_ID_START || ObjectsPos[i].id > FOREGROUND_OBJECT_ID_END)
 		{
 			continue;
 		}
 
-		switch (FGObjectsPos[i].id)
+		ForegroundObject_t* fgObject = &ctx->fgObjects[ctx->activefgObjects];
+
+		switch (ObjectsPos[i].id)
 		{
 		case FG_BRICKS_OBJECT_ID: {
-			ctx->fgObjects[i].asset = &BRICKS_ASSET;
+			fgObject->asset = &BRICKS_ASSET;
+			break;
+		}
+		case FG_BLOCK_QMARK_OBJECT_ID: {
+			fgObject->asset = &BLOCK_QMARK_ASSET;
+			break;
+		}
+		case FG_RURA_DOL_OBJECT_ID: {
+			fgObject->asset = &RURA_DOL_ASSET;
+			break;
+		}
+		case FG_RURA_GORA_OBJECT_ID: {
+			fgObject->asset = &RURA_GORA_ASSET;
+			break;
+		}
+		case FG_PYRAMID_BLOCK_OBJECT_ID: {
+			fgObject->asset = &PYRAMID_BLOCK_ASSET;
 			break;
 		}
 		default:
 			break;
 		}
 
-		ctx->fgObjects[i].id = FGObjectsPos[i].id;
-		ctx->fgObjects[i].mapPos.x = FGObjectsPos[i].x;
-		ctx->fgObjects[i].mapPos.y = FGObjectsPos[i].y;
-		ctx->fgObjects[i].BBoxCenter.x = FGObjectsPos[i].x + (ctx->fgObjects[i].asset->BBox.p1.x + ctx->fgObjects[i].asset->BBox.p2.x) / 2;
-		ctx->fgObjects[i].BBoxCenter.y = FGObjectsPos[i].y + (ctx->fgObjects[i].asset->BBox.p1.y + ctx->fgObjects[i].asset->BBox.p2.y) / 2;
-		ctx->fgObjects[i].IsAlive = true;
-		ctx->fgObjects[i].IsOnScreen = true;
+		fgObject->id = ObjectsPos[i].id;
+		fgObject->flags = ObjectsPos[i].flags;
+		fgObject->mapPos.x = ObjectsPos[i].x;
+		fgObject->mapPos.y = ObjectsPos[i].y;
+		fgObject->BBoxCenter.x = ObjectsPos[i].x + (fgObject->asset->BBox.p1.x + fgObject->asset->BBox.p2.x) / 2;
+		fgObject->BBoxCenter.y = ObjectsPos[i].y + (fgObject->asset->BBox.p1.y + fgObject->asset->BBox.p2.y) / 2;
+		fgObject->IsAlive = true;
+		fgObject->IsOnScreen = true;
+
+		if (ctx->activefgObjects >= FOREGROUND_OBJECTS_MAX_SIZE - 1) {
+			printf_s("\n### ERROR, max FGObjects reached ###\n");
+			break;
+		}
 
 		ctx->activefgObjects++;
 	}
@@ -150,7 +169,7 @@ int GAME_InitContext(GameContext_t* ctx)
 	ctx->activebgRepObjects = 0;
 	for (int i = 0; i < numOfBGRepObjects; i++)
 	{
-		if (BGRepObjectsPos[i].id < BACKGROUND_REP_OBJECT_ID_START || BGRepObjectsPos[i].id > FOREGROUND_REP_OBJECT_ID_END)
+		if (BGRepObjectsPos[i].id < BACKGROUND_REP_OBJECT_ID_START || BGRepObjectsPos[i].id > BACKGROUND_REP_OBJECT_ID_END)
 		{
 			continue;
 		}
@@ -216,12 +235,12 @@ int GAME_InitContext(GameContext_t* ctx)
 	ctx->player.damageTaken = false;
 	ctx->player.IsGrounded = true;
 	ctx->player.JustKilledFGObject = false;
-	ctx->player.playerLevel = PLAYER_LITTLE;
+	ctx->player.playerLevel = PLAYER_BIG;
 
 	///////////////////
 	// ENEMIES
 	///////////////////
-	const ObjectLevelPos_t* EnemiesPos = NULL;
+	const ObjectLevelInstance_t* EnemiesPos = NULL;
 	int numOfEnemies = 0;
 	ret = LEVEL_GetEnemiesLocations(&EnemiesPos, &numOfEnemies);
 	if (ret < 0) { return -30; }
@@ -460,6 +479,8 @@ int COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t* obj, co
 {
 	if (player == NULL || obj == NULL || bump == NULL || ctx == NULL) { return -1; }
 
+	if (!(obj->flags & COLL_ANY_ENABLED)) { return 0; }
+
 	const int bumpLenX = CalcRectXLen(bump->bumpRect);
 	const int bumpLenY = CalcRectYLen(bump->bumpRect);
 
@@ -468,13 +489,14 @@ int COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t* obj, co
 
 	// 1. VERTICAL COLLISION (UP/DOWN)
 	if (bumpLenX >= bumpLenY) {
+		if (!(obj->flags & COLL_TOP_ENABLED) && !(obj->flags & COLL_DOWN_ENABLED)) return 0;
 		if (bumpLenX <= COLLISION_THRESHOLD_VERTICAL) return 0;
 
 		int bumpCenterY = (bump->bumpRect.p1.y + bump->bumpRect.p2.y) / 2;
 
 		// LANDING ON OBJECT (TOP OF THE OBJECT)
 		if (bumpCenterY > obj->BBoxCenter.y) {
-			if (!player->IsGrounded) {
+			if ((obj->flags & COLL_TOP_ENABLED) && !player->IsGrounded) {
 				player->IsGrounded = true;
 				player->currMapPos.y = obj->mapPos.y + obj->asset->BBox.p2.y;
 				player->body.subpixelY = 0.0f;
@@ -483,78 +505,42 @@ int COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t* obj, co
 		}
 		// BUMPING FROM THE BOTTOM
 		else {
-			player->body.vy = -0.5f;
-			player->currMapPos.y = obj->mapPos.y - player->asset->BBox.p2.y;
+			if ((obj->flags & COLL_DOWN_ENABLED)) {
+				player->body.vy = -0.5f;
+				player->currMapPos.y = obj->mapPos.y - player->asset->BBox.p2.y;
 
-			bool isPlayerBig = (player->playerLevel == PLAYER_BIG || player->playerLevel == PLAYER_SHOOTING) ? true : false;
-			if (isPlayerBig && !player->JustKilledFGObject) {
-				player->JustKilledFGObject = true;
-				obj->IsAlive = false;
+				bool isPlayerBig = (player->playerLevel == PLAYER_BIG || player->playerLevel == PLAYER_SHOOTING) ? true : false;
+				if (isPlayerBig && !player->JustKilledFGObject) {
+					player->JustKilledFGObject = true;
+					obj->IsAlive = false;
+				}
 			}
 		}
 	}
 	// 2. HORIZONTAL COLLISION (LEFT/RIGHT)
 	else {
+		if (!(obj->flags & COLL_LEFT_ENABLED) && !(obj->flags & COLL_RIGHT_ENABLED)) return 0;
 		if (bumpLenY <= COLLISION_THRESHOLD_HORIZONTAL) return 0;
 
 		int centerBumpX = (bump->bumpRect.p1.x + bump->bumpRect.p2.x) / 2;
 
-		player->body.vx = 0.0f;
-		player->body.subpixelX = 0.0f;
-
 		// BUMPING FROM RIGHT
 		if (centerBumpX > obj->BBoxCenter.x) {
-			player->currMapPos.x = obj->mapPos.x + obj->asset->BBox.p2.x;
+			if ((obj->flags & COLL_RIGHT_ENABLED)) {
+				player->body.vx = 0.0f;
+				player->body.subpixelX = 0.0f;
+				player->currMapPos.x = obj->mapPos.x + obj->asset->BBox.p2.x + 1; // +1 in order to not "glue" to the object
+			}
 		}
 		// BUMPING FROM LEFT
 		else {
-			player->currMapPos.x = obj->mapPos.x - player->asset->BBox.p2.x;
+			if ((obj->flags & COLL_LEFT_ENABLED)) {
+				player->body.vx = 0.0f;
+				player->body.subpixelX = 0.0f;
+				player->currMapPos.x = obj->mapPos.x - player->asset->BBox.p2.x - 1; // - 1 in order to not "glue" to the object
+			}
 		}
 	}
-
-//	if (bumpLenX >= bumpLenY) { // gora lub dol
-//		int halfObjY = obj->mapPos.y + (obj->asset->BBox.p1.y + obj->asset->BBox.p2.y) / 2;
-//		int halfBumpY = (bump->bumpRect.p1.y + bump->bumpRect.p2.y) / 2;
-//		if (halfBumpY > halfObjY) { // gora
-//			if (bumpLenX > 3) {
-//				if (!player->IsGrounded) {
-//					player->IsGrounded = true;
-//					player->currMapPos.y = obj->mapPos.y + obj->asset->baseAsset.sprite.size.y;
-//					player->body.subpixelY = 0.0f;
-//					player->body.vy = 0.0f;
-//				}
-//			}
-//		} else { // dol
-//			if (bumpLenX > 3) {
-//				player->body.vy = -0.5f;
-//				if (obj->mapPos.y - player->asset->baseAsset.sprite.size.y > 0) {
-//					player->currMapPos.y = obj->mapPos.y - player->asset->baseAsset.sprite.size.y;
-//				}
-//				if ((player->playerLevel == PLAYER_BIG || player->playerLevel == PLAYER_SHOOTING) && !player->JustKilledFGObject) {
-//					player->JustKilledFGObject = true;
-//					obj->IsAlive = false;
-//				}
-//			}
-//		}
-//	} else { // prawa lub lewa
-//		int halfObjX = obj->mapPos.x + (obj->asset->BBox.p1.x + obj->asset->BBox.p2.x) / 2;
-//		int halfBumpX = (bump->bumpRect.p1.x + bump->bumpRect.p2.x) / 2;
-//		if (halfBumpX > halfObjX) { // prawa
-//			if (bumpLenX > 1) {
-//				player->currMapPos.x = obj->mapPos.x + obj->asset->baseAsset.sprite.size.x;
-//				player->body.vx = 0.0f;
-//				player->body.subpixelX = 0.0f;
-//			}
-//		} else { // lewa
-//			if (bumpLenX > 1) {
-//				if (obj->mapPos.x - player->asset->baseAsset.sprite.size.x > 0) {
-//					player->currMapPos.x = obj->mapPos.x - player->asset->baseAsset.sprite.size.x;
-//				}
-//				player->body.vx = 0.0f;
-//				player->body.subpixelX = 0.0f;
-//			}
-//		}
-//	}
 
 	return 0;
 }
@@ -649,9 +635,9 @@ int PHYSICS_Player_Movement(PlayerState_t* player, const GameContext_t* ctx)
 		}
 	} else {
 		if (player->body.vy > -1.0f) {
-			float multiplier = 3.0f;
+			float multiplier = 6.0f;
 			if (player->body.vy > 0.0f && (ctx->input.prev_buttons_state & PAD_BUTTON_A) && (ctx->input.buttons_state & PAD_BUTTON_A)) {
-				multiplier = 1.5f;
+				multiplier = 2.0f;
 			}
 			float dvy = ctx->input.frameData.frameTimeS * multiplier;
 			player->body.vy -= dvy;
@@ -953,7 +939,7 @@ int RENDERER_Update(GameContext_t* ctx)
 	if (ctx == NULL) { return -1; }
 	int ret = 0;
 
-	ret = REDNERER_ScrollRender(&ctx->renderer, ctx);
+	ret = RENDERER_ScrollRender(&ctx->renderer, ctx);
 	if (ret < 0) { return -1; }
 
 	ret = RENDERER_RenderObjects(&ctx->renderer, ctx);
@@ -999,7 +985,7 @@ int RENDERER_FirstRender(const GameContext_t* ctx)
 	return 0;
 }
 
-int REDNERER_ScrollRender(RendererState_t* renderer, const GameContext_t* ctx)
+int RENDERER_ScrollRender(RendererState_t* renderer, const GameContext_t* ctx)
 {
 	if (renderer == NULL || ctx == NULL) { return -1; }
 
@@ -1056,10 +1042,71 @@ int REDNERER_ScrollRender(RendererState_t* renderer, const GameContext_t* ctx)
 		RE_FillBackgroud(LCD_COLOR_BLUESKY, baseRectArea);
 
 
-		for (int j = 0; j < ctx->activebgObjects; j++)
+		for (int i = 0; i < ctx->activebgObjects; i++)
 		{
-			Point_t spritePos = ctx->bgObjects[j].mapPos;
-			RENDERER_RenderBgdSprite(&ctx->bgObjects[j].asset->baseAsset.sprite, spritePos, rightMapRect, rightScreenRect, renderer->LCDOffsetX, false, false);
+			Point_t spritePos = ctx->bgObjects[i].mapPos;
+			RENDERER_RenderBgdSprite(&ctx->bgObjects[i].asset->baseAsset.sprite, spritePos, rightMapRect, rightScreenRect, renderer->LCDOffsetX, false, false);
+		}
+
+
+		const int* prioArray = NULL;
+		int numOfPriorities = 0;
+		int ret = LEVEL_GetObjRenderPriorities(&prioArray, &numOfPriorities);
+		if (ret < 0) { return -5; }
+
+		for (int i = 0; i < numOfPriorities; i++)
+		{
+			int currentPrioObject = prioArray[i];
+
+			for (int j = 0; j < ctx->activefgObjects; j++)
+			{
+				const ForegroundObject_t* obj = &ctx->fgObjects[j];
+
+				if (obj->id != currentPrioObject) {
+					continue;
+				}
+
+				switch (obj->id)
+				{
+				case FG_RURA_DOL_OBJECT_ID:
+				case FG_RURA_GORA_OBJECT_ID:
+				case FG_BLOCK_QMARK_OBJECT_ID:
+				case FG_BRICKS_OBJECT_ID:
+				case FG_PYRAMID_BLOCK_OBJECT_ID:
+				{
+					if (!obj->IsAlive) { break; }
+					if (!(obj->flags & FG_SCROLL_RENDER)) { break; }
+
+					Rect_t posRect;
+					posRect.p1.x = obj->mapPos.x;
+					posRect.p1.y = obj->mapPos.y;
+					posRect.p2.x = obj->mapPos.x + obj->asset->baseAsset.sprite.size.x;
+					posRect.p2.y = obj->mapPos.y + obj->asset->baseAsset.sprite.size.y;
+
+					Rect_t commonRect;
+					commonRect.p1.x = max(rightMapRect.p1.x, posRect.p1.x);
+					commonRect.p1.y = max(rightMapRect.p1.y, posRect.p1.y);
+					commonRect.p2.x = min(rightMapRect.p2.x, posRect.p2.x);
+					commonRect.p2.y = min(rightMapRect.p2.y, posRect.p2.y);
+
+					// czesc wspolna istnieje
+					if (commonRect.p1.x <= commonRect.p2.x && commonRect.p1.y <= commonRect.p2.y)
+					{
+						SpriteRender_t renderContext;
+						renderContext.commonRect = commonRect;
+						renderContext.baseRect = rightScreenRect;
+						renderContext.baseToSpriteOffset.x = obj->mapPos.x - rightMapRect.p1.x;
+						renderContext.baseToSpriteOffset.y = obj->mapPos.y - rightMapRect.p1.y;
+						renderContext.LCDOffsetX = renderer->LCDOffsetX;
+
+						RE_FillSprite3(&obj->asset->baseAsset.sprite, renderContext);
+					}
+					break;
+				}
+				default:
+					break;
+				}
+			}
 		}
 
 		RE_SendRect(rightScreenRect, renderer->LCDOffsetX);
@@ -1090,11 +1137,12 @@ int RENDERER_RenderObjects(RendererState_t* renderer, const GameContext_t* ctx)
 	//////////////////////////
 	for (int i = 0; i < ctx->activefgObjects; i++)
 	{
+		if ((ctx->fgObjects[i].flags & FG_SCROLL_RENDER)) { break; }
+
 		Rect_t dirtyRect;
 		dirtyRect.p1 = ctx->fgObjects[i].mapPos;
 		dirtyRect.p2.x = ctx->fgObjects[i].mapPos.x + ctx->fgObjects[i].asset->baseAsset.sprite.size.x;
 		dirtyRect.p2.y = ctx->fgObjects[i].mapPos.y + ctx->fgObjects[i].asset->baseAsset.sprite.size.y;
-//		if (FGOBJECTS_GetDirtyRect(&ctx->fgObjects[i], &dirtyRect) < 0) { continue; }
 
 		Rect_t commonRect;
 		commonRect.p1.x = max(cameraRect.p1.x, dirtyRect.p1.x);
@@ -1224,10 +1272,63 @@ int RENDERER_RenderObjects(RendererState_t* renderer, const GameContext_t* ctx)
 			RENDERER_RenderBgdSprite(&ctx->bgObjects[j].asset->baseAsset.sprite, spritePos, dirtyRect->rect, screenRect, renderer->LCDOffsetX, false, false);
 		}
 
+
 		const int* prioArray = NULL;
 		int numOfPriorities = 0;
 		ret = LEVEL_GetObjRenderPriorities(&prioArray, &numOfPriorities);
 		if (ret < 0) { return -5; }
+
+		for (int j = 0; j < numOfPriorities; j++)
+		{
+			int currentPrioObject = prioArray[j];
+
+			for (int k = 0; k < ctx->activefgObjects; k++)
+			{
+				const ForegroundObject_t* obj = &ctx->fgObjects[k];
+
+				if (obj->id != currentPrioObject) { continue; }
+				if (!obj->IsAlive) { continue; }
+
+				switch (obj->id)
+				{
+				case FG_RURA_DOL_OBJECT_ID:
+				case FG_RURA_GORA_OBJECT_ID:
+				case FG_BLOCK_QMARK_OBJECT_ID:
+				case FG_BRICKS_OBJECT_ID:
+				case FG_PYRAMID_BLOCK_OBJECT_ID:
+				{
+					Rect_t posRect;
+					posRect.p1.x = obj->mapPos.x;
+					posRect.p1.y = obj->mapPos.y;
+					posRect.p2.x = obj->mapPos.x + obj->asset->baseAsset.sprite.size.x;
+					posRect.p2.y = obj->mapPos.y + obj->asset->baseAsset.sprite.size.y;
+
+					Rect_t commonRect;
+					commonRect.p1.x = max(dirtyRect->rect.p1.x, posRect.p1.x);
+					commonRect.p1.y = max(dirtyRect->rect.p1.y, posRect.p1.y);
+					commonRect.p2.x = min(dirtyRect->rect.p2.x, posRect.p2.x);
+					commonRect.p2.y = min(dirtyRect->rect.p2.y, posRect.p2.y);
+
+					// czesc wspolna istnieje
+					if (commonRect.p1.x <= commonRect.p2.x && commonRect.p1.y <= commonRect.p2.y)
+					{
+						SpriteRender_t renderContext;
+						renderContext.commonRect = commonRect;
+						renderContext.baseRect = screenRect;
+						renderContext.baseToSpriteOffset.x = obj->mapPos.x - dirtyRect->rect.p1.x;
+						renderContext.baseToSpriteOffset.y = obj->mapPos.y - dirtyRect->rect.p1.y;
+						renderContext.LCDOffsetX = renderer->LCDOffsetX;
+
+						RE_FillSprite3(&obj->asset->baseAsset.sprite, renderContext);
+					}
+					break;
+				}
+				default:
+					break;
+				}
+			}
+
+		}
 
 		for (int j = 0; j < numOfPriorities; j++)
 		{
@@ -1306,42 +1407,46 @@ int RENDERER_RenderObjects(RendererState_t* renderer, const GameContext_t* ctx)
 					}
 					break;
 				}
-				case FG_BRICKS_OBJECT_ID:
-				{
-					if (dirtyRect->objects[k].index < 0 || dirtyRect->objects[k].index >= FOREGROUND_OBJECTS_MAX_SIZE)
-					{
-						break;
-					}
-
-					const ForegroundObject_t* obj = &ctx->fgObjects[dirtyRect->objects[k].index];
-					if (!obj->IsAlive) { break; }
-
-					Rect_t posRect;
-					posRect.p1.x = obj->mapPos.x;
-					posRect.p1.y = obj->mapPos.y;
-					posRect.p2.x = obj->mapPos.x + obj->asset->baseAsset.sprite.size.x;
-					posRect.p2.y = obj->mapPos.y + obj->asset->baseAsset.sprite.size.y;
-
-					Rect_t commonRect;
-					commonRect.p1.x = max(dirtyRect->rect.p1.x, posRect.p1.x);
-					commonRect.p1.y = max(dirtyRect->rect.p1.y, posRect.p1.y);
-					commonRect.p2.x = min(dirtyRect->rect.p2.x, posRect.p2.x);
-					commonRect.p2.y = min(dirtyRect->rect.p2.y, posRect.p2.y);
-
-					// czesc wspolna istnieje
-					if (commonRect.p1.x <= commonRect.p2.x && commonRect.p1.y <= commonRect.p2.y)
-					{
-						SpriteRender_t renderContext;
-						renderContext.commonRect = commonRect;
-						renderContext.baseRect = screenRect;
-						renderContext.baseToSpriteOffset.x = obj->mapPos.x - dirtyRect->rect.p1.x;
-						renderContext.baseToSpriteOffset.y = obj->mapPos.y - dirtyRect->rect.p1.y;
-						renderContext.LCDOffsetX = renderer->LCDOffsetX;
-
-						RE_FillSprite3(&obj->asset->baseAsset.sprite, renderContext);
-					}
-					break;
-				}
+//				case FG_RURA_DOL_OBJECT_ID:
+//				case FG_RURA_GORA_OBJECT_ID:
+//				case FG_BLOCK_QMARK_OBJECT_ID:
+//				case FG_BRICKS_OBJECT_ID:
+//				case FG_PYRAMID_BLOCK_OBJECT_ID:
+//				{
+//					if (dirtyRect->objects[k].index < 0 || dirtyRect->objects[k].index >= FOREGROUND_OBJECTS_MAX_SIZE)
+//					{
+//						break;
+//					}
+//
+//					const ForegroundObject_t* obj = &ctx->fgObjects[dirtyRect->objects[k].index];
+//					if (!obj->IsAlive) { break; }
+//
+//					Rect_t posRect;
+//					posRect.p1.x = obj->mapPos.x;
+//					posRect.p1.y = obj->mapPos.y;
+//					posRect.p2.x = obj->mapPos.x + obj->asset->baseAsset.sprite.size.x;
+//					posRect.p2.y = obj->mapPos.y + obj->asset->baseAsset.sprite.size.y;
+//
+//					Rect_t commonRect;
+//					commonRect.p1.x = max(dirtyRect->rect.p1.x, posRect.p1.x);
+//					commonRect.p1.y = max(dirtyRect->rect.p1.y, posRect.p1.y);
+//					commonRect.p2.x = min(dirtyRect->rect.p2.x, posRect.p2.x);
+//					commonRect.p2.y = min(dirtyRect->rect.p2.y, posRect.p2.y);
+//
+//					// czesc wspolna istnieje
+//					if (commonRect.p1.x <= commonRect.p2.x && commonRect.p1.y <= commonRect.p2.y)
+//					{
+//						SpriteRender_t renderContext;
+//						renderContext.commonRect = commonRect;
+//						renderContext.baseRect = screenRect;
+//						renderContext.baseToSpriteOffset.x = obj->mapPos.x - dirtyRect->rect.p1.x;
+//						renderContext.baseToSpriteOffset.y = obj->mapPos.y - dirtyRect->rect.p1.y;
+//						renderContext.LCDOffsetX = renderer->LCDOffsetX;
+//
+//						RE_FillSprite3(&obj->asset->baseAsset.sprite, renderContext);
+//					}
+//					break;
+//				}
 				default:
 					break;
 				}

@@ -32,6 +32,15 @@ uint32_t GetTimestamp()
 	return ts;
 }
 
+uint32_t CalcTimeUS2(uint32_t startTime, uint32_t finishTime)
+{
+	uint32_t elapsed_cycles = finishTime - startTime;
+
+	uint32_t cycles_per_us = (SYSCLOCK_MHZ / 1000000UL);
+
+	return (elapsed_cycles / cycles_per_us);
+}
+
 uint32_t CalcTimeUS(uint32_t startTime)
 {
 	uint32_t current_cycles = DWT->CYCCNT;

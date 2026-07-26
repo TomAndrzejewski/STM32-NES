@@ -44,7 +44,7 @@ bool	ENEMIES_CalcIsOnScreen(const EnemyState_t* enemy, const Rect_t* screenRect)
 
 int 	RENDERER_Update(GameContext_t* ctx);
 int 	RENDERER_FirstRender(const GameContext_t* ctx);
-int 	REDNERER_ScrollRender(RendererState_t* renderer, const GameContext_t* ctx);
+int 	RENDERER_ScrollRender(RendererState_t* renderer, const GameContext_t* ctx);
 int 	RENDERER_RenderObjects(RendererState_t* renderer, const GameContext_t* ctx);
 int 	RENDERER_RenderFloor(const BackgroundRepObject_t* floor);
 int 	RENDERER_RenderBgdSprite(const Sprite_t* p, Point_t spritePos, Rect_t mapRectToDraw, Rect_t screenRect, int LCDOffsetX, bool render, bool fillBG);

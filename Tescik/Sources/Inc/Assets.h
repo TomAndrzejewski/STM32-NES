@@ -19,6 +19,10 @@ extern const PlayerAsset_t MARIO_ASSET;
 // FOREGROUND
 ///////////////////
 extern const ForegroundAsset_t BRICKS_ASSET;
+extern const ForegroundAsset_t BLOCK_QMARK_ASSET;
+extern const ForegroundAsset_t RURA_DOL_ASSET;
+extern const ForegroundAsset_t RURA_GORA_ASSET;
+extern const ForegroundAsset_t PYRAMID_BLOCK_ASSET;
 
 ///////////////////
 // BACKGROUND

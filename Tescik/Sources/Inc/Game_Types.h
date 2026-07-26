@@ -45,11 +45,15 @@
 #define FOREGROUND_OBJECT_ID_END		(0x00002FFF)
 
 #define BACKGROUND_REP_OBJECT_ID_START	(0x00003000)
-#define FOREGROUND_REP_OBJECT_ID_END	(0x00003FFF)
+#define BACKGROUND_REP_OBJECT_ID_END	(0x00003FFF)
 
 #define PLAYER_ID_START					(0x00004000)
 #define PLAYER_ID_END					(0x00004FFF)
 
+
+//-----------------------------------------------------------
+// REMEMBER! ADD NEW ID TO Level.c ObjRenderPriorities TAB
+//-----------------------------------------------------------
 typedef enum
 {
 	OBJECT_NOT_USED = -1,
@@ -62,6 +66,10 @@ typedef enum
 
 	FG_RURA_OBJECT_ID = FOREGROUND_OBJECT_ID_START,
 	FG_BRICKS_OBJECT_ID,
+	FG_BLOCK_QMARK_OBJECT_ID,
+	FG_RURA_DOL_OBJECT_ID,
+	FG_RURA_GORA_OBJECT_ID,
+	FG_PYRAMID_BLOCK_OBJECT_ID,
 
 	BG_REP_FLOOR_ID = BACKGROUND_REP_OBJECT_ID_START,
 
@@ -217,6 +225,8 @@ typedef struct
 	Point_t BBoxCenter;
 
 	const ForegroundAsset_t* asset;
+
+	uint32_t flags;
 
 	bool IsAlive;
 	bool IsOnScreen;
