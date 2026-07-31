@@ -156,12 +156,12 @@ typedef struct
 
 }CollState_t;
 
-typedef struct
-{
-	int size;
-	int bumps[COLLISION_CONTEXTS_SIZE];
-
-}CollContext_t;
+//typedef struct
+//{
+//	int size;
+//	int bumps[COLLISION_CONTEXTS_SIZE];
+//
+//}CollContext_t;
 
 typedef enum
 {
@@ -179,7 +179,7 @@ typedef struct
 
 	Body_t body;
 
-	CollContext_t collCtx;
+//	CollContext_t collCtx;
 
 	const PlayerAsset_t* asset;
 

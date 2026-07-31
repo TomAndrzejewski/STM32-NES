@@ -271,8 +271,8 @@ int GAME_InitContext(GameContext_t* ctx)
 	ctx->player.body.vy = 0.0f;
 	ctx->player.body.subpixelX = 0.0f;
 	ctx->player.body.subpixelY = 0.0f;
-	ctx->player.collCtx.size = 0;
-	fast_memset(&ctx->player.collCtx, 0, sizeof(ctx->player.collCtx));
+//	ctx->player.collCtx.size = 0;
+//	fast_memset(&ctx->player.collCtx, 0, sizeof(ctx->player.collCtx));
 	ctx->player.lifePoints = 1;
 	ctx->player.IsImmune = false;
 	ctx->player.damageTaken = false;

@@ -66,7 +66,7 @@ void DMA2_SPI1_Send_NoBlock(uint8_t* buffer, uint16_t length)
     // 1. Sprawdź, czy poprzedni transfer DMA się zakończył
     // Jeśli DMA jeszcze wysyła, musimy poczekać (lub zabezpieczyć to wyżej w kodzie)
     timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
-	while (!DMA2_Stream3->CR & DMA_SxCR_EN) {
+	while (DMA2_Stream3->CR & DMA_SxCR_EN) {
 		if (timeout_has_expired(&timer)) {
 			break;
 		}

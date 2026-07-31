@@ -1,2 +1,30 @@
-Skonfiguruj zegary
-Poczytaj o prescalerach dla magistral
+Ogolny zakres:
+pierwszy poziom bez podziemi
+dzwiek (muzyka, efekty dzwiekowe)
+punkty (zapis max wyniku do pamieci nieulotnej)
+wyswietlanie czasu, punktow, monet
+restart gry na przycisk
+menu startowe z najlepszym wynikiem punktowym, z niego startujemy gre
+
+Szczegółowy zakres:
+animacja mario biegajacego w rozne strony
+animacja rozwalania bloczku
+animacja uderzania glowa w bloczek
+animacja spawnu grzybka
+animacja zmiany rozmiaru mario
+animacja zdobywania punktow
+animacja zabijania przeciwnikow
+animacja smierci mario
+dzwiek, jeszcze nie wiem jak to rozdzielic na mniejsze zadania
+zapis wyniku do pamieci nieulotnej
+poruszanie przeciwnikow
+poruszanie grzybka
+liczenie czasu gry
+liczenie zdobytych punktow
+liczenie zdobytych monet
+wyswietlenie czasu gry
+wyswietlenie zdobytych punktow
+wyswietlenie zdobytych monet
+obsługa restartu gry na przycisk, czyli restart struktur z danymi i ekranu
+menu startowe przed rozpoczeciem gry
+
