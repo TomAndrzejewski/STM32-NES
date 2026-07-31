@@ -154,14 +154,7 @@ typedef struct
 	int size;
 	Bump_t bumps[COLLISIONS_SIZE] __attribute__((aligned(4)));
 
-}CollState_t;
-
-//typedef struct
-//{
-//	int size;
-//	int bumps[COLLISION_CONTEXTS_SIZE];
-//
-//}CollContext_t;
+}CollisionState_t;
 
 typedef enum
 {
@@ -178,8 +171,6 @@ typedef struct
 	Point_t		prevMapPos;
 
 	Body_t body;
-
-//	CollContext_t collCtx;
 
 	const PlayerAsset_t* asset;
 
@@ -333,7 +324,7 @@ typedef struct
 	// Renderer data
 	RendererState_t	renderer;
 
-	CollState_t coll;
+	CollisionState_t collision;
 
 }GameContext_t;
 

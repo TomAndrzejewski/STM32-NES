@@ -17,7 +17,7 @@ int 	INPUT_SetButtonsState(InputState_t* input, uint32_t buttons_state);
 int 	INPUT_SetFrameTimeUS(InputState_t* frameData, u32 frameTimeUS);
 
 int		COLLISION_Update(GameContext_t* ctx);
-int		COLLISION_Calculate(CollState_t* coll, const GameContext_t* ctx);
+int		COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx);
 int 	COLLISION_Resolve(GameContext_t* ctx);
 int 	COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t* obj, const Bump_t* bump, const GameContext_t* ctx);
 int 	COLLISION_Player_Floor(PlayerState_t* player, const Bump_t* bump, const GameContext_t* ctx);

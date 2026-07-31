@@ -289,8 +289,8 @@ int GAME_InitContext(GameContext_t* ctx)
 	///////////////////
 	// COLLISION
 	///////////////////
-	ctx->coll.size = 0;
-	fast_memset(ctx->coll.bumps, 0, sizeof(ctx->coll.bumps));
+	ctx->collision.size = 0;
+	fast_memset(ctx->collision.bumps, 0, sizeof(ctx->collision.bumps));
 
 	return 0;
 }
@@ -331,7 +331,7 @@ int	COLLISION_Update(GameContext_t* ctx)
 	if (ctx == NULL) { return -1; }
 	int ret = 0;
 
-	ret = COLLISION_Calculate(&ctx->coll, ctx);
+	ret = COLLISION_Calculate(&ctx->collision, ctx);
 	if (ret < 0) { return -5; }
 
 	ret = COLLISION_Resolve(ctx);
@@ -340,7 +340,7 @@ int	COLLISION_Update(GameContext_t* ctx)
 	return 0;
 }
 
-int	COLLISION_Calculate(CollState_t* coll, const GameContext_t* ctx)
+int	COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx)
 {
 	if (coll == NULL || ctx == NULL) { return -1; }
 
@@ -448,9 +448,9 @@ int COLLISION_Resolve(GameContext_t* ctx)
 	if (ctx == NULL) { return -1; }
 	int ret = 0;
 
-	for (int i = 0; i < ctx->coll.size; i++)
+	for (int i = 0; i < ctx->collision.size; i++)
 	{
-		Bump_t* bump = &ctx->coll.bumps[i];
+		Bump_t* bump = &ctx->collision.bumps[i];
 		switch (bump->bumpID)
 		{
 		case PLAYER_BUMP_FLOOR:
