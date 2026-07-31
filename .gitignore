@@ -4,6 +4,8 @@
 */Debug/*
 */Release/*
 *.launch*
+*/html/*
+*/latex/*
 
 # Prerequisites
 *.d
