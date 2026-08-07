@@ -14,10 +14,10 @@
 #include "RenderEngine.h"
 
 #include "Game_Types.h"
-#include "Assets.h"
 #include "Level.h"
 
 #include "Game.h"
+#include "../Inc/GraphicsAssets.h"
 
 
 int GAME_InitContext(GameContext_t* ctx)
@@ -263,7 +263,7 @@ int GAME_InitContext(GameContext_t* ctx)
 	// PLAYER
 	///////////////////
 	ctx->player.asset = &MARIO_ASSET;
-	ctx->player.id = ctx->player.asset->baseAsset.id;
+	ctx->player.id = ctx->player.asset->id;
 	ctx->player.currMapPos.x = 80;
 	ctx->player.currMapPos.y = ctx->map.floorYLevel;
 	ctx->player.prevMapPos = ctx->player.currMapPos;
@@ -735,12 +735,23 @@ int CAMERA_CalcPos(CameraState_t* camera, const PlayerState_t* player)
 
 	camera->prevPos = camera->currPos;
 
-	int diff = player->currMapPos.x - player->prevMapPos.x;
-	if (diff >= 0 && camera->currPos.x + diff >= 0 && camera->currPos.x + diff <= levelBounds->p2.x) {
-		if (player->currMapPos.x - camera->currPos.x >= 80) {
-			camera->currPos.x += diff;
-		}
+	if (player->currMapPos.x - camera->currPos.x > 80)
+	{
+		camera->currPos.x += player->currMapPos.x - camera->currPos.x - 80;
 	}
+//	int diff = player->currMapPos.x - player->prevMapPos.x;
+//	if (diff > 0) {
+//		int playerCameraDiff = player->currMapPos.x - camera->currPos.x;
+//		int finalDiff = playerCameraDiff - 80;
+//		if (finalDiff > 0) {
+//			camera->currPos.x += finalDiff;
+//		}
+//	}
+//	if (diff >= 0 && camera->currPos.x + diff >= 0 && camera->currPos.x + diff <= levelBounds->p2.x) {
+//		if (player->currMapPos.x - camera->currPos.x >= 80) {
+//			camera->currPos.x += diff;
+//		}
+//	}
 
 	return 0;
 }
@@ -910,6 +921,32 @@ int RENDERER_Update(GameContext_t* ctx)
 
 	return 0;
 }
+
+int RENDERER_Update1(GameContext_t* ctx)
+{
+	if (ctx == NULL) { return -1; }
+	int ret = 0;
+
+	ret = RENDERER_ScrollRender(&ctx->renderer, ctx);
+	if (ret < 0) { return -1; }
+
+	return 0;
+}
+
+int RENDERER_Update2(GameContext_t* ctx)
+{
+	if (ctx == NULL) { return -1; }
+	int ret = 0;
+
+	ret = RENDERER_DirtyRects_Calculate(&ctx->renderer, ctx);
+	if (ret < 0) { return -1; }
+
+	ret = RENDERER_DirtyRects_Render(&ctx->renderer, ctx);
+	if (ret < 0) { return -1; }
+
+	return 0;
+}
+
 
 int RENDERER_FirstRender(const GameContext_t* ctx)
 {
@@ -1251,7 +1288,7 @@ int RENDERER_RenderFloor(const BackgroundRepObject_t* floor)
 {
 	if (floor == NULL)	{ return -1; }
 
-	const GameAsset_t* baseAsset = &floor->asset->baseAsset;
+	const BaseAsset_t* baseAsset = &floor->asset->baseAsset;
 	SpriteRender_t renderContext;
 
 	for (int i = 0; i < floor->mulVector.y; i++)

@@ -5,10 +5,11 @@
  *      Author: tomasz
  */
 
-#include "string.h"
+#include <string.h>
 
 #include "Game_Types.h"
 #include "NES_Defs.h"
+#include "Sound.h"
 
 #include "Level.h"
 
@@ -90,6 +91,20 @@ const GameObjectID ObjRenderPriorities[] = {
 		PLAYER_MARIO_ID,
 };
 
+const NoteAsset_t SoundNotes[] = {
+		{500, 1000},
+		{300, 125},
+		{200, 250},
+		{600, 500},
+};
+
+#define SOUND_NOTES_SIZE 	(sizeof(SoundNotes) / sizeof(SoundNotes[0]))
+
+static int _CurrNoteAsset = {0};
+
+
+
+
 int LEVEL_GetObjectsLocations(const ObjectLevelInstance_t** posTable, int* numOfObjects)
 {
 	if (posTable == NULL || numOfObjects == NULL)
@@ -156,3 +171,24 @@ int LEVEL_GetObjRenderPriorities(const GameObjectID** prioTable, int* numOfObjec
 		return -5;
 	}
 }
+
+int LEVEL_GetNextSoundNote(NoteAsset_t* note)
+{
+	if (note == NULL) return -1;
+
+	if (_CurrNoteAsset >= 0 && _CurrNoteAsset < SOUND_NOTES_SIZE)
+	{
+		*note = SoundNotes[_CurrNoteAsset];
+	}
+
+	_CurrNoteAsset++;
+	if (_CurrNoteAsset == SOUND_NOTES_SIZE) {
+		_CurrNoteAsset = 0;
+	}
+
+	return 0;
+}
+
+
+
+

@@ -45,6 +45,8 @@ int		ENEMIES_GetDirtyRect(const EnemyState_t* enemy, Rect_t* dirtyRect);
 bool	ENEMIES_CalcIsOnScreen(const EnemyState_t* enemy, const Rect_t* screenRect);
 
 int 	RENDERER_Update(GameContext_t* ctx);
+int 	RENDERER_Update1(GameContext_t* ctx);
+int 	RENDERER_Update2(GameContext_t* ctx);
 int 	RENDERER_FirstRender(const GameContext_t* ctx);
 int 	RENDERER_ScrollRender(RendererState_t* renderer, const GameContext_t* ctx);
 int		RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_t* ctx);

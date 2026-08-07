@@ -10,6 +10,8 @@
 
 #include "stdint.h"
 
+#define TESTY_MUZYKI
+
 #ifndef NDEBUG
     #define OPTIMIZE_FOR_DEBUG __attribute__((optimize("Og")))
 #else

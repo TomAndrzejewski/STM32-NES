@@ -81,39 +81,54 @@ typedef enum
 typedef struct
 {
 	Sprite_t sprite;
-	GameObjectID id;
 
-}GameAsset_t;
+}BaseAsset_t;
 
 typedef struct
 {
-	GameAsset_t baseAsset;
+	GameObjectID id;
+	BaseAsset_t baseAsset;
 
 }BackgroundAsset_t;
 
 typedef struct
 {
-	GameAsset_t baseAsset;
+	GameObjectID id;
+	BaseAsset_t baseAsset;
 
 	Rect_t BBox; // p1 - offset from (0,0) in sprite, p2 - length
 
-}ForegroundAsset_t;
+}Asset_t;
+
+//////////////
+// ANIMACJE
+//
+// ANIMABLEASSET_T TRZYMA WSKAZNIK NA TABLICE WSKAZNIKOW DO BASEASSETOW WE FLASHU I NA ANIMATION_ID
+// W FOR SZUKAMY ODPOWIEDNIEGO DO USTAWIENIA ANIMATION_ID
+// ANIMATOR STERUJE WYBOREM ANIMATION_ID I PRZY TYM ASSETEM
+//
+
+typedef enum
+{
+	DUPA,
+}AnimationID_t;
 
 typedef struct
 {
-	GameAsset_t baseAsset;
+	GameObjectID id;
+
+	int baseAssetsCount;
+	BaseAsset_t** baseAssets;
+	AnimationID_t currAnimation;
 
 	Rect_t BBox; // p1 - offset from (0,0) in sprite, p2 - length
 
-}EnemyAsset_t;
+}AnimableAsset_t;
 
-typedef struct
-{
-	GameAsset_t baseAsset;
-
-	Rect_t BBox; // p1 - offset from (0,0) in sprite, p2 - length
-
-}PlayerAsset_t;
+//typedef struct
+//{
+//
+//}Animator_t;
 
 typedef struct
 {
@@ -172,7 +187,7 @@ typedef struct
 
 	Body_t body;
 
-	const PlayerAsset_t* asset;
+	const Asset_t* asset;
 
 	PlayerLevel	playerLevel;
 	int lifePoints;
@@ -191,7 +206,7 @@ typedef struct
 	Point_t		currMapPos;
 	Point_t		prevMapPos;
 
-	const EnemyAsset_t* asset;
+	const Asset_t* asset;
 
 	bool IsAlive;
 	bool IsOnScreen;
@@ -215,7 +230,7 @@ typedef struct
 	Point_t mapPos;
 	Point_t BBoxCenter;
 
-	const ForegroundAsset_t* asset;
+	const Asset_t* asset;
 
 	uint32_t flags;
 

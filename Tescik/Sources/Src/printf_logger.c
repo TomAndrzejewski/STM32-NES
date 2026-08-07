@@ -43,24 +43,29 @@ void printf_init(void)
 
 void printf_c(char c)
 {
+#ifdef DEBUG
     if (!(ITM->TCR & ITM_TCR_ITMENA_Msk)) return;
     if (!(ITM->TER & 1)) return;
 
     while (!(ITM->PORT[0].u32 & 1));
     ITM->PORT[0].u8 = c;
+#endif
 }
 
 static void printf_hex(uint32_t val)
 {
+#ifdef DEBUG
     char hex[] = "0123456789ABCDEF";
     for (int i = 7; i >= 0; i--)
     {
     	printf_c(hex[(val >> (i * 4)) & 0xF]);
     }
+#endif
 }
 
 void printf_v(const char *fmt, ...)
 {
+#ifdef DEBUG
     va_list args;
     va_start(args, fmt);
 
@@ -115,18 +120,22 @@ void printf_v(const char *fmt, ...)
     }
 
     va_end(args);
+#endif
 }
 
 void printf_s(const char *s)
 {
+#ifdef DEBUG
     while (*s)
     {
     	printf_c(*s++);
     }
+#endif
 }
 
 void printf_uint(uint32_t value)
 {
+#ifdef DEBUG
     char buf[10];
     int i = 0;
 
@@ -146,14 +155,17 @@ void printf_uint(uint32_t value)
     {
     	printf_c(buf[i]);
     }
+#endif
 }
 
 void printf_int(int value)
 {
+#ifdef DEBUG
     if (value < 0)
     {
     	printf_c('-');
         value = -value;
     }
     printf_uint((uint32_t)value);
+#endif
 }

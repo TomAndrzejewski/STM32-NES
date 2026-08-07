@@ -31,6 +31,7 @@
 #include "LCDControl.h"
 #include "PADControl.h"
 #include "RenderEngine.h"
+#include "Sound.h"
 
 #include "Game.h"
 
@@ -48,7 +49,26 @@ void FPU_init()
 
 volatile uint32_t tim10_t1 = 0;
 
-void Timer_init()
+void Timer_10_init()
+{
+	RCC->APB2ENR |= RCC_APB2ENR_TIM10EN;
+
+	// 144MHz / ((23999 + 1) * (99 + 1)) = 60Hz
+	TIM10->ARR = 23999;
+	TIM10->PSC = 99;
+
+	// update shadow registers and clear irq pending bit
+	TIM10->EGR |= TIM_EGR_UG;
+	TIM10->SR &= ~TIM_SR_UIF;
+
+	tim10_t1 = GetTimestamp();
+
+	NVIC_EnableIRQ(TIM1_UP_TIM10_IRQn);
+
+	TIM10->DIER = 1; // UPDATE IRQ ENABLE AND CC IRQ DISABLE
+}
+
+void Timer_2_init()
 {
 	RCC->APB2ENR |= RCC_APB2ENR_TIM10EN;
 
@@ -308,21 +328,44 @@ int main(void)
 	GPIO_init();
 	IRQ_DMA2_SPI1_TX_Init();
 	DMA2_SPI1_TX_Init();
-	Timer_init();
+	Timer_10_init();
 	printf_init();
 
 	print_start();
 
+#ifdef TESTY_MUZYKI
+
+	uint32_t startTime = 0, startLoop = 0;
+	uint32_t timeSpent = 0, loopTimeSpent = 0;
+
+	SOUND_Init();
+
+	for (int i = 0; i < 100; i++)
+	{
+		startLoop = GetTimestamp();
+		for (int j = 0; j < 64; j++)
+		{
+			startTime = GetTimestamp();
+			SOUND_Irq();
+			timeSpent = GetTimestamp();
+		}
+		loopTimeSpent = GetTimestamp();
+		printf_v("Loop %d t0: %d, t1: %d\n", i, CalcDiffTimeUS(startTime, timeSpent), CalcDiffTimeUS(startLoop, loopTimeSpent));
+	}
+
+
+#else
 	RE_Init();
 
 	LCD_init();
 
 	uint32_t startTime[TIMESTAMPS_SIZE] = {0}, finishTime[TIMESTAMPS_SIZE] = {0};
-	int timeSteps = 0;
+	int timeStaps = 0;
 	uint32_t frameNumber = 0;
 	int ret = 0;
 
 //	Timer_start();
+
 
 	GAME_InitContext(pGameCtx);
 
@@ -341,62 +384,63 @@ int main(void)
 
 		u32 startLoopTime = GetTimestamp();
 		{
-			timeSteps = 0;
+			timeStaps = 0;
 
-			startTime[timeSteps] = GetTimestamp();
+			startTime[timeStaps] = GetTimestamp();
 			ret = INPUT_Update(&pGameCtx->input, pGameCtx, targetFrameTimeUS);
-			finishTime[timeSteps] = GetTimestamp();
+			finishTime[timeStaps] = GetTimestamp();
 			if (ret < 0)	{ delay(1); continue; }
-			timeSteps++;
+			timeStaps++;
 
-			startTime[timeSteps] = GetTimestamp();
+			startTime[timeStaps] = GetTimestamp();
 			ret = ENEMIES_UpdateFlags(&pGameCtx->enemies, pGameCtx);
-			finishTime[timeSteps] = GetTimestamp();
+			finishTime[timeStaps] = GetTimestamp();
 			if (ret < 0)	{ delay(1); continue; }
-			timeSteps++;
+			timeStaps++;
 
-			startTime[timeSteps] = GetTimestamp();
+			startTime[timeStaps] = GetTimestamp();
 			ret = PHYSICS_Update(pGameCtx);
-			finishTime[timeSteps] = GetTimestamp();
+			finishTime[timeStaps] = GetTimestamp();
 			if (ret < 0)	{ delay(1); continue; }
-			timeSteps++;
+			timeStaps++;
 
-			startTime[timeSteps] = GetTimestamp();
+			startTime[timeStaps] = GetTimestamp();
 			ret = CAMERA_Update(&pGameCtx->camera, pGameCtx);
-			finishTime[timeSteps] = GetTimestamp();
+			finishTime[timeStaps] = GetTimestamp();
 			if (ret < 0)	{ delay(1); continue; }
-			timeSteps++;
+			timeStaps++;
 
-			startTime[timeSteps] = GetTimestamp();
+			startTime[timeStaps] = GetTimestamp();
 			ret = PLAYER_ClearFlags(&pGameCtx->player);
-			finishTime[timeSteps] = GetTimestamp();
+			finishTime[timeStaps] = GetTimestamp();
 			if (ret < 0)	{ delay(1); continue; }
-			timeSteps++;
+			timeStaps++;
 
-			startTime[timeSteps] = GetTimestamp();
+			startTime[timeStaps] = GetTimestamp();
 			ret = COLLISION_Update(pGameCtx);
-			finishTime[timeSteps] = GetTimestamp();
+			finishTime[timeStaps] = GetTimestamp();
 			if (ret < 0)	{ delay(1); continue; }
-			timeSteps++;
+			timeStaps++;
 
-			startTime[timeSteps] = GetTimestamp();
+			startTime[timeStaps] = GetTimestamp();
 			ret = RENDERER_Update(pGameCtx);
-			finishTime[timeSteps] = GetTimestamp();
+			finishTime[timeStaps] = GetTimestamp();
 			if (ret < 0)	{ delay(1); continue; }
-			timeSteps++;
+			timeStaps++;
 
-//			printf_v("Frame %d time: %d us, timestamps:\n", frameNumber, CalcTimeUS2(startTime[0], finishTime[6]));
-//			for (int i = 0; i < timeSteps; i++)
-//			{
-//				printf_uint(CalcTimeUS2(startTime[i], finishTime[i]));
-//				printf_c('\t');
-//			}
-//			printf_c('\n');
+			printf_v("Frame %d time: %d us, timestamps:\n", frameNumber, CalcDiffTimeUS(startTime[0], finishTime[timeStaps-1]));
+			for (int i = 0; i < timeStaps; i++)
+			{
+				printf_uint(CalcDiffTimeUS(startTime[i], finishTime[i]));
+				printf_c('\t');
+			}
+			printf_c('\n');
 
 			frameNumber++;
 		}
 		timeSpentInLoopUS = CalcTimeUS(startLoopTime);
 	}
+#endif
 
     /* Loop forever */
 	for(;;);

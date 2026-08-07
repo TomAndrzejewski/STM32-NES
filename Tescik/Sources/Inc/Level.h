@@ -9,6 +9,7 @@
 #define SOURCES_INC_LEVEL_H_
 
 #include "Game_Types.h"
+#include "Sound.h"
 
 
 typedef struct
@@ -38,6 +39,8 @@ int LEVEL_GetBGRepObjectsLocations(const RepObjectLevelPos_t** posTable, int* nu
 int LEVEL_GetLevelBoundaries(const Rect_t** levelBoundaries);
 
 int LEVEL_GetObjRenderPriorities(const GameObjectID** prioTable, int* numOfObjects);
+
+int LEVEL_GetNextSoundNote(NoteAsset_t* note);
 
 
 #endif /* SOURCES_INC_LEVEL_H_ */
