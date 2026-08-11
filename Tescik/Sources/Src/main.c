@@ -35,6 +35,8 @@
 
 #include "Game.h"
 
+#include "arm_math.h"
+
 #define DEFINE_NES_ENGINE
 #include "NESEngine.h"
 

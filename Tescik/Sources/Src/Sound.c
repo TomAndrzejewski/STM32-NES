@@ -11,6 +11,8 @@
 
 #include "Sound.h"
 
+#include "arm_math.h"
+
 
 static int16_t _SoundBuffer[SOUND_BUFFER_SIZE] = {0};
 static int	_SoundBufferHalf = SOUND_BUFFER_FIRST_HALF;
@@ -51,11 +53,11 @@ int SOUND_Update(int bufferHalf)
 {
 	if (bufferHalf == SOUND_BUFFER_FIRST_HALF)
 	{
-		SOUND_SynthSamples(_SoundBuffer + HALF_SOUND_BUFFER_SIZE, HALF_SOUND_BUFFER_SIZE);
+		SOUND_SynthSamples(_SoundBuffer, HALF_SOUND_BUFFER_SIZE);
 	}
 	else if (bufferHalf == SOUND_BUFFER_SECOND_HALF)
 	{
-		SOUND_SynthSamples(_SoundBuffer, HALF_SOUND_BUFFER_SIZE);
+		SOUND_SynthSamples(_SoundBuffer + HALF_SOUND_BUFFER_SIZE, HALF_SOUND_BUFFER_SIZE);
 	}
 
 	return 0;
@@ -67,19 +69,20 @@ int SOUND_SetFirstSoundNote()
 	return ret;
 }
 
-int SOUND_SetNextSoundNote(SoundNote_t* note)
+int SOUND_SetNextSoundNote(SoundNote_t* noteToSet)
 {
-	if (note == NULL) return -1;
+	if (noteToSet == NULL) return -1;
 
 	// Configure next sound note
-	LEVEL_GetNextSoundNote(&note->asset);
+	const NoteAsset_t* asset = NULL;
+	LEVEL_GetNextSoundNote(&asset);
+	if (asset == NULL) return -2;
 
-	note->sampleNumber = 0;
-	note->samplesToPlay = SOUND_SAMPLE_RATE_KHZ * note->asset.time_ms;
+	noteToSet->sampleNumber = 0;
+	noteToSet->samplesToPlay = SOUND_SAMPLE_RATE_KHZ * asset->time_ms;
 
 	// Configure oscillator
-	SOUND_SetAmplitude(&_SquareOsc, SOUND_SQUARE_WAVE_AMPLITUDE);
-	SOUND_SetPhaseStep(&_SquareOsc, note->asset.freq, SOUND_SAMPLE_RATE_HZ);
+	SOUND_ConfigureOscillator(&_SquareOsc, SOUND_SQUARE_WAVE_AMPLITUDE, asset->freq, SOUND_SAMPLE_RATE_HZ);
 
 	return 0;
 }
@@ -97,7 +100,7 @@ int SOUND_SynthSamples(int16_t samplesBuf[], int samplesToSynth)
 
 		// Increase sample and check if note has finished
 		_CurrNote.sampleNumber++;
-		if (_CurrNote.sampleNumber > _CurrNote.samplesToPlay)
+		if (_CurrNote.sampleNumber >= _CurrNote.samplesToPlay)
 		{
 			SOUND_SetNextSoundNote(&_CurrNote);
 		}
@@ -109,17 +112,16 @@ int SOUND_SynthSamples(int16_t samplesBuf[], int samplesToSynth)
 //------------------------------
 // Square Wave Oscillator
 //------------------------------
-int SOUND_SetAmplitude(SquareWaveOscillator_t* osc, int16_t amplitude)
-{
-	if (osc == NULL) return -1;
-	osc->amplitude = amplitude;
-	return 0;
-}
-
-int SOUND_SetPhaseStep(SquareWaveOscillator_t* osc, uint16_t freq, uint16_t sampleRate)
+OPTIMIZE_FOR_DEBUG
+int SOUND_ConfigureOscillator(SquareWaveOscillator_t* osc, int16_t amplitude, uint16_t freq, uint16_t sampleRate)
 {
 	if (osc == NULL || sampleRate == 0)	return -1;
+
+	osc->amplitude = amplitude;
+
+	osc->phase = 0.0f;
 	osc->phaseStep = (float)freq/(float)sampleRate;
+
 	return 0;
 }
 

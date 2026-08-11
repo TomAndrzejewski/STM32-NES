@@ -172,13 +172,13 @@ int LEVEL_GetObjRenderPriorities(const GameObjectID** prioTable, int* numOfObjec
 	}
 }
 
-int LEVEL_GetNextSoundNote(NoteAsset_t* note)
+int LEVEL_GetNextSoundNote(const NoteAsset_t** note)
 {
 	if (note == NULL) return -1;
 
 	if (_CurrNoteAsset >= 0 && _CurrNoteAsset < SOUND_NOTES_SIZE)
 	{
-		*note = SoundNotes[_CurrNoteAsset];
+		*note = &SoundNotes[_CurrNoteAsset];
 	}
 
 	_CurrNoteAsset++;

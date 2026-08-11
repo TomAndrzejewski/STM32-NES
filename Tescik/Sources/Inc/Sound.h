@@ -41,8 +41,6 @@ typedef struct
 
 typedef struct
 {
-	NoteAsset_t asset;
-
 	int samplesToPlay;
 	int sampleNumber;
 
@@ -52,7 +50,7 @@ typedef struct
 void	SOUND_Irq();
 
 int 	SOUND_Init();
-int 	SOUND_Update();
+int 	SOUND_Update(int bufferHalf);
 int 	SOUND_SetFirstSoundNote();
 
 int 	SOUND_SynthSamples(int16_t samplesBuf[], int samplesToSynth);
@@ -60,8 +58,7 @@ int 	SOUND_SynthSamples(int16_t samplesBuf[], int samplesToSynth);
 int		SOUND_SetNote(const NoteAsset_t* note);
 int 	SOUND_SetNextSoundNote(SoundNote_t* note);
 
-int 	SOUND_SetAmplitude(SquareWaveOscillator_t* osc, int16_t amplitude);
-int 	SOUND_SetPhaseStep(SquareWaveOscillator_t* osc, uint16_t freq, uint16_t sampleRate);
+int 	SOUND_ConfigureOscillator(SquareWaveOscillator_t* osc, int16_t amplitude, uint16_t freq, uint16_t sampleRate);
 
 int16_t SOUND_GetSample(SquareWaveOscillator_t* osc);
 
