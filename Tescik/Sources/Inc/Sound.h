@@ -48,6 +48,7 @@ typedef struct
 
 
 void	SOUND_Irq();
+int16_t* SOUND_GetBufferPtr();
 
 int 	SOUND_Init();
 int 	SOUND_Update(int bufferHalf);

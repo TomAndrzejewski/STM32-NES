@@ -7,15 +7,20 @@
 
 #include <string.h>
 
+#include "NES_Functions.h"
+#include "printf_logger.h"
+
 #include "Level.h"
 
 #include "Sound.h"
 
-#include "arm_math.h"
+#include <stm32f446xx.h>
+#include "stm32f4xx_ll_gpio.h"
+
 
 
 static int16_t _SoundBuffer[SOUND_BUFFER_SIZE] = {0};
-static int	_SoundBufferHalf = SOUND_BUFFER_FIRST_HALF;
+static int _SoundBufferHalf = SOUND_BUFFER_FIRST_HALF;
 
 static SoundNote_t _CurrNote = {0};
 
@@ -25,10 +30,42 @@ static SquareWaveOscillator_t _SquareOsc = {0};
 //------------------------------
 // Note Synthesizer
 //------------------------------
+static volatile uint32_t dma_prevStartTimestamp = 0;
+
+void DMA1_Stream4_IRQHandler(void)
+{
+	uint32_t ts = CalcTimeUS(dma_prevStartTimestamp);
+	printf_uint(ts);
+	printf_c('\n');
+	dma_prevStartTimestamp = GetTimestamp();
+
+	if (DMA1->HISR & DMA_HISR_TCIF4) {
+		DMA1->HIFCR = DMA_HIFCR_CTCIF4; // clear transfer complete flag
+		DMA1_Stream4->CR |= DMA_SxCR_EN; // start new transfer
+
+		if (_SoundBufferHalf == SOUND_BUFFER_FIRST_HALF) {
+			_SoundBufferHalf = SOUND_BUFFER_SECOND_HALF;
+		}
+	} else if (DMA1->HISR & DMA_HISR_HTIF4) {
+		DMA1->HIFCR = DMA_HIFCR_CHTIF4; // clear half transfer complete flag
+
+		if (_SoundBufferHalf == SOUND_BUFFER_SECOND_HALF) {
+			_SoundBufferHalf = SOUND_BUFFER_FIRST_HALF;
+		}
+	}
+
+	SOUND_Update(_SoundBufferHalf);
+}
+
 int SOUND_Init()
 {
 	int ret = SOUND_SetFirstSoundNote();
 	return ret;
+}
+
+int16_t* SOUND_GetBufferPtr()
+{
+	return _SoundBuffer;
 }
 
 void SOUND_Irq()

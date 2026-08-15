@@ -93,9 +93,9 @@ const GameObjectID ObjRenderPriorities[] = {
 
 const NoteAsset_t SoundNotes[] = {
 		{500, 1000},
-		{300, 125},
-		{200, 250},
-		{600, 500},
+//		{300, 125},
+//		{200, 250},
+//		{600, 500},
 };
 
 #define SOUND_NOTES_SIZE 	(sizeof(SoundNotes) / sizeof(SoundNotes[0]))

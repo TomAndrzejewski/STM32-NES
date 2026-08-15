@@ -35,11 +35,8 @@
 
 #include "Game.h"
 
-#include "arm_math.h"
-
 #define DEFINE_NES_ENGINE
 #include "NESEngine.h"
-
 
 
 
@@ -70,32 +67,19 @@ void Timer_10_init()
 	TIM10->DIER = 1; // UPDATE IRQ ENABLE AND CC IRQ DISABLE
 }
 
-void Timer_2_init()
-{
-	RCC->APB2ENR |= RCC_APB2ENR_TIM10EN;
-
-	// 144MHz / ((23999 + 1) * (99 + 1)) = 60Hz
-	TIM10->ARR = 23999;
-	TIM10->PSC = 99;
-
-	// update shadow registers and clear irq pending bit
-	TIM10->EGR |= TIM_EGR_UG;
-	TIM10->SR &= ~TIM_SR_UIF;
-
-	tim10_t1 = GetTimestamp();
-
-	NVIC_EnableIRQ(TIM1_UP_TIM10_IRQn);
-
-	TIM10->DIER = 1; // UPDATE IRQ ENABLE AND CC IRQ DISABLE
-}
-
-void Timer_start()
+void Timer_10_start()
 {
 	SET_FIELD_32(TIM10->CR1, TIM_CR1_CEN_Msk, TIM_CR1_CEN_Pos, 1);
 }
 
+void IRQ_init(void)
+{
+	NVIC_SetPriorityGrouping(3); // all 4 bits are for priorities, no subgroups
+}
+
 void IRQ_DMA2_SPI1_TX_Init(void)
 {
+	NVIC_SetPriority(DMA2_Stream3_IRQn, 10); // not too high not too low :)
 	NVIC_EnableIRQ(DMA2_Stream3_IRQn);
 }
 
@@ -116,8 +100,8 @@ void DMA2_SPI1_TX_Init(void)
     // - Wybór Kanału 3 (CHSEL = 011b -> shift o 25)
     DMA2_Stream3->CR |= (3U << DMA_SxCR_CHSEL_Pos);
 
-    // - Priorytet bardzo wysoki (PL = 11b -> shift o 16)
-    DMA2_Stream3->CR |= (3U << DMA_SxCR_PL_Pos);
+    // - Priorytet wysoki (PL = 10b -> shift o 16)
+    DMA2_Stream3->CR |= (2U << DMA_SxCR_PL_Pos);
 
     // - Rozmiar danych pamięci (MSIZE) = 8-bit (00b)
     // - Rozmiar danych peryferium (PSIZE) = 8-bit (00b)
@@ -142,11 +126,11 @@ void DMA2_SPI1_TX_Init(void)
     DMA2_Stream3->CR |= DMA_SxCR_TCIE;
 }
 
-void GPIO_init()
+void GPIO_LCD_PAD_init()
 {
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN; // GPIOA clock enable
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN; // GPIOA clock enable
-	RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN; // GPIOB clock enable
+	RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;  // SPI1 clock enable
 
 	//////////////////////////////////
 	// LCD_RESET
@@ -314,6 +298,105 @@ void TIM1_UP_TIM10_IRQHandler(void)
     }
 }
 
+void IRQ_DMA1_I2S2_TX_Init(void)
+{
+	NVIC_SetPriority(DMA1_Stream4_IRQn, 5); //absolutely critical! highest prio available
+	NVIC_EnableIRQ(DMA1_Stream4_IRQn);
+}
+
+void DMA1_I2S2_TX_init(void)
+{
+	RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN; // DMA1 clock enable
+
+	SET_FIELD_32(DMA1_Stream4->CR, DMA_SxCR_EN_Msk, DMA_SxCR_EN_Pos, 0); // stream disable
+	while ((DMA1_Stream4->CR & DMA_SxCR_EN_Msk) == 1); // wait until disabled
+
+	// clear all interrupt flag registers
+	DMA1_Stream4->CR = 0;
+	SET_FIELD_32(DMA1->HIFCR, DMA_HIFCR_CTCIF4_Msk, DMA_HIFCR_CTCIF4_Pos, 1);
+	SET_FIELD_32(DMA1->HIFCR, DMA_HIFCR_CHTIF4_Msk, DMA_HIFCR_CHTIF4_Pos, 1);
+	SET_FIELD_32(DMA1->HIFCR, DMA_HIFCR_CTEIF4_Msk, DMA_HIFCR_CTEIF4_Pos, 1);
+	SET_FIELD_32(DMA1->HIFCR, DMA_HIFCR_CDMEIF4_Msk, DMA_HIFCR_CDMEIF4_Pos, 1);
+	SET_FIELD_32(DMA1->HIFCR, DMA_HIFCR_CFEIF4_Msk, DMA_HIFCR_CFEIF4_Pos, 1);
+
+	DMA1_Stream4->PAR = (uint32_t)&SPI2->DR; // peripheral address
+	int16_t* memPtr = SOUND_GetBufferPtr();
+	if (memPtr != NULL) {
+		DMA1_Stream4->M0AR = (uint32_t)memPtr; // memory address
+	} else {
+		return;
+	}
+	DMA1_Stream4->NDTR = 2*SOUND_BUFFER_SIZE; // buffer size
+
+	SET_FIELD_32(DMA1_Stream4->CR, DMA_SxCR_CHSEL_Msk, DMA_SxCR_CHSEL_Pos, 0b000); // channel 0
+//	SET_FIELD_32(DMA1_Stream4->CR, DMA_SxCR_PFCTRL_Msk, DMA_SxCR_PFCTRL_Pos, 1); // peripheral is the flow controller
+	SET_FIELD_32(DMA1_Stream4->CR, DMA_SxCR_PL_Msk, DMA_SxCR_PL_Pos, 0b11); // very high priority
+	SET_FIELD_32(DMA1_Stream4->CR, DMA_SxCR_MSIZE_Msk, DMA_SxCR_MSIZE_Pos, 0b01); // 16-bit memory data size
+	SET_FIELD_32(DMA1_Stream4->CR, DMA_SxCR_PSIZE_Msk, DMA_SxCR_PSIZE_Pos, 0b01); // 16-bit peripheral data size
+	SET_FIELD_32(DMA1_Stream4->CR, DMA_SxCR_MINC_Msk, DMA_SxCR_MINC_Pos, 1); // memory increment mode
+	SET_FIELD_32(DMA1_Stream4->CR, DMA_SxCR_DIR_Msk, DMA_SxCR_DIR_Pos, 0b01); // memory to peripheral
+	SET_FIELD_32(DMA1_Stream4->CR, DMA_SxCR_TCIE_Msk, DMA_SxCR_TCIE_Pos, 1); // transfer complete interrupt enable
+	SET_FIELD_32(DMA1_Stream4->CR, DMA_SxCR_HTIE_Msk, DMA_SxCR_HTIE_Pos, 1); // half transfer complete interrupt enable
+
+	delay(1);
+	//todotomka sprawdzic czy dalej dziala jak wlacze fifo
+//	SET_FIELD_32(DMA1_Stream4->FCR, DMA_SxFCR_DMDIS_Msk, DMA_SxFCR_DMDIS_Pos, 1); // direct mode disable (fifo enable)
+//	SET_FIELD_32(DMA1_Stream4->FCR, DMA_SxFCR_FTH_Msk, DMA_SxFCR_FTH_Pos, 0b11); // full fifo threshold
+
+}
+
+void I2S_init(void)
+{
+	/////////////////////////////////
+	// SPK_SD
+	// PB15 AF5 I2S2_SD
+	SET_FIELD_32(GPIOB->PUPDR, GPIO_PUPDR_PUPD15_Msk, GPIO_PUPDR_PUPD15_Pos, LL_GPIO_PULL_DOWN); //pull-down
+	SET_FIELD_32(GPIOB->OTYPER, GPIO_OTYPER_OT15_Msk, GPIO_OTYPER_OT15_Pos, LL_GPIO_OUTPUT_PUSHPULL); //push-pull
+	SET_FIELD_32(GPIOB->OSPEEDR, GPIO_OSPEEDR_OSPEED15_Msk, GPIO_OSPEEDR_OSPEED15_Pos, LL_GPIO_SPEED_FREQ_MEDIUM); //medium speed
+	SET_FIELD_32(GPIOB->AFR[0], GPIO_AFRH_AFSEL15_Msk, GPIO_AFRH_AFSEL15_Pos, LL_GPIO_AF_5); //AF5 - I2S2_SD
+	SET_FIELD_32(GPIOB->MODER, GPIO_MODER_MODER15_Msk, GPIO_MODER_MODER15_Pos, LL_GPIO_MODE_ALTERNATE); //alternate function
+
+	/////////////////////////////////
+	// SPK_CK
+	// PB13 AF5 I2S2_CK
+	SET_FIELD_32(GPIOB->PUPDR, GPIO_PUPDR_PUPD13_Msk, GPIO_PUPDR_PUPD13_Pos, LL_GPIO_PULL_DOWN); //pull-down
+	SET_FIELD_32(GPIOB->OTYPER, GPIO_OTYPER_OT13_Msk, GPIO_OTYPER_OT13_Pos, LL_GPIO_OUTPUT_PUSHPULL); //push-pull
+	SET_FIELD_32(GPIOB->OSPEEDR, GPIO_OSPEEDR_OSPEED13_Msk, GPIO_OSPEEDR_OSPEED13_Pos, LL_GPIO_SPEED_FREQ_MEDIUM); //medium speed
+	SET_FIELD_32(GPIOB->AFR[0], GPIO_AFRH_AFSEL13_Msk, GPIO_AFRH_AFSEL13_Pos, LL_GPIO_AF_5); //AF5 - I2S2_CK
+	SET_FIELD_32(GPIOB->MODER, GPIO_MODER_MODER13_Msk, GPIO_MODER_MODER13_Pos, LL_GPIO_MODE_ALTERNATE); //alternate function
+
+	/////////////////////////////////
+	// SPK_WS
+	// PB12 AF5 I2S2_WS
+	SET_FIELD_32(GPIOB->PUPDR, GPIO_PUPDR_PUPD12_Msk, GPIO_PUPDR_PUPD12_Pos, LL_GPIO_PULL_DOWN); //pull-down
+	SET_FIELD_32(GPIOB->OTYPER, GPIO_OTYPER_OT12_Msk, GPIO_OTYPER_OT12_Pos, LL_GPIO_OUTPUT_PUSHPULL); //push-pull
+	SET_FIELD_32(GPIOB->OSPEEDR, GPIO_OSPEEDR_OSPEED12_Msk, GPIO_OSPEEDR_OSPEED12_Pos, LL_GPIO_SPEED_FREQ_MEDIUM); //medium speed
+	SET_FIELD_32(GPIOB->AFR[0], GPIO_AFRH_AFSEL12_Msk, GPIO_AFRH_AFSEL12_Pos, LL_GPIO_AF_5); //AF5 - I2S2_WS
+	SET_FIELD_32(GPIOB->MODER, GPIO_MODER_MODER12_Msk, GPIO_MODER_MODER12_Pos, LL_GPIO_MODE_ALTERNATE); //alternate function
+
+
+	// I2S APB1 clock source selection
+	// I2S1 here means I2S interfaces on APB1
+	SET_FIELD_32(RCC->DCKCFGR, RCC_DCKCFGR_I2S1SRC_Msk, RCC_DCKCFGR_I2S1SRC_Pos, 0b11); // HSE or HSI
+	RCC->APB1ENR |= RCC_APB1ENR_SPI2EN; // I2S2 clock enable
+
+	// HSI 16MHz -> sample rate 16KHz
+	SET_FIELD_32(SPI2->I2SPR, SPI_I2SPR_I2SDIV_Msk, SPI_I2SPR_I2SDIV_Pos, 15);
+	SET_FIELD_32(SPI2->I2SPR, SPI_I2SPR_ODD_Msk, SPI_I2SPR_ODD_Pos, 1);
+
+	SET_FIELD_32(SPI2->I2SCFGR, SPI_I2SCFGR_CKPOL_Msk, SPI_I2SCFGR_CKPOL_Pos, 0); // I2S clock steady state is low level
+	SET_FIELD_32(SPI2->I2SCFGR, SPI_I2SCFGR_I2SMOD_Msk, SPI_I2SCFGR_I2SMOD_Pos, 1); // I2S mode instead of default SPI mode
+	SET_FIELD_32(SPI2->I2SCFGR, SPI_I2SCFGR_I2SCFG_Msk, SPI_I2SCFGR_I2SCFG_Pos, 0b11); // Master - receive
+	SET_FIELD_32(SPI2->I2SCFGR, SPI_I2SCFGR_I2SSTD_Msk, SPI_I2SCFGR_I2SSTD_Pos, 0); // I2S Phillips standard
+
+	SET_FIELD_32(SPI2->I2SCFGR, SPI_I2SCFGR_DATLEN_Msk, SPI_I2SCFGR_DATLEN_Pos, 0); // 16-bit data length
+	SET_FIELD_32(SPI2->I2SCFGR, SPI_I2SCFGR_CHLEN_Msk, SPI_I2SCFGR_CHLEN_Pos, 0); // 16-bit wide
+
+	SET_FIELD_32(SPI2->CR2, SPI_CR2_TXDMAEN_Msk, SPI_CR2_TXDMAEN_Pos, 1); // Tx buffer DMA enable
+
+	SET_FIELD_32(SPI2->I2SCFGR, SPI_I2SCFGR_I2SE_Msk, SPI_I2SCFGR_I2SE_Pos, 1); // I2S2 enable
+}
+
 void print_start()
 {
  	printf_v("Welcome!\n");
@@ -326,10 +409,15 @@ int main(void)
 	Flash_init();
 	Clock_init();
 	FPU_init();
+	IRQ_init();
 	Delay_init();
-	GPIO_init();
+	GPIO_LCD_PAD_init();
 	IRQ_DMA2_SPI1_TX_Init();
 	DMA2_SPI1_TX_Init();
+	SOUND_Init();
+	I2S_init();
+	DMA1_I2S2_TX_init();
+	IRQ_DMA1_I2S2_TX_Init();
 	Timer_10_init();
 	printf_init();
 
@@ -337,23 +425,25 @@ int main(void)
 
 #ifdef TESTY_MUZYKI
 
-	uint32_t startTime = 0, startLoop = 0;
-	uint32_t timeSpent = 0, loopTimeSpent = 0;
+	DMA1_Stream4->CR |= DMA_SxCR_EN;
 
-	SOUND_Init();
+	while(1);
 
-	for (int i = 0; i < 100; i++)
-	{
-		startLoop = GetTimestamp();
-		for (int j = 0; j < 64; j++)
-		{
-			startTime = GetTimestamp();
-			SOUND_Irq();
-			timeSpent = GetTimestamp();
-		}
-		loopTimeSpent = GetTimestamp();
-		printf_v("Loop %d t0: %d, t1: %d\n", i, CalcDiffTimeUS(startTime, timeSpent), CalcDiffTimeUS(startLoop, loopTimeSpent));
-	}
+//	uint32_t startTime = 0, startLoop = 0;
+//	uint32_t timeSpent = 0, loopTimeSpent = 0;
+//
+//	for (int i = 0; i < 100000000; i++)
+//	{
+//		startLoop = GetTimestamp();
+//		for (int j = 0; j < 1; j++)
+//		{
+//			startTime = GetTimestamp();
+//			SOUND_Irq();
+//			timeSpent = GetTimestamp();
+//		}
+////		loopTimeSpent = GetTimestamp();
+////		printf_v("Loop %d t0: %d, t1: %d\n", i, CalcDiffTimeUS(startTime, timeSpent), CalcDiffTimeUS(startLoop, loopTimeSpent));
+//	}
 
 
 #else
@@ -366,7 +456,7 @@ int main(void)
 	uint32_t frameNumber = 0;
 	int ret = 0;
 
-//	Timer_start();
+//	Timer_10_start();
 
 
 	GAME_InitContext(pGameCtx);
