@@ -222,10 +222,7 @@ int SOUND_ConfigureOscillator(SquareWaveOscillator_t* osc, int16_t amplitude, ui
 	if (osc == NULL || sampleRate == 0)	return -1;
 
 	osc->amplitude = amplitude;
-
-	osc->phase = 0.0f;
 	osc->phaseStep = (float)freq/(float)sampleRate;
-
 	return 0;
 }
 
@@ -237,7 +234,7 @@ int16_t SOUND_GetSample(SquareWaveOscillator_t* osc)
 
 	// Get sample
 	sample = get_sine_p360(osc->phase);
-	sample = sample/4;
+	sample = sample/2;
 //	if (osc->phase < 0.5f) {
 //		sample = osc->amplitude;
 //	} else {
