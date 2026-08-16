@@ -27,6 +27,7 @@
 #include "NES_Defs.h"
 #include "NES_Functions.h"
 #include "printf_logger.h"
+#include "TimeoutTracker.h"
 
 #include "LCDControl.h"
 #include "PADControl.h"
@@ -163,7 +164,7 @@ void GPIO_LCD_PAD_init()
 	// PA10 pull-up output
 	GPIOA->BSRR = GPIO_BSRR_BR10; // init as low
 //	SET_FIELD_32(GPIOA->PUPDR, GPIO_PUPDR_PUPD3_Msk, GPIO_PUPDR_PUPD3_Pos, LL_GPIO_PULL_DOWN); //pull-down
-	SET_FIELD_32(GPIOA->OSPEEDR, GPIO_OSPEEDR_OSPEED10_Msk, GPIO_OSPEEDR_OSPEED10_Pos, LL_GPIO_SPEED_FREQ_VERY_HIGH); //fast speed
+	SET_FIELD_32(GPIOA->OSPEEDR, GPIO_OSPEEDR_OSPEED10_Msk, GPIO_OSPEEDR_OSPEED10_Pos, LL_GPIO_SPEED_FREQ_LOW); //low speed
 //	SET_FIELD_32(GPIOA->OTYPER, GPIO_OTYPER_OT3_Msk, GPIO_OTYPER_OT3_Pos, LL_GPIO_OUTPUT_PUSHPULL); //push-pull
 	SET_FIELD_32(GPIOA->MODER, GPIO_MODER_MODER10_Msk, GPIO_MODER_MODER10_Pos, LL_GPIO_MODE_OUTPUT); //output
 
@@ -172,7 +173,7 @@ void GPIO_LCD_PAD_init()
 	// PB5 pull-up output
 	GPIOB->BSRR = GPIO_BSRR_BR5; // init as low
 //	SET_FIELD_32(GPIOB->PUPDR, GPIO_PUPDR_PUPD5_Msk, GPIO_PUPDR_PUPD5_Pos, LL_GPIO_PULL_DOWN); //pull-down
-	SET_FIELD_32(GPIOB->OSPEEDR, GPIO_OSPEEDR_OSPEED5_Msk, GPIO_OSPEEDR_OSPEED5_Pos, LL_GPIO_SPEED_FREQ_VERY_HIGH); //fast speed
+	SET_FIELD_32(GPIOB->OSPEEDR, GPIO_OSPEEDR_OSPEED5_Msk, GPIO_OSPEEDR_OSPEED5_Pos, LL_GPIO_SPEED_FREQ_LOW); //low speed
 //	SET_FIELD_32(GPIOB->OTYPER, GPIO_OTYPER_OT5_Msk, GPIO_OTYPER_OT5_Pos, LL_GPIO_OUTPUT_PUSHPULL); //push-pull
 	SET_FIELD_32(GPIOB->MODER, GPIO_MODER_MODER5_Msk, GPIO_MODER_MODER5_Pos, LL_GPIO_MODE_OUTPUT); //output
 
@@ -180,7 +181,7 @@ void GPIO_LCD_PAD_init()
 	// PAD_DATA
 	// PB10 pull-up input
 	SET_FIELD_32(GPIOB->PUPDR, GPIO_PUPDR_PUPD10_Msk, GPIO_PUPDR_PUPD10_Pos, LL_GPIO_PULL_UP); //pull-up
-	SET_FIELD_32(GPIOB->OSPEEDR, GPIO_OSPEEDR_OSPEED10_Msk, GPIO_OSPEEDR_OSPEED10_Pos, LL_GPIO_SPEED_FREQ_VERY_HIGH); //fast speed
+	SET_FIELD_32(GPIOB->OSPEEDR, GPIO_OSPEEDR_OSPEED10_Msk, GPIO_OSPEEDR_OSPEED10_Pos, LL_GPIO_SPEED_FREQ_LOW); //low speed
 	SET_FIELD_32(GPIOB->OTYPER, GPIO_OTYPER_OT10_Msk, GPIO_OTYPER_OT10_Pos, LL_GPIO_OUTPUT_PUSHPULL); //push-pull
 	SET_FIELD_32(GPIOB->MODER, GPIO_MODER_MODER10_Msk, GPIO_MODER_MODER10_Pos, LL_GPIO_MODE_INPUT); //input
 
@@ -326,34 +327,37 @@ void DMA1_I2S2_TX_init(void)
 	} else {
 		return;
 	}
-	DMA1_Stream4->NDTR = 2*SOUND_BUFFER_SIZE; // buffer size
+	DMA1_Stream4->NDTR = SOUND_BUFFER_SIZE; // buffer size
 
 	SET_FIELD_32(DMA1_Stream4->CR, DMA_SxCR_CHSEL_Msk, DMA_SxCR_CHSEL_Pos, 0b000); // channel 0
-//	SET_FIELD_32(DMA1_Stream4->CR, DMA_SxCR_PFCTRL_Msk, DMA_SxCR_PFCTRL_Pos, 1); // peripheral is the flow controller
+	SET_FIELD_32(DMA1_Stream4->CR, DMA_SxCR_PFCTRL_Msk, DMA_SxCR_PFCTRL_Pos, 0); // dma is flow controller
 	SET_FIELD_32(DMA1_Stream4->CR, DMA_SxCR_PL_Msk, DMA_SxCR_PL_Pos, 0b11); // very high priority
 	SET_FIELD_32(DMA1_Stream4->CR, DMA_SxCR_MSIZE_Msk, DMA_SxCR_MSIZE_Pos, 0b01); // 16-bit memory data size
 	SET_FIELD_32(DMA1_Stream4->CR, DMA_SxCR_PSIZE_Msk, DMA_SxCR_PSIZE_Pos, 0b01); // 16-bit peripheral data size
 	SET_FIELD_32(DMA1_Stream4->CR, DMA_SxCR_MINC_Msk, DMA_SxCR_MINC_Pos, 1); // memory increment mode
 	SET_FIELD_32(DMA1_Stream4->CR, DMA_SxCR_DIR_Msk, DMA_SxCR_DIR_Pos, 0b01); // memory to peripheral
+	SET_FIELD_32(DMA1_Stream4->CR, DMA_SxCR_CIRC_Msk, DMA_SxCR_CIRC_Pos, 1); // circular mode
 	SET_FIELD_32(DMA1_Stream4->CR, DMA_SxCR_TCIE_Msk, DMA_SxCR_TCIE_Pos, 1); // transfer complete interrupt enable
 	SET_FIELD_32(DMA1_Stream4->CR, DMA_SxCR_HTIE_Msk, DMA_SxCR_HTIE_Pos, 1); // half transfer complete interrupt enable
 
-	delay(1);
-	//todotomka sprawdzic czy dalej dziala jak wlacze fifo
-//	SET_FIELD_32(DMA1_Stream4->FCR, DMA_SxFCR_DMDIS_Msk, DMA_SxFCR_DMDIS_Pos, 1); // direct mode disable (fifo enable)
-//	SET_FIELD_32(DMA1_Stream4->FCR, DMA_SxFCR_FTH_Msk, DMA_SxFCR_FTH_Pos, 0b11); // full fifo threshold
-
+	SET_FIELD_32(DMA1_Stream4->FCR, DMA_SxFCR_DMDIS_Msk, DMA_SxFCR_DMDIS_Pos, 1); // direct mode disable (fifo enable)
+	SET_FIELD_32(DMA1_Stream4->FCR, DMA_SxFCR_FTH_Msk, DMA_SxFCR_FTH_Pos, 0b11); // full fifo threshold
 }
 
 void I2S_init(void)
 {
+	// I2S APB1 clock source selection
+	// I2S1 here means I2S interfaces on APB1
+	SET_FIELD_32(RCC->DCKCFGR, RCC_DCKCFGR_I2S1SRC_Msk, RCC_DCKCFGR_I2S1SRC_Pos, 0b11); // HSE or HSI
+	RCC->APB1ENR |= RCC_APB1ENR_SPI2EN; // I2S2 clock enable
+
 	/////////////////////////////////
 	// SPK_SD
 	// PB15 AF5 I2S2_SD
 	SET_FIELD_32(GPIOB->PUPDR, GPIO_PUPDR_PUPD15_Msk, GPIO_PUPDR_PUPD15_Pos, LL_GPIO_PULL_DOWN); //pull-down
 	SET_FIELD_32(GPIOB->OTYPER, GPIO_OTYPER_OT15_Msk, GPIO_OTYPER_OT15_Pos, LL_GPIO_OUTPUT_PUSHPULL); //push-pull
 	SET_FIELD_32(GPIOB->OSPEEDR, GPIO_OSPEEDR_OSPEED15_Msk, GPIO_OSPEEDR_OSPEED15_Pos, LL_GPIO_SPEED_FREQ_MEDIUM); //medium speed
-	SET_FIELD_32(GPIOB->AFR[0], GPIO_AFRH_AFSEL15_Msk, GPIO_AFRH_AFSEL15_Pos, LL_GPIO_AF_5); //AF5 - I2S2_SD
+	SET_FIELD_32(GPIOB->AFR[1], GPIO_AFRH_AFSEL15_Msk, GPIO_AFRH_AFSEL15_Pos, LL_GPIO_AF_5); //AF5 - I2S2_SD
 	SET_FIELD_32(GPIOB->MODER, GPIO_MODER_MODER15_Msk, GPIO_MODER_MODER15_Pos, LL_GPIO_MODE_ALTERNATE); //alternate function
 
 	/////////////////////////////////
@@ -362,7 +366,7 @@ void I2S_init(void)
 	SET_FIELD_32(GPIOB->PUPDR, GPIO_PUPDR_PUPD13_Msk, GPIO_PUPDR_PUPD13_Pos, LL_GPIO_PULL_DOWN); //pull-down
 	SET_FIELD_32(GPIOB->OTYPER, GPIO_OTYPER_OT13_Msk, GPIO_OTYPER_OT13_Pos, LL_GPIO_OUTPUT_PUSHPULL); //push-pull
 	SET_FIELD_32(GPIOB->OSPEEDR, GPIO_OSPEEDR_OSPEED13_Msk, GPIO_OSPEEDR_OSPEED13_Pos, LL_GPIO_SPEED_FREQ_MEDIUM); //medium speed
-	SET_FIELD_32(GPIOB->AFR[0], GPIO_AFRH_AFSEL13_Msk, GPIO_AFRH_AFSEL13_Pos, LL_GPIO_AF_5); //AF5 - I2S2_CK
+	SET_FIELD_32(GPIOB->AFR[1], GPIO_AFRH_AFSEL13_Msk, GPIO_AFRH_AFSEL13_Pos, LL_GPIO_AF_5); //AF5 - I2S2_CK
 	SET_FIELD_32(GPIOB->MODER, GPIO_MODER_MODER13_Msk, GPIO_MODER_MODER13_Pos, LL_GPIO_MODE_ALTERNATE); //alternate function
 
 	/////////////////////////////////
@@ -371,22 +375,17 @@ void I2S_init(void)
 	SET_FIELD_32(GPIOB->PUPDR, GPIO_PUPDR_PUPD12_Msk, GPIO_PUPDR_PUPD12_Pos, LL_GPIO_PULL_DOWN); //pull-down
 	SET_FIELD_32(GPIOB->OTYPER, GPIO_OTYPER_OT12_Msk, GPIO_OTYPER_OT12_Pos, LL_GPIO_OUTPUT_PUSHPULL); //push-pull
 	SET_FIELD_32(GPIOB->OSPEEDR, GPIO_OSPEEDR_OSPEED12_Msk, GPIO_OSPEEDR_OSPEED12_Pos, LL_GPIO_SPEED_FREQ_MEDIUM); //medium speed
-	SET_FIELD_32(GPIOB->AFR[0], GPIO_AFRH_AFSEL12_Msk, GPIO_AFRH_AFSEL12_Pos, LL_GPIO_AF_5); //AF5 - I2S2_WS
+	SET_FIELD_32(GPIOB->AFR[1], GPIO_AFRH_AFSEL12_Msk, GPIO_AFRH_AFSEL12_Pos, LL_GPIO_AF_5); //AF5 - I2S2_WS
 	SET_FIELD_32(GPIOB->MODER, GPIO_MODER_MODER12_Msk, GPIO_MODER_MODER12_Pos, LL_GPIO_MODE_ALTERNATE); //alternate function
 
-
-	// I2S APB1 clock source selection
-	// I2S1 here means I2S interfaces on APB1
-	SET_FIELD_32(RCC->DCKCFGR, RCC_DCKCFGR_I2S1SRC_Msk, RCC_DCKCFGR_I2S1SRC_Pos, 0b11); // HSE or HSI
-	RCC->APB1ENR |= RCC_APB1ENR_SPI2EN; // I2S2 clock enable
+	SET_FIELD_32(SPI2->I2SCFGR, SPI_I2SCFGR_I2SMOD_Msk, SPI_I2SCFGR_I2SMOD_Pos, 1); // I2S mode instead of default SPI mode
 
 	// HSI 16MHz -> sample rate 16KHz
 	SET_FIELD_32(SPI2->I2SPR, SPI_I2SPR_I2SDIV_Msk, SPI_I2SPR_I2SDIV_Pos, 15);
 	SET_FIELD_32(SPI2->I2SPR, SPI_I2SPR_ODD_Msk, SPI_I2SPR_ODD_Pos, 1);
 
-	SET_FIELD_32(SPI2->I2SCFGR, SPI_I2SCFGR_CKPOL_Msk, SPI_I2SCFGR_CKPOL_Pos, 0); // I2S clock steady state is low level
-	SET_FIELD_32(SPI2->I2SCFGR, SPI_I2SCFGR_I2SMOD_Msk, SPI_I2SCFGR_I2SMOD_Pos, 1); // I2S mode instead of default SPI mode
-	SET_FIELD_32(SPI2->I2SCFGR, SPI_I2SCFGR_I2SCFG_Msk, SPI_I2SCFGR_I2SCFG_Pos, 0b11); // Master - receive
+	SET_FIELD_32(SPI2->I2SCFGR, SPI_I2SCFGR_CKPOL_Msk, SPI_I2SCFGR_CKPOL_Pos, 1); // I2S clock steady state is high level
+	SET_FIELD_32(SPI2->I2SCFGR, SPI_I2SCFGR_I2SCFG_Msk, SPI_I2SCFGR_I2SCFG_Pos, 0b10); // Master - transmit
 	SET_FIELD_32(SPI2->I2SCFGR, SPI_I2SCFGR_I2SSTD_Msk, SPI_I2SCFGR_I2SSTD_Pos, 0); // I2S Phillips standard
 
 	SET_FIELD_32(SPI2->I2SCFGR, SPI_I2SCFGR_DATLEN_Msk, SPI_I2SCFGR_DATLEN_Pos, 0); // 16-bit data length
@@ -399,7 +398,7 @@ void I2S_init(void)
 
 void print_start()
 {
- 	printf_v("Welcome!\n");
+	printf_v("Welcome!\n");
 }
 
 #define TIMESTAMPS_SIZE		16
@@ -427,7 +426,17 @@ int main(void)
 
 	DMA1_Stream4->CR |= DMA_SxCR_EN;
 
-	while(1);
+	while(1)
+	{
+//	    TimeoutTracker_t timer = timeout_start_ms(100);
+//		while (!(SPI2->SR & SPI_SR_TXE)) {	// Zakonczono wysylanie
+//			if (timeout_has_expired(&timer)) {
+//				break;
+//			}
+//		}
+//		*(volatile int16_t *)&SPI2->DR = 0x100;
+////		printf_c('d'); printf_c('\n');
+	}
 
 //	uint32_t startTime = 0, startLoop = 0;
 //	uint32_t timeSpent = 0, loopTimeSpent = 0;

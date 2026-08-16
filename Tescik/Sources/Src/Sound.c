@@ -35,22 +35,28 @@ static volatile uint32_t dma_prevStartTimestamp = 0;
 void DMA1_Stream4_IRQHandler(void)
 {
 	uint32_t ts = CalcTimeUS(dma_prevStartTimestamp);
-	printf_uint(ts);
-	printf_c('\n');
 	dma_prevStartTimestamp = GetTimestamp();
 
 	if (DMA1->HISR & DMA_HISR_TCIF4) {
 		DMA1->HIFCR = DMA_HIFCR_CTCIF4; // clear transfer complete flag
-		DMA1_Stream4->CR |= DMA_SxCR_EN; // start new transfer
+//		DMA1_Stream4->CR |= DMA_SxCR_EN; // start new transfer
 
 		if (_SoundBufferHalf == SOUND_BUFFER_FIRST_HALF) {
 			_SoundBufferHalf = SOUND_BUFFER_SECOND_HALF;
+			printf_uint(ts);
+			printf_c('\t');
+			printf_uint(0);
+			printf_c('\n');
 		}
 	} else if (DMA1->HISR & DMA_HISR_HTIF4) {
 		DMA1->HIFCR = DMA_HIFCR_CHTIF4; // clear half transfer complete flag
 
 		if (_SoundBufferHalf == SOUND_BUFFER_SECOND_HALF) {
 			_SoundBufferHalf = SOUND_BUFFER_FIRST_HALF;
+			printf_uint(ts);
+			printf_c('\t');
+			printf_uint(1);
+			printf_c('\n');
 		}
 	}
 
@@ -90,11 +96,11 @@ int SOUND_Update(int bufferHalf)
 {
 	if (bufferHalf == SOUND_BUFFER_FIRST_HALF)
 	{
-		SOUND_SynthSamples(_SoundBuffer, HALF_SOUND_BUFFER_SIZE);
+		SOUND_SynthSamples(_SoundBuffer, HALF_SOUND_BUFFER_SAMPLES);
 	}
 	else if (bufferHalf == SOUND_BUFFER_SECOND_HALF)
 	{
-		SOUND_SynthSamples(_SoundBuffer + HALF_SOUND_BUFFER_SIZE, HALF_SOUND_BUFFER_SIZE);
+		SOUND_SynthSamples(_SoundBuffer + HALF_SOUND_BUFFER_SIZE, HALF_SOUND_BUFFER_SAMPLES);
 	}
 
 	return 0;
@@ -133,7 +139,8 @@ int SOUND_SynthSamples(int16_t samplesBuf[], int samplesToSynth)
 	{
 		// Trigger oscillator
 		int16_t sample = SOUND_GetSample(&_SquareOsc);
-		samplesBuf[i] = sample;
+		samplesBuf[2 * i] = sample;
+		samplesBuf[2 * i + 1] = sample;
 
 		// Increase sample and check if note has finished
 		_CurrNote.sampleNumber++;
