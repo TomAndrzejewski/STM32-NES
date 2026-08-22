@@ -79,8 +79,8 @@ int16_t get_sine_p360(float phase)
 
 
 
-static int16_t _SoundBuffer[SOUND_BUFFER_SIZE] = {0};
-static int _SoundBufferHalf = SOUND_BUFFER_FIRST_HALF;
+__attribute__((section(".sram2_bss"))) static int16_t _SoundBuffer[SOUND_BUFFER_SIZE];
+static int _SoundBufferHalf = SOUND_BUFFER_FIRST_HALF ;
 
 static SoundNote_t _CurrNote = {0};
 
@@ -99,24 +99,53 @@ void DMA1_Stream4_IRQHandler(void)
 
 	if (DMA1->HISR & DMA_HISR_TCIF4) {
 		DMA1->HIFCR = DMA_HIFCR_CTCIF4; // clear transfer complete flag
-//		DMA1_Stream4->CR |= DMA_SxCR_EN; // start new transfer
 
 		if (_SoundBufferHalf == SOUND_BUFFER_FIRST_HALF) {
 			_SoundBufferHalf = SOUND_BUFFER_SECOND_HALF;
-			printf_uint(ts);
-			printf_c('\t');
-			printf_uint(0);
-			printf_c('\n');
+//			printf_uint(ts);
+//			printf_c('\t');
+//			printf_uint(0);
+//			printf_c('\n');
 		}
 	} else if (DMA1->HISR & DMA_HISR_HTIF4) {
 		DMA1->HIFCR = DMA_HIFCR_CHTIF4; // clear half transfer complete flag
 
 		if (_SoundBufferHalf == SOUND_BUFFER_SECOND_HALF) {
 			_SoundBufferHalf = SOUND_BUFFER_FIRST_HALF;
-			printf_uint(ts);
-			printf_c('\t');
-			printf_uint(1);
-			printf_c('\n');
+//			printf_uint(ts);
+//			printf_c('\t');
+//			printf_uint(1);
+//			printf_c('\n');
+		}
+	}
+
+	SOUND_Update(_SoundBufferHalf);
+}
+
+void DMA1_Stream7_IRQHandler(void)
+{
+	uint32_t ts = CalcTimeUS(dma_prevStartTimestamp);
+	dma_prevStartTimestamp = GetTimestamp();
+
+	if (DMA1->HISR & DMA_HISR_TCIF7) {
+		DMA1->HIFCR = DMA_HIFCR_CTCIF7; // clear transfer complete flag
+
+		if (_SoundBufferHalf == SOUND_BUFFER_FIRST_HALF) {
+			_SoundBufferHalf = SOUND_BUFFER_SECOND_HALF;
+//			printf_uint(ts);
+//			printf_c('\t');
+//			printf_uint(0);
+//			printf_c('\n');
+		}
+	} else if (DMA1->HISR & DMA_HISR_HTIF7) {
+		DMA1->HIFCR = DMA_HIFCR_CHTIF7; // clear half transfer complete flag
+
+		if (_SoundBufferHalf == SOUND_BUFFER_SECOND_HALF) {
+			_SoundBufferHalf = SOUND_BUFFER_FIRST_HALF;
+//			printf_uint(ts);
+//			printf_c('\t');
+//			printf_uint(1);
+//			printf_c('\n');
 		}
 	}
 
@@ -125,6 +154,7 @@ void DMA1_Stream4_IRQHandler(void)
 
 int SOUND_Init()
 {
+	memset(&_SoundBuffer, 0, sizeof(_SoundBuffer));
 	int ret = SOUND_SetFirstSoundNote();
 	return ret;
 }

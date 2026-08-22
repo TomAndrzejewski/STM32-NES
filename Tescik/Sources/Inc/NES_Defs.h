@@ -10,7 +10,9 @@
 
 #include "stdint.h"
 
-#define TESTY_MUZYKI
+#define I2S_3		(3)
+#define I2S_2		(2)
+#define I2S_SOUND	(I2S_3)
 
 #ifndef NDEBUG
     #define OPTIMIZE_FOR_DEBUG __attribute__((optimize("Og")))
