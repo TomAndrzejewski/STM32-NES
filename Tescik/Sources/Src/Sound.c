@@ -79,7 +79,7 @@ int16_t get_sine_p360(float phase)
 
 
 
-__attribute__((section(".sram2_bss"))) static int16_t _SoundBuffer[SOUND_BUFFER_SIZE];
+static int16_t _SoundBuffer[SOUND_BUFFER_SIZE];
 static int _SoundBufferHalf = SOUND_BUFFER_FIRST_HALF ;
 
 static SoundNote_t _CurrNote = {0};
