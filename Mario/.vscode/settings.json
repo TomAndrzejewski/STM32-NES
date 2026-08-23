@@ -1,0 +1,12 @@
+{
+    "cmake.generator": "Ninja",
+    "cmake.buildDirectory": "${workspaceFolder}/Debug",
+
+    "cmake.configureOnOpen": true,
+
+    "clangd.arguments": [
+        "--compile-commands-dir=${workspaceFolder}/Debug"
+    ],
+
+    "C_Cpp.intelliSenseEngine": "disabled"
+}

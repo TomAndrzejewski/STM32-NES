@@ -1,0 +1,52 @@
+/*
+ * RenderEngine.h
+ *
+ *  Created on: 31 maj 2026
+ *      Author: tomasz
+ */
+
+#ifndef SOURCES_INC_RENDERENGINE_H_
+#define SOURCES_INC_RENDERENGINE_H_
+
+#include <stdint.h>
+#include <stdbool.h>
+
+#include "NES_Defs.h"
+#include "NES_Types.h"
+
+
+#ifdef DEFINE_RENDER_ENGINE
+
+#define GLOBAL_RENDER_ENGINE
+#define INIT_RENDER_ENGINE(x) = x
+
+#else
+
+#define GLOBAL_RENDER_ENGINE extern
+#define INIT_RENDER_ENGINE(x)
+
+#endif
+
+#define BYTES_PER_PIXEL				(2)
+#define FRAMEBUFFER_SIZE			(40*240)
+#define FRAMEBUFFER_NUMOF_PIXELS	(FRAMEBUFFER_SIZE/BYTES_PER_PIXEL)
+#define FRAMEBUFFERS_PER_LCD		(LCD_SIZE/FRAMEBUFFER_NUMOF_PIXELS)
+
+
+void 		RE_Init();
+void 		RE_ResetFB();
+uint8_t* 	RE_GetFB();
+int 		RE_SendFB(int pixelsToSend);
+int 		RE_SendFB_withOffset(int pixelsToSend, int pixelsOffset, bool exchangeFramebuffers);
+int 		RE_SendRect(Rect_t inputRect, int LCDOffsetX);
+
+int 		RE_FillPixel(uint16_t pixel);
+int 		RE_OmmitPixel();
+
+int			RE_RenderFullBackgroud(uint16_t pixel);
+int 		RE_FillBackgroud(uint16_t pixel, int numOfPixels);
+
+int 		RE_FillSprite(const Sprite_t* sprite, const SpriteRender_t* renderContext);
+int 		RE_RenderSprite(const Sprite_t* sprite, SpriteRender_t renderContext, bool fillBG);
+
+#endif /* SOURCES_INC_RENDERENGINE_H_ */

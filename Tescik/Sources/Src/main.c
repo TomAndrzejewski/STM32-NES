@@ -20,9 +20,10 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include <stm32f446xx.h>
-#include "stm32f4xx_ll_gpio.h"
-#include "stm32f4xx_ll_spi.h"
+#include "../SystemInc/LowLayer/stm32f4xx_ll_gpio.h"
+#include "../SystemInc/LowLayer/stm32f4xx_ll_spi.h"
+#include "../SystemInc/stm32f446xx.h"
+#include "cmsis_gcc.h"
 
 #include "NES_Defs.h"
 #include "NES_Functions.h"

@@ -39,8 +39,8 @@ set (MFLOAT_ABI_MIX                   "-mfloat-abi=softfp")
 set (PROJECT_NAME             "Tescik")
 set (PROJECT_TYPE             "exe")
 set (LINKER_SCRIPT            "../STM32F446RETX_FLASH.ld")
-set (MCPU                     "-mcpu=Cortex-M4")
-set (MFPU                 "-mfpu=fpv4-sp-d16")
+set (MCPU                     "-mcpu=cortex-m4")
+set (MFPU                 	  "-mfpu=fpv4-sp-d16")
 set (MFLOAT_ABI               "-mfloat-abi=hard")
 set (RUNTIME_LIBRARY          "--specs=nano.specs")
 set (RUNTIME_LIBRARY_SYSCALLS "--specs=nosys.specs")
@@ -59,15 +59,23 @@ list(APPEND PROJECT_SOURCES ${ALL_SOURCES})
 
 set (PROJECT_DEFINES
 	# LIST COMPILER DEFINITIONS HERE
-
+    ARM_MATH_CM4
     )
 
 set (PROJECT_INCLUDES
 	# LIST INCLUDE DIRECTORIES HERE
 	Sources/Inc
-    Sources/SystemInc
-    Sources/SystemInc/LowLayer
+	Sources/SystemInc
+	Sources/SystemInc/LowLayer
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/CMSIS/Core/Include
+    ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/CMSIS-DSP/Include
+    ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/CMSIS-DSP/PrivateInclude
     )
+
+set(CMSISCORE
+    ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/CMSIS/Core
+)
 
 ############ MODIFY ACCORDING TO REQUIREMENTS) ########################
 
@@ -77,8 +85,19 @@ set (PROJECT_INCLUDES
 project(${PROJECT_NAME})
 enable_language(ASM)
 
+add_subdirectory(
+    ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/CMSIS-DSP/Source
+    ${CMAKE_CURRENT_BINARY_DIR}/cmsis-dsp
+)
+
 if (${PROJECT_TYPE} MATCHES ${PROJECT_TYPE_EXECUTABLE})
   add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
+
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        CMSISDSP
+        m
+    )
+
   add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_SIZE} $<TARGET_FILE:${CMAKE_PROJECT_NAME}>)
 elseif (${PROJECT_TYPE} MATCHES ${PROJECT_TYPE_STATIC_LIBRARY})
   add_library(${PROJECT_NAME} ${PROJECT_SOURCES})
@@ -89,7 +108,7 @@ include_directories (${PROJECT_INCLUDES})
 
 set (CMAKE_EXECUTABLE_SUFFIX ".elf")
 set (CMAKE_STATIC_LIBRARY_SUFFIX ".a")
-set (CMAKE_C_FLAGS "${MCPU} -std=gnu11 ${MFPU} ${MFLOAT_ABI} ${RUNTIME_LIBRARY} -mthumb -Wall -Wno-switch")
+set (CMAKE_C_FLAGS "${MCPU} -std=gnu11 ${MFPU} ${MFLOAT_ABI} ${RUNTIME_LIBRARY} -mthumb -Wall -Wno-switch -ffunction-sections -fdata-sections")
 set (CMAKE_EXE_LINKER_FLAGS "-T${LINKER_SCRIPT} ${RUNTIME_LIBRARY_SYSCALLS} -Wl,-Map=test.map -Wl,--gc-sections -static -Wl,--start-group -lc -lm -Wl,--end-group")
 set (CMAKE_ASM_FLAGS "${CMAKE_C_FLAGS} -x assembler-with-cpp")
 

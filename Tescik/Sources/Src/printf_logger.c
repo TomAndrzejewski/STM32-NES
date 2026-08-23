@@ -24,12 +24,12 @@ void printf_init(void)
 
     ITM->LAR = 0xC5ACCE55;
 
-    TPI->SPPR = 2; // NRZ
+    TPIU->SPPR = 2; // NRZ
 
 #if SYSCLOCK_MHZ == SYSCLOCK_144MHZ
-    TPI->ACPR = (144000000 / 2000000) - 1; // 2 MHz
+    TPIU->ACPR = (144000000 / 2000000) - 1; // 2 MHz
 #else
-    TPI->ACPR = (16000000 / 1000000) - 1; // 2 MHz
+    TPIU->ACPR = (16000000 / 1000000) - 1; // 2 MHz
 #endif
 
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
