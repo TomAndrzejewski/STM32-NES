@@ -1,0 +1,37 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Microcontroller - STLink-V2",
+            "cwd": "${workspaceFolder}",        //Path from where commands are executed
+            "type": "cortex-debug",             //Debug 
+            "executable": "build/Debug/Mario.elf", //or fixed file path: build/project-name.elf
+            "request": "launch",                //Use "attach" to connect to target w/o elf download
+            "servertype": "stlink",             //Use stlink setup of cortex-M debug
+            "device": "STM32F446RE",            //MCU used
+            "interface": "swd",                 //Interface setup
+            "serialNumber": "",                 //Set ST-Link ID if you use multiple at the same time
+            "runToEntryPoint": "main",          //Run to main and stop there
+            "svdFile": "/opt/st/stm32cubeclt_1.22.0/STMicroelectronics_CMSIS_SVD/STM32F446.svd",         //SVD file to see registers
+            "v1": false,
+            "gdbPath": "/opt/st/stm32cubeclt_1.22.0/GNU-tools-for-STM32/bin/arm-none-eabi-gdb",
+            "serverpath": "/opt/st/stm32cubeclt_1.22.0/STLink-gdb-server/bin/ST-LINK_gdbserver",
+            "swoConfig": {
+                "enabled": true,
+                "source": "probe", // works since cortex-debug v1.3.0
+                "swoPort": "localhost:50001",
+                "cpuFrequency": 144000000,
+                "swoFrequency": 2000000,
+                "decoders": [
+                    {
+                        "port": 0,
+                        "type": "console",
+                        "label": "ITM",
+                        "encoding": "ascii",
+                        "showOnStartup": true
+                    }
+                ]
+            },
+        }
+    ]
+}

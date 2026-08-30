@@ -1,10 +1,10 @@
 {
     "cmake.generator": "Ninja",
     "cmake.configureOnOpen": true,
-
+        
     "clangd.arguments": [
         "--compile-commands-dir=${workspaceFolder}/build/Debug",
-        "--compile-commands-dir=${workspaceFolder}/build/Release"
+        "--query-driver=/opt/st/stm32cubeclt_1.22.0/GNU-tools-for-STM32/bin/arm-none-eabi-*"
     ],
 
     "C_Cpp.intelliSenseEngine": "disabled"

@@ -2,4 +2,4 @@ CompileFlags:
   Add:
     - --target=arm-none-eabi
     - -isystem
-    - /usr/include/newlib
+    - /opt/st/stm32cubeclt_1.22.0/GNU-tools-for-STM32/arm-none-eabi/include
