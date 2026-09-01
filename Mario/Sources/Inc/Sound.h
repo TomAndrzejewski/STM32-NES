@@ -8,7 +8,8 @@
 #ifndef SOURCES_INC_SOUND_H_
 #define SOURCES_INC_SOUND_H_
 
-#include "Game_Types.h"
+// #include "Game_Types.h"
+#include <stdint.h>
 
 #define SOUND_BUFFER_SAMPLES			(512)
 #define HALF_SOUND_BUFFER_SAMPLES		(SOUND_BUFFER_SAMPLES / 2)

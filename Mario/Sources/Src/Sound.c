@@ -8,15 +8,15 @@
 #include <string.h>
 
 #include "NES_Defs.h"
-#include "NES_Functions.h"
-#include "printf_logger.h"
+// #include "NES_Functions.h"
+// #include "printf_logger.h"
 
 #include "Level.h"
 
 #include "Sound.h"
 
 #include <stm32f446xx.h>
-#include "stm32f4xx_ll_gpio.h"
+// #include "stm32f4xx_ll_gpio.h"
 
 
 
@@ -91,12 +91,12 @@ static SquareWaveOscillator_t _SquareOsc = {0};
 //------------------------------
 // Note Synthesizer
 //------------------------------
-static volatile uint32_t dma_prevStartTimestamp = 0;
+// static volatile uint32_t dma_prevStartTimestamp = 0;
 
 void DMA1_Stream4_IRQHandler(void)
 {
-	uint32_t ts = CalcTimeUS(dma_prevStartTimestamp);
-	dma_prevStartTimestamp = GetTimestamp();
+	// uint32_t ts = CalcTimeUS(dma_prevStartTimestamp);
+	// dma_prevStartTimestamp = GetTimestamp();
 
 	if (DMA1->HISR & DMA_HISR_TCIF4) {
 		DMA1->HIFCR = DMA_HIFCR_CTCIF4; // clear transfer complete flag
@@ -125,8 +125,8 @@ void DMA1_Stream4_IRQHandler(void)
 
 void DMA1_Stream7_IRQHandler(void)
 {
-	uint32_t ts = CalcTimeUS(dma_prevStartTimestamp);
-	dma_prevStartTimestamp = GetTimestamp();
+	// uint32_t ts = CalcTimeUS(dma_prevStartTimestamp);
+	// dma_prevStartTimestamp = GetTimestamp();
 
 	if (DMA1->HISR & DMA_HISR_TCIF7) {
 		DMA1->HIFCR = DMA_HIFCR_CTCIF7; // clear transfer complete flag

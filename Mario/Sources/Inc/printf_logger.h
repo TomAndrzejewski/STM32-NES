@@ -16,10 +16,10 @@ void printf_init(void);
 void printf_v(const char *fmt, ...);
 
 void printf_c(char c);
-void printf_s(const char *s);
+void printf_str(const char *s);
 void printf_int(int value);
 void printf_uint(uint32_t value);
 
-#define LOG(msg) do { printf_s(msg); printf_s("\n"); } while(0)
+#define LOG(msg) do { printf_str(msg); printf_str("\n"); } while(0)
 
 #endif /* PRINTF_LOGGER_H_ */

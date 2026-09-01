@@ -82,7 +82,7 @@ int GAME_InitContext(GameContext_t* ctx)
 		}
 
 		if (ctx->activebgObjects >= BACKGROUND_OBJECTS_MAX_SIZE - 1) {
-			printf_s("\n### ERROR, max FGObjects reached ###\n");
+			printf_str("\n### ERROR, max FGObjects reached ###\n");
 			break;
 		}
 
@@ -143,7 +143,7 @@ int GAME_InitContext(GameContext_t* ctx)
 		fgObject->IsOnScreen = true;
 
 		if (ctx->activefgObjects >= FOREGROUND_OBJECTS_MAX_SIZE - 1) {
-			printf_s("\n### ERROR, max FGObjects reached ###\n");
+			printf_str("\n### ERROR, max FGObjects reached ###\n");
 			break;
 		}
 
@@ -187,7 +187,7 @@ int GAME_InitContext(GameContext_t* ctx)
 
 
 		if (ctx->enemies.activeEnemies >= ENEMIES_MAX_SIZE - 1) {
-			printf_s("\n### ERROR, max Enemies reached ###\n");
+			printf_str("\n### ERROR, max Enemies reached ###\n");
 			break;
 		}
 
@@ -482,7 +482,8 @@ int COLLISION_Resolve(GameContext_t* ctx)
 		}
 	}
 
-	return 0;
+	// return 0;
+	return ret; // todo nie mam jeszcze pomyslu jak obsluzyc ret < 0
 }
 
 int COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t* obj, const Bump_t* bump, const GameContext_t* ctx)
@@ -1112,7 +1113,7 @@ int	RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_t
 		if (Rect_IsIntersection(&commonRect))
 		{
 			if (renderer->activeDirtyRects >= DIRTY_RECTS_SIZE) {
-				printf_s("\n### activeDirtyRects exeeds DIRTY_RECTS_SIZE ###\n");
+				printf_str("\n### activeDirtyRects exeeds DIRTY_RECTS_SIZE ###\n");
 			} else {
 				dirtyRects[renderer->activeDirtyRects].rect = commonRect;
 				renderer->activeDirtyRects++;
@@ -1134,7 +1135,7 @@ int	RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_t
 		if (Rect_IsIntersection(&commonRect))
 		{
 			if (renderer->activeDirtyRects >= DIRTY_RECTS_SIZE) {
-				printf_s("\n### activeDirtyRects exeeds DIRTY_RECTS_SIZE ###\n");
+				printf_str("\n### activeDirtyRects exeeds DIRTY_RECTS_SIZE ###\n");
 			} else {
 				dirtyRects[renderer->activeDirtyRects].rect = commonRect;
 				renderer->activeDirtyRects++;
@@ -1154,7 +1155,7 @@ int	RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_t
 		if (Rect_IsIntersection(&commonRect))
 		{
 			if (renderer->activeDirtyRects >= DIRTY_RECTS_SIZE) {
-				printf_s("\n### activeDirtyRects exeeds DIRTY_RECTS_SIZE ###\n");
+				printf_str("\n### activeDirtyRects exeeds DIRTY_RECTS_SIZE ###\n");
 			} else {
 				dirtyRects[renderer->activeDirtyRects].rect = commonRect;
 				renderer->activeDirtyRects++;

@@ -94,7 +94,7 @@ void printf_v(const char *fmt, ...)
                 case 's':
                 {
                     char *s = va_arg(args, char*);
-                    printf_s(s ? s : "(null)");
+                    printf_str(s ? s : "(null)");
                     break;
                 }
 
@@ -123,7 +123,7 @@ void printf_v(const char *fmt, ...)
 #endif
 }
 
-void printf_s(const char *s)
+void printf_str(const char *s)
 {
 #ifdef DEBUG
     while (*s)

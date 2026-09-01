@@ -689,13 +689,16 @@ int main(void)
 			if (ret < 0)	{ delay(1); continue; }
 			timeStaps++;
 
-//			printf_v("Frame %d time: %d us, timestamps:\n", frameNumber, CalcDiffTimeUS(startTime[0], finishTime[timeStaps-1]));
-//			for (int i = 0; i < timeStaps; i++)
-//			{
-//				printf_uint(CalcDiffTimeUS(startTime[i], finishTime[i]));
-//				printf_c('\t');
-//			}
-//			printf_c('\n');
+			if (0)
+			{
+				printf_v("Frame %d time: %d us, timestamps:\n", frameNumber, CalcDiffTimeUS(startTime[0], finishTime[timeStaps-1]));
+				for (int i = 0; i < timeStaps; i++)
+				{
+					printf_uint(CalcDiffTimeUS(startTime[i], finishTime[i]));
+					printf_c('\t');
+				}
+				printf_c('\n');
+			}
 
 			frameNumber++;
 		}
