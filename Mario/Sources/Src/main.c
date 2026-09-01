@@ -604,7 +604,7 @@ int main(void)
 ////		for (int j = 0; j < 1; j++)
 ////		{
 ////			startTime = GetTimestamp();
-////			SOUND_Irq();
+////			SOUND_Irq_TEST();
 ////			timeSpent = GetTimestamp();
 ////		}
 //////		loopTimeSpent = GetTimestamp();

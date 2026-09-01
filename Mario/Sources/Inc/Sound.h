@@ -11,6 +11,7 @@
 // #include "Game_Types.h"
 #include <stdint.h>
 
+	
 #define SOUND_BUFFER_SAMPLES			(512)
 #define HALF_SOUND_BUFFER_SAMPLES		(SOUND_BUFFER_SAMPLES / 2)
 
@@ -50,23 +51,8 @@ typedef struct
 } SoundNote_t;
 
 
-void	SOUND_Irq();
-int16_t* SOUND_GetBufferPtr();
-
-int 	SOUND_Init();
-int 	SOUND_Update(int bufferHalf);
-int 	SOUND_SetFirstSoundNote();
-
-int 	SOUND_SynthSamples(int16_t samplesBuf[], int samplesToSynth);
-
-int		SOUND_SetNote(const NoteAsset_t* note);
-int 	SOUND_SetNextSoundNote(SoundNote_t* note);
-
-int 	SOUND_ConfigureOscillator(SquareWaveOscillator_t* osc, int16_t amplitude, uint16_t freq, uint16_t sampleRate);
-
-int16_t SOUND_GetSample(SquareWaveOscillator_t* osc);
-
-
+int SOUND_Init(void);
+int16_t* SOUND_GetBufferPtr(void);
 
 
 #endif /* SOURCES_INC_SOUND_H_ */
