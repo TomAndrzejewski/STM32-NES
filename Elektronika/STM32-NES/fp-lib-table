@@ -1,5 +1,0 @@
-(fp_lib_table
-	(version 7)
-	(lib (name "NUCLEO-F446RE") (type "KiCad") (uri "${KIPRJMOD}/NUCLEO-F446RE.pretty") (options "") (descr ""))
-	(lib (name "STM32-NES") (type "KiCad") (uri "${KIPRJMOD}/Library/STM32-NES.pretty") (options "") (descr ""))
-)
