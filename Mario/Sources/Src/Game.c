@@ -267,8 +267,10 @@ int GAME_InitContext(GameContext_t* ctx)
 	///////////////////
 	// PLAYER
 	///////////////////
-	ctx->player.asset = &MARIO_ASSET;
-	ctx->player.id = ctx->player.asset->id;
+	ctx->player.animableAsset = &MARIO_ANIMABLE_ASSET;
+	ctx->player.asset.id = ctx->player.animableAsset->id;
+	ctx->player.asset.BBox = ctx->player.animableAsset->BBox;
+	ctx->player.id = ctx->player.asset.id;
 	ctx->player.currMapPos.x = 80;
 	ctx->player.currMapPos.y = ctx->map.floorYLevel;
 	ctx->player.prevMapPos = ctx->player.currMapPos;
@@ -353,10 +355,10 @@ int	COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx)
 	fast_memset(&coll->bumps, 0, sizeof(coll->bumps));
 
 	Rect_t playerRect;
-	playerRect.p1.x = ctx->player.currMapPos.x + ctx->player.asset->BBox.p1.x;
-	playerRect.p1.y = ctx->player.currMapPos.y + ctx->player.asset->BBox.p1.y;
-	playerRect.p2.x = ctx->player.currMapPos.x + ctx->player.asset->BBox.p2.x;
-	playerRect.p2.y = ctx->player.currMapPos.y + ctx->player.asset->BBox.p2.y;
+	playerRect.p1.x = ctx->player.currMapPos.x + ctx->player.asset.BBox.p1.x;
+	playerRect.p1.y = ctx->player.currMapPos.y + ctx->player.asset.BBox.p1.y;
+	playerRect.p2.x = ctx->player.currMapPos.x + ctx->player.asset.BBox.p2.x;
+	playerRect.p2.y = ctx->player.currMapPos.y + ctx->player.asset.BBox.p2.y;
 
 	//-------------------------
 	// PLAYER BUMPS FLOOR
@@ -518,7 +520,7 @@ int COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t* obj, co
 		else {
 			if ((obj->flags & COLL_DOWN_ENABLED)) {
 				player->body.vy = -0.5f;
-				player->currMapPos.y = obj->mapPos.y - player->asset->BBox.p2.y;
+				player->currMapPos.y = obj->mapPos.y - player->asset.BBox.p2.y;
 
 				bool isPlayerBig = (player->playerLevel == PLAYER_BIG || player->playerLevel == PLAYER_SHOOTING) ? true : false;
 				if (isPlayerBig && !player->JustKilledFGObject) {
@@ -548,7 +550,7 @@ int COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t* obj, co
 			if ((obj->flags & COLL_LEFT_ENABLED)) {
 				player->body.vx = 0.0f;
 				player->body.subpixelX = 0.0f;
-				player->currMapPos.x = obj->mapPos.x - player->asset->BBox.p2.x - 1; // - 1 in order to not "glue" to the object
+				player->currMapPos.x = obj->mapPos.x - player->asset.BBox.p2.x - 1; // - 1 in order to not "glue" to the object
 			}
 		}
 	}
@@ -822,13 +824,13 @@ int PLAYER_GetDirtyRect(const PlayerState_t* player, Rect_t* dirtyRect)
 
 	Rect_t prevDirtyRect;
 	prevDirtyRect.p1 = player->prevMapPos;
-	prevDirtyRect.p2.x = player->prevMapPos.x + player->asset->baseAsset.sprite.size.x;
-	prevDirtyRect.p2.y = player->prevMapPos.y + player->asset->baseAsset.sprite.size.y;
+	prevDirtyRect.p2.x = player->prevMapPos.x + player->asset.baseAsset.sprite.size.x;
+	prevDirtyRect.p2.y = player->prevMapPos.y + player->asset.baseAsset.sprite.size.y;
 
 	Rect_t currDirtyRect;
 	currDirtyRect.p1 = player->currMapPos;
-	currDirtyRect.p2.x = player->currMapPos.x + player->asset->baseAsset.sprite.size.x;
-	currDirtyRect.p2.y = player->currMapPos.y + player->asset->baseAsset.sprite.size.y;
+	currDirtyRect.p2.x = player->currMapPos.x + player->asset.baseAsset.sprite.size.x;
+	currDirtyRect.p2.y = player->currMapPos.y + player->asset.baseAsset.sprite.size.y;
 
 	Rect_t commonDirtyRect;
 	commonDirtyRect.p1.x = min(prevDirtyRect.p1.x, currDirtyRect.p1.x);
@@ -909,6 +911,66 @@ bool ENEMIES_CalcIsOnScreen(const EnemyState_t* enemy, const Rect_t* screenRect)
 	} else {
 		return false;
 	}
+}
+
+int ANIMATOR_Update(GameContext_t* ctx)
+{
+	if (ctx == NULL) { return -1; }
+	int ret = 0;
+
+	ret = ANIMATOR_Player_Update(&ctx->player, ctx);
+	if (ret < 0) { return -5; }
+
+	return 0;
+}
+
+int ANIMATOR_Player_Update(PlayerState_t* player, const GameContext_t* ctx)
+{
+	if (player == NULL || ctx == NULL) { return -1; }
+	int ret = 0;
+
+	ret = ANIMATOR_Player_Decide(player, ctx);
+	if (ret < 0) { return -5; }
+
+	ret = ANIMATOR_Player_SetAsset(player);
+	if (ret < 0) { return -5; }
+
+	return 0;
+}
+
+int ANIMATOR_Player_Decide(PlayerState_t* player, const GameContext_t* ctx)
+{
+	if (player == NULL || ctx == NULL) { return -1; }
+
+	if (player->body.vx > 0.0f) {
+		player->currAnimation = RUN_RIGHT_ANIMATION_ID;
+	} else {
+		player->currAnimation = STANDSTILL_ANIMATION_ID;
+	}
+
+	return 0;
+}
+
+int ANIMATOR_Player_SetAsset(PlayerState_t* player)
+{
+	if (player == NULL) { return -1; }
+	if (player->animableAsset == NULL) { return -5; }
+	if (player->animableAsset->baseAssetsCount <= 0) { return -10; }
+
+	int assetIndex = 0;
+	for (int i = 0; i < player->animableAsset->baseAssetsCount; i++)
+	{
+		if (player->animableAsset->animationIDs[i] == player->currAnimation) {
+			assetIndex = i;
+			break;
+		}
+	}
+
+	if (player->animableAsset->baseAssets[assetIndex] != NULL) {
+		player->asset.baseAsset = *player->animableAsset->baseAssets[assetIndex];
+	}
+
+	return 0;
 }
 
 int RENDERER_Update(GameContext_t* ctx)
@@ -1410,8 +1472,8 @@ int	RENDERER_RenderPlayer(const PlayerState_t* player, const Rect_t* mapRectToDr
 	Rect_t posRect;
 	posRect.p1.x = player->currMapPos.x;
 	posRect.p1.y = player->currMapPos.y;
-	posRect.p2.x = player->currMapPos.x + player->asset->baseAsset.sprite.size.x;
-	posRect.p2.y = player->currMapPos.y + player->asset->baseAsset.sprite.size.y;
+	posRect.p2.x = player->currMapPos.x + player->asset.baseAsset.sprite.size.x;
+	posRect.p2.y = player->currMapPos.y + player->asset.baseAsset.sprite.size.y;
 
 	Rect_t commonRect = {0};
 	Rect_GetIntersection(mapRectToDraw, &posRect, &commonRect);
@@ -1425,7 +1487,7 @@ int	RENDERER_RenderPlayer(const PlayerState_t* player, const Rect_t* mapRectToDr
 		renderContext.baseToSpriteOffset.y = player->currMapPos.y - mapRectToDraw->p1.y;
 		renderContext.LCDOffsetX = LCDOffsetX;
 
-		RE_FillSprite(&player->asset->baseAsset.sprite, &renderContext);
+		RE_FillSprite(&player->asset.baseAsset.sprite, &renderContext);
 	}
 
 	return 0;

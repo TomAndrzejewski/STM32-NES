@@ -44,6 +44,13 @@ int		ENEMIES_UpdateFlags(Enemies_t* enemies, const GameContext_t* ctx);
 int		ENEMIES_GetDirtyRect(const EnemyState_t* enemy, Rect_t* dirtyRect);
 bool	ENEMIES_CalcIsOnScreen(const EnemyState_t* enemy, const Rect_t* screenRect);
 
+
+int     ANIMATOR_Update(GameContext_t* ctx);
+int     ANIMATOR_Player_Update(PlayerState_t* player, const GameContext_t* ctx);
+int     ANIMATOR_Player_Decide(PlayerState_t* player, const GameContext_t* ctx);
+int     ANIMATOR_Player_SetAsset(PlayerState_t* player);
+
+
 int 	RENDERER_Update(GameContext_t* ctx);
 int 	RENDERER_Update1(GameContext_t* ctx);
 int 	RENDERER_Update2(GameContext_t* ctx);

@@ -13,16 +13,16 @@
 ///////////////////
 // PLAYER
 ///////////////////
-extern const Asset_t MARIO_ASSET;
+extern const AnimableAsset_t MARIO_ANIMABLE_ASSET;
 
 ///////////////////
 // FOREGROUND
 ///////////////////
-extern const Asset_t BRICKS_ASSET;
-extern const Asset_t BLOCK_QMARK_ASSET;
-extern const Asset_t RURA_DOL_ASSET;
-extern const Asset_t RURA_GORA_ASSET;
-extern const Asset_t PYRAMID_BLOCK_ASSET;
+extern const SimpleAsset_t BRICKS_ASSET;
+extern const SimpleAsset_t BLOCK_QMARK_ASSET;
+extern const SimpleAsset_t RURA_DOL_ASSET;
+extern const SimpleAsset_t RURA_GORA_ASSET;
+extern const SimpleAsset_t PYRAMID_BLOCK_ASSET;
 
 ///////////////////
 // BACKGROUND
@@ -39,7 +39,7 @@ extern const BackgroundAsset_t FLOOR_ASSET;
 ///////////////////
 // ENEMIES
 ///////////////////
-extern const Asset_t GOOMBA_ASSET;
+extern const SimpleAsset_t GOOMBA_ASSET;
 
 
 #endif /* SOURCES_INC_GRAPHICSASSETS_H_ */

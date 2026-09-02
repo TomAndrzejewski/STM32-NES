@@ -93,12 +93,12 @@ typedef struct
 
 typedef struct
 {
-	GameObjectID id;
-	BaseAsset_t baseAsset;
+	GameObjectID id; // one-time initialized
+	BaseAsset_t baseAsset; // one-time initialized or changing in ANIMATOR
 
-	Rect_t BBox; // p1 - offset from (0,0) in sprite, p2 - length
+	Rect_t BBox; // one-time initialized, p1 - offset from (0,0) in sprite, p2 - length
 
-}Asset_t;
+}SimpleAsset_t;
 
 //////////////
 // ANIMACJE
@@ -110,7 +110,8 @@ typedef struct
 
 typedef enum
 {
-	DUPA,
+	STANDSTILL_ANIMATION_ID,
+	RUN_RIGHT_ANIMATION_ID,
 }AnimationID_t;
 
 typedef struct
@@ -118,17 +119,18 @@ typedef struct
 	GameObjectID id;
 
 	int baseAssetsCount;
-	BaseAsset_t** baseAssets;
-	AnimationID_t currAnimation;
+	const BaseAsset_t** baseAssets;
+	const AnimationID_t* animationIDs;
 
 	Rect_t BBox; // p1 - offset from (0,0) in sprite, p2 - length
 
 }AnimableAsset_t;
 
-//typedef struct
-//{
-//
-//}Animator_t;
+// typedef struct
+// {
+// 	AnimationID_t currAnimation;
+	
+// }Animator_t;
 
 typedef struct
 {
@@ -187,7 +189,11 @@ typedef struct
 
 	Body_t body;
 
-	const Asset_t* asset;
+	SimpleAsset_t asset;
+	const AnimableAsset_t* animableAsset;
+
+	// For animation
+	AnimationID_t currAnimation;
 
 	PlayerLevel	playerLevel;
 	int lifePoints;
@@ -206,7 +212,7 @@ typedef struct
 	Point_t		currMapPos;
 	Point_t		prevMapPos;
 
-	const Asset_t* asset;
+	const SimpleAsset_t* asset;
 
 	bool IsAlive;
 	bool IsOnScreen;
@@ -230,7 +236,7 @@ typedef struct
 	Point_t mapPos;
 	Point_t BBoxCenter;
 
-	const Asset_t* asset;
+	const SimpleAsset_t* asset;
 
 	uint32_t flags;
 

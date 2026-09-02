@@ -684,6 +684,12 @@ int main(void)
 			timeStaps++;
 
 			startTime[timeStaps] = GetTimestamp();
+			ret = ANIMATOR_Update(pGameCtx);
+			finishTime[timeStaps] = GetTimestamp();
+			if (ret < 0)	{ delay(1); continue; }
+			timeStaps++;
+
+			startTime[timeStaps] = GetTimestamp();
 			ret = RENDERER_Update(pGameCtx);
 			finishTime[timeStaps] = GetTimestamp();
 			if (ret < 0)	{ delay(1); continue; }
