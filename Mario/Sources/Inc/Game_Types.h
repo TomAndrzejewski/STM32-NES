@@ -110,9 +110,13 @@ typedef struct
 
 typedef enum
 {
-	STANDSTILL_ANIMATION_ID,
-	RUN_RIGHT_ANIMATION_ID,
-}AnimationID_t;
+	MARIO_STANDSTILL_ANIMATION_ID,
+	MARIO_RUN_1_ANIMATION_ID,
+	MARIO_RUN_2_ANIMATION_ID,
+	MARIO_RUN_3_ANIMATION_ID,
+	MARIO_SLOWDOWN_ANIMATION_ID,
+	MARIO_JUMP_ANIMATION_ID,
+}AnimationIDEnum;
 
 typedef struct
 {
@@ -120,7 +124,7 @@ typedef struct
 
 	int baseAssetsCount;
 	const BaseAsset_t** baseAssets;
-	const AnimationID_t* animationIDs;
+	const AnimationIDEnum* animationIDs;
 
 	Rect_t BBox; // p1 - offset from (0,0) in sprite, p2 - length
 
@@ -180,6 +184,23 @@ typedef enum
 	PLAYER_SHOOTING,
 }PlayerLevel;
 
+typedef enum
+{
+	PLAYER_ANIMATOR_STANDSTILL,
+	PLAYER_ANIMATOR_RUNNING,
+	PLAYER_ANIMATOR_SLOWDOWN,
+	PLAYER_ANIMATOR_JUMPING,
+	PLAYER_ANIMATOR_DEAD,
+}PlayerAnimatorStateEnum;
+
+typedef struct 
+{
+	AnimationIDEnum currAnimation;
+	PlayerAnimatorStateEnum state;
+	uint32_t runAnimationFrameTimeUS;
+
+}PlayerAnimator_t;
+
 typedef struct
 {
 	GameObjectID id;
@@ -192,8 +213,7 @@ typedef struct
 	SimpleAsset_t asset;
 	const AnimableAsset_t* animableAsset;
 
-	// For animation
-	AnimationID_t currAnimation;
+	PlayerAnimator_t animator;
 
 	PlayerLevel	playerLevel;
 	int lifePoints;

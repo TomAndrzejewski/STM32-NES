@@ -6,6 +6,7 @@
  */
 
 #include <string.h>
+#include <math.h>
 
 #include "NES_Functions.h"
 
@@ -278,8 +279,8 @@ int GAME_InitContext(GameContext_t* ctx)
 	ctx->player.body.vy = 0.0f;
 	ctx->player.body.subpixelX = 0.0f;
 	ctx->player.body.subpixelY = 0.0f;
-//	ctx->player.collCtx.size = 0;
-//	fast_memset(&ctx->player.collCtx, 0, sizeof(ctx->player.collCtx));
+	ctx->player.animator.currAnimation = MARIO_STANDSTILL_ANIMATION_ID;
+	ctx->player.animator.state = PLAYER_ANIMATOR_STANDSTILL;
 	ctx->player.lifePoints = 1;
 	ctx->player.IsImmune = false;
 	ctx->player.damageTaken = false;
@@ -942,11 +943,57 @@ int ANIMATOR_Player_Decide(PlayerState_t* player, const GameContext_t* ctx)
 {
 	if (player == NULL || ctx == NULL) { return -1; }
 
-	if (player->body.vx > 0.0f) {
-		player->currAnimation = RUN_RIGHT_ANIMATION_ID;
+	const float vxThreshold = 0.0f;
+	const float vyThreshold = 0.0f;
+
+	bool isPlayerStandstill = false;
+	bool isPlayerRunning = false;
+	bool isPlayerJumping = false;
+	// bool isPlayerDead = false;
+
+	PlayerAnimatorStateEnum prevState = player->animator.state;
+
+ 	if (fabsf(player->body.vy) > vyThreshold && (player->prevMapPos.y != player->currMapPos.y || prevState == PLAYER_ANIMATOR_JUMPING)) {
+		isPlayerJumping = true;
+	} else if (fabsf(player->body.vx) > vxThreshold && (player->prevMapPos.x != player->currMapPos.x || prevState == PLAYER_ANIMATOR_RUNNING)) {
+		isPlayerRunning = true;
 	} else {
-		player->currAnimation = STANDSTILL_ANIMATION_ID;
+		isPlayerStandstill = true;
 	}
+
+	if (isPlayerStandstill) {
+		player->animator.state = PLAYER_ANIMATOR_STANDSTILL;
+		player->animator.currAnimation = MARIO_STANDSTILL_ANIMATION_ID;
+	} else if (isPlayerJumping) {
+		player->animator.state = PLAYER_ANIMATOR_JUMPING;
+		player->animator.currAnimation = MARIO_JUMP_ANIMATION_ID;
+	} else if (isPlayerRunning) {
+		player->animator.state = PLAYER_ANIMATOR_RUNNING;
+
+		if (prevState != PLAYER_ANIMATOR_RUNNING) {
+			player->animator.runAnimationFrameTimeUS = 0;
+			player->animator.currAnimation = MARIO_RUN_1_ANIMATION_ID;
+		} else {
+			player->animator.runAnimationFrameTimeUS += ctx->input.frameData.frameTimeUS;
+
+			uint32_t runAnimationVelTimeMultiplier = player->animator.runAnimationFrameTimeUS * fabsf(player->body.vx);
+			
+			if (runAnimationVelTimeMultiplier >= 0 && player->animator.runAnimationFrameTimeUS < 75000) {
+				player->animator.currAnimation = MARIO_RUN_1_ANIMATION_ID;
+			} else if (runAnimationVelTimeMultiplier > 75000 && runAnimationVelTimeMultiplier < 150000) {
+				player->animator.currAnimation = MARIO_RUN_2_ANIMATION_ID;
+			} else if (runAnimationVelTimeMultiplier > 150000 && runAnimationVelTimeMultiplier < 225000) {
+				player->animator.currAnimation = MARIO_RUN_3_ANIMATION_ID;
+			} else if (runAnimationVelTimeMultiplier > 225000) {
+				player->animator.runAnimationFrameTimeUS = 0;
+			}
+		}
+	}
+
+		
+// 	} else if (isPlayerDead) {
+// //		player->animator.currAnimation = MARIO_DEAD_ANIMATION_ID;
+// 	}
 
 	return 0;
 }
@@ -960,7 +1007,7 @@ int ANIMATOR_Player_SetAsset(PlayerState_t* player)
 	int assetIndex = 0;
 	for (int i = 0; i < player->animableAsset->baseAssetsCount; i++)
 	{
-		if (player->animableAsset->animationIDs[i] == player->currAnimation) {
+		if (player->animableAsset->animationIDs[i] == player->animator.currAnimation) {
 			assetIndex = i;
 			break;
 		}
