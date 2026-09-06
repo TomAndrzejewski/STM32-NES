@@ -108,7 +108,7 @@ static const uint16_t mario_run_3_16x16_dma[256] = {
 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff
 };
 
-static const uint16_t mario_slowdown_16x16_dma[256] = {
+static const uint16_t mario_decelerate_16x16_dma[256] = {
 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 
 0xffff, 0xe314, 0xe314, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xe0fd, 0xe0fd, 0xffff, 0xffff, 0xffff, 
 0xe314, 0xe314, 0xffff, 0xffff, 0xffff, 0xffff, 0x00f8, 0x00f8, 0x00f8, 0xffff, 0xe0fd, 0xe0fd, 0xe0fd, 0xe314, 0xffff, 0xffff, 
@@ -170,8 +170,8 @@ static const BaseAsset_t MARIO_RUN_3_ASSET = {
 		.sprite.size.y = 16,
 };
 
-static const BaseAsset_t MARIO_SLOWDOWN_ASSET = {
-		.sprite.bitmap = mario_slowdown_16x16_dma,
+static const BaseAsset_t MARIO_DECELERATE_ASSET = {
+		.sprite.bitmap = mario_decelerate_16x16_dma,
 		.sprite.size.x = 16,
 		.sprite.size.y = 16,
 };
@@ -190,7 +190,7 @@ const AnimableAsset_t MARIO_ANIMABLE_ASSET = {
 			 &MARIO_RUN_1_ASSET,
 			 &MARIO_RUN_2_ASSET,
 			 &MARIO_RUN_3_ASSET,
-			 &MARIO_SLOWDOWN_ASSET,
+			 &MARIO_DECELERATE_ASSET,
 			 &MARIO_JUMP_ASSET
 			},
 		.animationIDs = (const AnimationIDEnum[]) {
@@ -198,7 +198,7 @@ const AnimableAsset_t MARIO_ANIMABLE_ASSET = {
 			 MARIO_RUN_1_ANIMATION_ID,
 			 MARIO_RUN_2_ANIMATION_ID,
 			 MARIO_RUN_3_ANIMATION_ID,
-			 MARIO_SLOWDOWN_ANIMATION_ID,
+			 MARIO_DECELERATE_ANIMATION_ID,
 			 MARIO_JUMP_ANIMATION_ID
 			},
 		.BBox.p1.x = 0,

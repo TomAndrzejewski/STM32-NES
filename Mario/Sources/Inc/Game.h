@@ -25,8 +25,10 @@ int 	COLLISION_Player_Enemy(PlayerState_t* player, EnemyState_t* enemy, const Bu
 
 int		PHYSICS_Update(GameContext_t* ctx);
 int		PHYSICS_Player_Update(PlayerState_t* player, const GameContext_t* ctx);
+int     PHYSICS_Player_RestartFlags(PlayerState_t* player);
 int 	PHYSICS_Player_Movement(PlayerState_t* player, const GameContext_t* ctx);
 int 	PHYSICS_Player_CalcMapPos(PlayerState_t* player, const GameContext_t* ctx);
+int     PHYSICS_Player_CalcMovementDirection(PlayerState_t* player);
 
 int 	CAMERA_Update(CameraState_t* camera, const GameContext_t* ctx);
 int 	CAMERA_CalcPos(CameraState_t* camera, const PlayerState_t* player);

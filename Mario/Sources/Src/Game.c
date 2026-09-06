@@ -275,6 +275,9 @@ int GAME_InitContext(GameContext_t* ctx)
 	ctx->player.currMapPos.x = 80;
 	ctx->player.currMapPos.y = ctx->map.floorYLevel;
 	ctx->player.prevMapPos = ctx->player.currMapPos;
+	ctx->player.currPhysicsFlags.lastMovementDirectionRight = true;
+	ctx->player.currPhysicsFlags.IsDecelerating = false;
+	ctx->player.prevPhysicsFlags = ctx->player.currPhysicsFlags;
 	ctx->player.body.vx = 0.0f;
 	ctx->player.body.vy = 0.0f;
 	ctx->player.body.subpixelX = 0.0f;
@@ -596,11 +599,28 @@ int PHYSICS_Player_Update(PlayerState_t* player, const GameContext_t* ctx)
 	if (player == NULL || ctx == NULL) { return -1; }
 	int ret = 0;
 
+	ret = PHYSICS_Player_RestartFlags(player);
+	if (ret < 0) { return -4; }
+
 	ret = PHYSICS_Player_Movement(player, ctx);
 	if (ret < 0) { return -5; }
 
 	ret = PHYSICS_Player_CalcMapPos(player, ctx);
 	if (ret < 0) { return -10; }
+
+	ret = PHYSICS_Player_CalcMovementDirection(player);
+	if (ret < 0) { return -15; }
+
+	return 0;
+}
+
+int PHYSICS_Player_RestartFlags(PlayerState_t* player)
+{
+	if (player == NULL) { return -1; }
+
+	player->prevPhysicsFlags = player->currPhysicsFlags;
+
+	player->currPhysicsFlags.IsDecelerating = false;
 
 	return 0;
 }
@@ -633,21 +653,27 @@ int PHYSICS_Player_Movement(PlayerState_t* player, const GameContext_t* ctx)
 	///////////////////
 	if (ctx->input.buttons_state & PAD_BUTTON_RIGHT) {
 		if (player->body.vx < 1.0f) {
+			// Calculate new velocity
 			float dvx = ctx->input.frameData.frameTimeS * 3;
 			if (player->body.vx + dvx < 1.0f) {
 				player->body.vx += dvx;
 			} else {
 				player->body.vx = 1.0f;
 			}
+			// Update deceleration flag
+			player->currPhysicsFlags.IsDecelerating = (player->body.vx < 0.0f)? true : false;
 		}
 	} else if (ctx->input.buttons_state & PAD_BUTTON_LEFT) {
 		if (player->body.vx > -1.0f) {
+			// Calculate new velocity
 			float dvx = ctx->input.frameData.frameTimeS * 3;
 			if (player->body.vx - dvx > -1.0f) {
 				player->body.vx -= dvx;
 			} else {
 				player->body.vx = -1.0f;
 			}
+			// Update deceleration flag
+			player->currPhysicsFlags.IsDecelerating = (player->body.vx > 0.0f)? true : false;
 		}
 	} else {
 		if (player->body.vx > 0.0f) {
@@ -715,6 +741,19 @@ int PHYSICS_Player_CalcMapPos(PlayerState_t* player, const GameContext_t* ctx)
 		{
 			player->currMapPos.x += pixelsToMove;
 		}
+	}
+
+	return 0;
+}
+
+int PHYSICS_Player_CalcMovementDirection(PlayerState_t* player)
+{
+	if (player == NULL) { return -1; }
+
+	if (player->currMapPos.x > player->prevMapPos.x) {
+		player->currPhysicsFlags.lastMovementDirectionRight = true;
+	} else if (player->currMapPos.x < player->prevMapPos.x) {
+		player->currPhysicsFlags.lastMovementDirectionRight = false;
 	}
 
 	return 0;
@@ -949,12 +988,15 @@ int ANIMATOR_Player_Decide(PlayerState_t* player, const GameContext_t* ctx)
 	bool isPlayerStandstill = false;
 	bool isPlayerRunning = false;
 	bool isPlayerJumping = false;
+	bool isPlayerDecelerating = false;
 	// bool isPlayerDead = false;
 
 	PlayerAnimatorStateEnum prevState = player->animator.state;
 
  	if (fabsf(player->body.vy) > vyThreshold && (player->prevMapPos.y != player->currMapPos.y || prevState == PLAYER_ANIMATOR_JUMPING)) {
 		isPlayerJumping = true;
+	} else if (fabsf(player->body.vx) > vxThreshold && (player->prevMapPos.y != player->currMapPos.y || player->currPhysicsFlags.IsDecelerating)) {
+		isPlayerDecelerating = true;
 	} else if (fabsf(player->body.vx) > vxThreshold && (player->prevMapPos.x != player->currMapPos.x || prevState == PLAYER_ANIMATOR_RUNNING)) {
 		isPlayerRunning = true;
 	} else {
@@ -967,6 +1009,9 @@ int ANIMATOR_Player_Decide(PlayerState_t* player, const GameContext_t* ctx)
 	} else if (isPlayerJumping) {
 		player->animator.state = PLAYER_ANIMATOR_JUMPING;
 		player->animator.currAnimation = MARIO_JUMP_ANIMATION_ID;
+	} else if (isPlayerDecelerating) {
+		player->animator.state = PLAYER_ANIMATOR_DECELERATING;
+		player->animator.currAnimation = MARIO_DECELERATE_ANIMATION_ID;
 	} else if (isPlayerRunning) {
 		player->animator.state = PLAYER_ANIMATOR_RUNNING;
 
@@ -1449,6 +1494,7 @@ int RENDERER_RenderBGObject(const BackgroundObject_t* obj, const Rect_t* mapRect
 		renderContext.baseToSpriteOffset.x = posRect.p1.x - mapRectToDraw->p1.x;
 		renderContext.baseToSpriteOffset.y = posRect.p1.y - mapRectToDraw->p1.y;
 		renderContext.LCDOffsetX = LCDOffsetX;
+		renderContext.mirrorX = false;
 
 		RE_FillSprite(&obj->asset->baseAsset.sprite, &renderContext);
 	}
@@ -1477,6 +1523,7 @@ int	RENDERER_RenderFGObject(const ForegroundObject_t* obj, const Rect_t* mapRect
 		renderContext.baseToSpriteOffset.x = obj->mapPos.x - mapRectToDraw->p1.x;
 		renderContext.baseToSpriteOffset.y = obj->mapPos.y - mapRectToDraw->p1.y;
 		renderContext.LCDOffsetX = LCDOffsetX;
+		renderContext.mirrorX = false;
 
 		RE_FillSprite(&obj->asset->baseAsset.sprite, &renderContext);
 	}
@@ -1505,6 +1552,7 @@ int	RENDERER_RenderEnemy(const EnemyState_t* enemy, const Rect_t* mapRectToDraw,
 		renderContext.baseToSpriteOffset.x = enemy->currMapPos.x - mapRectToDraw->p1.x;
 		renderContext.baseToSpriteOffset.y = enemy->currMapPos.y - mapRectToDraw->p1.y;
 		renderContext.LCDOffsetX = LCDOffsetX;
+		renderContext.mirrorX = false;
 
 		RE_FillSprite(&enemy->asset->baseAsset.sprite, &renderContext);
 	}
@@ -1533,6 +1581,7 @@ int	RENDERER_RenderPlayer(const PlayerState_t* player, const Rect_t* mapRectToDr
 		renderContext.baseToSpriteOffset.x = player->currMapPos.x - mapRectToDraw->p1.x;
 		renderContext.baseToSpriteOffset.y = player->currMapPos.y - mapRectToDraw->p1.y;
 		renderContext.LCDOffsetX = LCDOffsetX;
+		renderContext.mirrorX = player->currPhysicsFlags.lastMovementDirectionRight ? false : true;
 
 		RE_FillSprite(&player->asset.baseAsset.sprite, &renderContext);
 	}

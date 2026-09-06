@@ -9,6 +9,7 @@
 #define SOURCES_INC_NES_TYPES_H_
 
 #include <stdint.h>
+#include <stdbool.h>
 // #include "NES_Defs.h"
 
 typedef struct{
@@ -27,6 +28,7 @@ typedef struct
 	Rect_t	baseRect;
 	Point_t	baseToSpriteOffset;
 	int		LCDOffsetX;
+	bool 	mirrorX;
 
 }SpriteRender_t;
 

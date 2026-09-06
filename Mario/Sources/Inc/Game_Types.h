@@ -114,7 +114,7 @@ typedef enum
 	MARIO_RUN_1_ANIMATION_ID,
 	MARIO_RUN_2_ANIMATION_ID,
 	MARIO_RUN_3_ANIMATION_ID,
-	MARIO_SLOWDOWN_ANIMATION_ID,
+	MARIO_DECELERATE_ANIMATION_ID,
 	MARIO_JUMP_ANIMATION_ID,
 }AnimationIDEnum;
 
@@ -188,7 +188,7 @@ typedef enum
 {
 	PLAYER_ANIMATOR_STANDSTILL,
 	PLAYER_ANIMATOR_RUNNING,
-	PLAYER_ANIMATOR_SLOWDOWN,
+	PLAYER_ANIMATOR_DECELERATING,
 	PLAYER_ANIMATOR_JUMPING,
 	PLAYER_ANIMATOR_DEAD,
 }PlayerAnimatorStateEnum;
@@ -203,16 +203,24 @@ typedef struct
 
 typedef struct
 {
+	bool lastMovementDirectionRight;
+	bool IsDecelerating;
+
+}PlayerPhysicsFlags_t;
+
+typedef struct
+{
 	GameObjectID id;
 
 	Point_t		currMapPos;
 	Point_t		prevMapPos;
 
 	Body_t body;
+	PlayerPhysicsFlags_t currPhysicsFlags;
+	PlayerPhysicsFlags_t prevPhysicsFlags;
 
 	SimpleAsset_t asset;
 	const AnimableAsset_t* animableAsset;
-
 	PlayerAnimator_t animator;
 
 	PlayerLevel	playerLevel;
