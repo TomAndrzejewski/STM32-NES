@@ -320,11 +320,6 @@ int RE_FillSprite(const Sprite_t* sprite, const SpriteRender_t* renderContext)
 		int endY = CalcRectYLen(&renderContext->commonRect);
 		int endX = CalcRectXLen(&renderContext->commonRect);
 
-		if (renderContext->mirrorX) 
-		{
-
-		}
-
 		for (int i = 0; i < endX; i++)
 		{
 			int spriteIndX = (renderContext->mirrorX) ? (spriteStartOffsetX + endX - 1 - i) : i + spriteStartOffsetX;
@@ -333,16 +328,42 @@ int RE_FillSprite(const Sprite_t* sprite, const SpriteRender_t* renderContext)
 			const uint16_t* srcColumn = s2d[spriteIndX];
 			uint16_t* destColumn = fb[fbIndX];
 
-			for (int j = 0; j < endY; j++)
+			if (renderContext->activeColorSwap <= 0)
 			{
-				int spriteIndY = j + spriteStartOffsetY;
-				int fbIndY = j + fbStartOffsetY;
-
-				if (srcColumn[spriteIndY] != LCD_TRANSPARENT_COLOR)
+				for (int j = 0; j < endY; j++)
 				{
-					destColumn[fbIndY] = srcColumn[spriteIndY];
+					int spriteIndY = j + spriteStartOffsetY;
+					int fbIndY = j + fbStartOffsetY;
+
+					if (srcColumn[spriteIndY] != LCD_TRANSPARENT_COLOR)
+					{
+						destColumn[fbIndY] = srcColumn[spriteIndY];
+					}
 				}
 			}
+			else
+			{
+				for (int j = 0; j < endY; j++)
+				{
+					int spriteIndY = j + spriteStartOffsetY;
+					int fbIndY = j + fbStartOffsetY;
+
+					if (srcColumn[spriteIndY] != LCD_TRANSPARENT_COLOR)
+					{
+						uint16_t color = srcColumn[spriteIndY];
+						for (int k = 0; k < renderContext->activeColorSwap; k++)
+						{
+							if (srcColumn[spriteIndY] == renderContext->colorSwap[k][0])
+							{
+								color = renderContext->colorSwap[k][1];
+								break;
+							}
+						}
+						destColumn[fbIndY] = color;
+					}
+				}
+			}
+			
 		}
 	}
 

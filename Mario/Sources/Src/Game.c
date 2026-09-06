@@ -107,27 +107,31 @@ int GAME_InitContext(GameContext_t* ctx)
 		}
 
 		ForegroundObject_t* fgObject = &ctx->fgObjects[ctx->activefgObjects];
+		fgObject->animableAsset = NULL;
 
 		switch (ObjectsPos[i].id)
 		{
 		case FG_BRICKS_OBJECT_ID: {
-			fgObject->asset = &BRICKS_ASSET;
+			fgObject->asset = BRICKS_ASSET;
 			break;
 		}
 		case FG_BLOCK_QMARK_OBJECT_ID: {
-			fgObject->asset = &BLOCK_QMARK_ASSET;
+			fgObject->animableAsset = &BLOCK_QMARK_ANIMABLE_ASSET;
+			fgObject->asset.id = fgObject->animableAsset->id;
+			fgObject->asset.BBox = fgObject->animableAsset->BBox;
+			fgObject->currAnimation = FG_BLOCK_QMARK_1_ANIMATION_ID;
 			break;
 		}
 		case FG_RURA_DOL_OBJECT_ID: {
-			fgObject->asset = &RURA_DOL_ASSET;
+			fgObject->asset = RURA_DOL_ASSET;
 			break;
 		}
 		case FG_RURA_GORA_OBJECT_ID: {
-			fgObject->asset = &RURA_GORA_ASSET;
+			fgObject->asset = RURA_GORA_ASSET;
 			break;
 		}
 		case FG_PYRAMID_BLOCK_OBJECT_ID: {
-			fgObject->asset = &PYRAMID_BLOCK_ASSET;
+			fgObject->asset = PYRAMID_BLOCK_ASSET;
 			break;
 		}
 		default:
@@ -138,10 +142,11 @@ int GAME_InitContext(GameContext_t* ctx)
 		fgObject->flags = ObjectsPos[i].flags;
 		fgObject->mapPos.x = ObjectsPos[i].x;
 		fgObject->mapPos.y = ObjectsPos[i].y;
-		fgObject->BBoxCenter.x = ObjectsPos[i].x + (fgObject->asset->BBox.p1.x + fgObject->asset->BBox.p2.x) / 2;
-		fgObject->BBoxCenter.y = ObjectsPos[i].y + (fgObject->asset->BBox.p1.y + fgObject->asset->BBox.p2.y) / 2;
+		fgObject->BBoxCenter.x = ObjectsPos[i].x + (fgObject->asset.BBox.p1.x + fgObject->asset.BBox.p2.x) / 2;
+		fgObject->BBoxCenter.y = ObjectsPos[i].y + (fgObject->asset.BBox.p1.y + fgObject->asset.BBox.p2.y) / 2;
 		fgObject->IsAlive = true;
 		fgObject->IsOnScreen = true;
+		fgObject->playerBumpedFromBelow = false;
 
 		if (ctx->activefgObjects >= FOREGROUND_OBJECTS_MAX_SIZE - 1) {
 			printf_str("\n### ERROR, max FGObjects reached ###\n");
@@ -288,7 +293,7 @@ int GAME_InitContext(GameContext_t* ctx)
 	ctx->player.IsImmune = false;
 	ctx->player.damageTaken = false;
 	ctx->player.IsGrounded = true;
-	ctx->player.JustKilledFGObject = false;
+	// ctx->player.JustKilledFGObject = false;
 	ctx->player.playerLevel = PLAYER_BIG;
 
 	///////////////////
@@ -402,10 +407,10 @@ int	COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx)
 		if (!fgObject->IsAlive) { continue; }
 
 		Rect_t objRect;
-		objRect.p1.x = fgObject->mapPos.x + fgObject->asset->BBox.p1.x;
-		objRect.p1.y = fgObject->mapPos.y + fgObject->asset->BBox.p1.y;
-		objRect.p2.x = fgObject->mapPos.x + fgObject->asset->BBox.p2.x;
-		objRect.p2.y = fgObject->mapPos.y + fgObject->asset->BBox.p2.y;
+		objRect.p1.x = fgObject->mapPos.x + fgObject->asset.BBox.p1.x;
+		objRect.p1.y = fgObject->mapPos.y + fgObject->asset.BBox.p1.y;
+		objRect.p2.x = fgObject->mapPos.x + fgObject->asset.BBox.p2.x;
+		objRect.p2.y = fgObject->mapPos.y + fgObject->asset.BBox.p2.y;
 
 		Rect_t bumpRect = {0};
 		Rect_GetIntersection(&playerRect, &objRect, &bumpRect);
@@ -515,7 +520,7 @@ int COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t* obj, co
 		if (bumpCenterY > obj->BBoxCenter.y) {
 			if ((obj->flags & COLL_TOP_ENABLED) && !player->IsGrounded) {
 				player->IsGrounded = true;
-				player->currMapPos.y = obj->mapPos.y + obj->asset->BBox.p2.y;
+				player->currMapPos.y = obj->mapPos.y + obj->asset.BBox.p2.y;
 				player->body.subpixelY = 0.0f;
 				player->body.vy = 0.0f;
 			}
@@ -526,11 +531,7 @@ int COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t* obj, co
 				player->body.vy = -0.5f;
 				player->currMapPos.y = obj->mapPos.y - player->asset.BBox.p2.y;
 
-				bool isPlayerBig = (player->playerLevel == PLAYER_BIG || player->playerLevel == PLAYER_SHOOTING) ? true : false;
-				if (isPlayerBig && !player->JustKilledFGObject) {
-					player->JustKilledFGObject = true;
-					obj->IsAlive = false;
-				}
+				COLLISION_FGObject_Player_Action(obj, player, BUMP_SIDE_BOTTOM, ctx);
 			}
 		}
 	}
@@ -546,7 +547,7 @@ int COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t* obj, co
 			if ((obj->flags & COLL_RIGHT_ENABLED)) {
 				player->body.vx = 0.0f;
 				player->body.subpixelX = 0.0f;
-				player->currMapPos.x = obj->mapPos.x + obj->asset->BBox.p2.x + 1; // +1 in order to not "glue" to the object
+				player->currMapPos.x = obj->mapPos.x + obj->asset.BBox.p2.x + 1; // +1 in order to not "glue" to the object
 			}
 		}
 		// BUMPING FROM LEFT
@@ -579,6 +580,34 @@ int COLLISION_Player_Floor(PlayerState_t* player, const Bump_t* bump, const Game
 int COLLISION_Player_Enemy(PlayerState_t* player, EnemyState_t* enemy, const Bump_t* bump, const GameContext_t* ctx)
 {
 	if (player == NULL || enemy == NULL || bump == NULL || ctx == NULL) { return -1; }
+
+	return 0;
+}
+
+int COLLISION_FGObject_Player_Action(ForegroundObject_t* obj, PlayerState_t* player, BumpSideEnum bumpSide, const GameContext_t* ctx)
+{
+	if (obj == NULL || player == NULL || ctx == NULL) { return -1; }
+
+	switch (obj->id)
+	{
+	case FG_BLOCK_QMARK_OBJECT_ID:
+	{
+		if (bumpSide == BUMP_SIDE_BOTTOM) {
+			obj->playerBumpedFromBelow = true;
+		}
+		break;
+	}
+	case FG_BRICKS_OBJECT_ID:
+	{
+		bool isPlayerBig = (player->playerLevel == PLAYER_BIG || player->playerLevel == PLAYER_SHOOTING) ? true : false;
+		if (isPlayerBig && bumpSide == BUMP_SIDE_BOTTOM) {
+			obj->IsAlive = false;
+		}
+		break;
+	}
+	default:
+		break;
+	}
 
 	return 0;
 }
@@ -787,19 +816,6 @@ int CAMERA_CalcPos(CameraState_t* camera, const PlayerState_t* player)
 	{
 		camera->currPos.x += player->currMapPos.x - camera->currPos.x - 80;
 	}
-//	int diff = player->currMapPos.x - player->prevMapPos.x;
-//	if (diff > 0) {
-//		int playerCameraDiff = player->currMapPos.x - camera->currPos.x;
-//		int finalDiff = playerCameraDiff - 80;
-//		if (finalDiff > 0) {
-//			camera->currPos.x += finalDiff;
-//		}
-//	}
-//	if (diff >= 0 && camera->currPos.x + diff >= 0 && camera->currPos.x + diff <= levelBounds->p2.x) {
-//		if (player->currMapPos.x - camera->currPos.x >= 80) {
-//			camera->currPos.x += diff;
-//		}
-//	}
 
 	return 0;
 }
@@ -852,7 +868,7 @@ int PLAYER_ClearFlags(PlayerState_t* player)
 	if (player == NULL) { return -1; }
 
 	player->IsGrounded = false;
-	player->JustKilledFGObject = false;
+	// player->JustKilledFGObject = false;
 
 	return 0;
 }
@@ -961,6 +977,15 @@ int ANIMATOR_Update(GameContext_t* ctx)
 	ret = ANIMATOR_Player_Update(&ctx->player, ctx);
 	if (ret < 0) { return -5; }
 
+	for (int i = 0; i < ctx->activefgObjects; i++)
+	{
+		if (ctx->fgObjects[i].animableAsset == NULL) {
+			continue;
+		}
+		ret = ANIMATOR_FGObject_Update(&ctx->fgObjects[i], ctx);
+		if (ret < 0) { return -10; }
+	}
+
 	return 0;
 }
 
@@ -1060,6 +1085,64 @@ int ANIMATOR_Player_SetAsset(PlayerState_t* player)
 
 	if (player->animableAsset->baseAssets[assetIndex] != NULL) {
 		player->asset.baseAsset = *player->animableAsset->baseAssets[assetIndex];
+	}
+
+	return 0;
+}
+
+int ANIMATOR_FGObject_Update(ForegroundObject_t* obj, const GameContext_t* ctx)
+{
+	if (obj == NULL || ctx == NULL) { return -1; }
+	int ret = 0;
+
+	ret = ANIMATOR_FGObject_Decide(obj, ctx);
+	if (ret < 0) { return -5; }
+
+	ret = ANIMATOR_FGObject_SetAsset(obj);
+	if (ret < 0) { return -10; }
+
+	return 0;
+}
+
+int ANIMATOR_FGObject_Decide(ForegroundObject_t* obj, const GameContext_t* ctx)
+{
+	if (obj == NULL || ctx == NULL) { return -1; }
+
+	switch (obj->id)
+	{
+	case FG_BLOCK_QMARK_OBJECT_ID:
+	{
+		if (obj->playerBumpedFromBelow) {
+			obj->currAnimation = FG_BLOCK_QMARK_2_ANIMATION_ID;
+		} else {
+			obj->currAnimation = FG_BLOCK_QMARK_1_ANIMATION_ID;
+		}
+		break;
+	}
+	default:
+		break;
+	}
+
+	return 0;
+}
+
+int ANIMATOR_FGObject_SetAsset(ForegroundObject_t* obj)
+{
+	if (obj == NULL) { return -1; }
+	if (obj->animableAsset == NULL) { return -5; }
+	if (obj->animableAsset->baseAssetsCount <= 0) { return -10; }
+
+	int assetIndex = 0;
+	for (int i = 0; i < obj->animableAsset->baseAssetsCount; i++)
+	{
+		if (obj->animableAsset->animationIDs[i] == obj->currAnimation) {
+			assetIndex = i;
+			break;
+		}
+	}
+
+	if (obj->animableAsset->baseAssets[assetIndex] != NULL) {
+		obj->asset.baseAsset = *obj->animableAsset->baseAssets[assetIndex];
 	}
 
 	return 0;
@@ -1258,8 +1341,8 @@ int	RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_t
 
 		Rect_t dirtyRect;
 		dirtyRect.p1 = ctx->fgObjects[i].mapPos;
-		dirtyRect.p2.x = ctx->fgObjects[i].mapPos.x + ctx->fgObjects[i].asset->baseAsset.sprite.size.x;
-		dirtyRect.p2.y = ctx->fgObjects[i].mapPos.y + ctx->fgObjects[i].asset->baseAsset.sprite.size.y;
+		dirtyRect.p2.x = ctx->fgObjects[i].mapPos.x + ctx->fgObjects[i].asset.baseAsset.sprite.size.x;
+		dirtyRect.p2.y = ctx->fgObjects[i].mapPos.y + ctx->fgObjects[i].asset.baseAsset.sprite.size.y;
 
 		Rect_t commonRect = {0};
 		Rect_GetIntersection(&cameraRect, &dirtyRect, &commonRect);
@@ -1449,7 +1532,7 @@ int RENDERER_RenderFloor(const BackgroundRepObject_t* floor)
 	if (floor == NULL)	{ return -1; }
 
 	const BaseAsset_t* baseAsset = &floor->asset->baseAsset;
-	SpriteRender_t renderContext;
+	SpriteRender_t renderContext = {0};
 
 	for (int i = 0; i < floor->mulVector.y; i++)
 	{
@@ -1465,6 +1548,7 @@ int RENDERER_RenderFloor(const BackgroundRepObject_t* floor)
 			renderContext.baseToSpriteOffset.x = 0;
 			renderContext.baseToSpriteOffset.y = 0;
 			renderContext.LCDOffsetX = 0;
+			renderContext.mirrorX = false;
 
 			RE_RenderSprite(&baseAsset->sprite, renderContext, false);
 		}
@@ -1488,7 +1572,7 @@ int RENDERER_RenderBGObject(const BackgroundObject_t* obj, const Rect_t* mapRect
 
 	if (Rect_IsIntersection(&commonRect))
 	{
-		SpriteRender_t renderContext;
+		SpriteRender_t renderContext = {0};
 		renderContext.commonRect = commonRect;
 		renderContext.baseRect = *screenRect;
 		renderContext.baseToSpriteOffset.x = posRect.p1.x - mapRectToDraw->p1.x;
@@ -1509,8 +1593,8 @@ int	RENDERER_RenderFGObject(const ForegroundObject_t* obj, const Rect_t* mapRect
 	Rect_t posRect;
 	posRect.p1.x = obj->mapPos.x;
 	posRect.p1.y = obj->mapPos.y;
-	posRect.p2.x = obj->mapPos.x + obj->asset->baseAsset.sprite.size.x;
-	posRect.p2.y = obj->mapPos.y + obj->asset->baseAsset.sprite.size.y;
+	posRect.p2.x = obj->mapPos.x + obj->asset.baseAsset.sprite.size.x;
+	posRect.p2.y = obj->mapPos.y + obj->asset.baseAsset.sprite.size.y;
 
 	Rect_t commonRect = {0};
 	Rect_GetIntersection(mapRectToDraw, &posRect, &commonRect);
@@ -1525,7 +1609,7 @@ int	RENDERER_RenderFGObject(const ForegroundObject_t* obj, const Rect_t* mapRect
 		renderContext.LCDOffsetX = LCDOffsetX;
 		renderContext.mirrorX = false;
 
-		RE_FillSprite(&obj->asset->baseAsset.sprite, &renderContext);
+		RE_FillSprite(&obj->asset.baseAsset.sprite, &renderContext);
 	}
 
 	return 0;
@@ -1546,7 +1630,7 @@ int	RENDERER_RenderEnemy(const EnemyState_t* enemy, const Rect_t* mapRectToDraw,
 
 	if (Rect_IsIntersection(&commonRect))
 	{
-		SpriteRender_t renderContext;
+		SpriteRender_t renderContext = {0};
 		renderContext.commonRect = commonRect;
 		renderContext.baseRect = *screenRect;
 		renderContext.baseToSpriteOffset.x = enemy->currMapPos.x - mapRectToDraw->p1.x;
@@ -1575,15 +1659,27 @@ int	RENDERER_RenderPlayer(const PlayerState_t* player, const Rect_t* mapRectToDr
 
 	if (Rect_IsIntersection(&commonRect))
 	{
-		SpriteRender_t renderContext;
+		SpriteRender_t renderContext = {0};
 		renderContext.commonRect = commonRect;
 		renderContext.baseRect = *screenRect;
 		renderContext.baseToSpriteOffset.x = player->currMapPos.x - mapRectToDraw->p1.x;
 		renderContext.baseToSpriteOffset.y = player->currMapPos.y - mapRectToDraw->p1.y;
 		renderContext.LCDOffsetX = LCDOffsetX;
 		renderContext.mirrorX = player->currPhysicsFlags.lastMovementDirectionRight ? false : true;
+		// renderContext.activeColorSwap = 4;
+		// renderContext.colorSwap[0][0] = 0x00f8;
+		// renderContext.colorSwap[0][1] = 0xe0fd;
+		// renderContext.colorSwap[1][0] = 0x00f9;
+		// renderContext.colorSwap[1][1] = 0xe0fe;
+		// renderContext.colorSwap[2][0] = 0x00fa;
+		// renderContext.colorSwap[2][1] = 0xe0fe;
+		// renderContext.colorSwap[3][0] = 0x00fb;
+		// renderContext.colorSwap[3][1] = 0xe0ff;
 
+		uint32_t t1 = GetTimestamp();
 		RE_FillSprite(&player->asset.baseAsset.sprite, &renderContext);
+		uint32_t tdiff = CalcTimeUS(t1);
+		printf_int(tdiff); printf_c('\n');
 	}
 
 	return 0;

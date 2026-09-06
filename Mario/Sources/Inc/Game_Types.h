@@ -116,6 +116,10 @@ typedef enum
 	MARIO_RUN_3_ANIMATION_ID,
 	MARIO_DECELERATE_ANIMATION_ID,
 	MARIO_JUMP_ANIMATION_ID,
+
+	FG_BLOCK_QMARK_1_ANIMATION_ID,
+	FG_BLOCK_QMARK_2_ANIMATION_ID,
+
 }AnimationIDEnum;
 
 typedef struct
@@ -160,6 +164,15 @@ typedef enum
 	PLAYER_BUMP_FLOOR,
 
 }BumpID_t;
+
+typedef enum 
+{
+	BUMP_SIDE_TOP,
+	BUMP_SIDE_BOTTOM,
+	BUMP_SIDE_LEFT,
+	BUMP_SIDE_RIGHT,
+
+}BumpSideEnum;
 
 typedef struct
 {
@@ -229,7 +242,7 @@ typedef struct
 	bool IsImmune;
 	bool damageTaken;
 	bool IsGrounded;
-	bool JustKilledFGObject;
+	// bool JustKilledFGObject;
 
 }PlayerState_t;
 
@@ -264,12 +277,14 @@ typedef struct
 	Point_t mapPos;
 	Point_t BBoxCenter;
 
-	const SimpleAsset_t* asset;
-
-	uint32_t flags;
+	SimpleAsset_t asset;
+	const AnimableAsset_t* animableAsset;
+	uint32_t flags; // treat as const! parameters set from map maker
+	AnimationIDEnum currAnimation;
 
 	bool IsAlive;
 	bool IsOnScreen;
+	bool playerBumpedFromBelow;
 
 }ForegroundObject_t;
 

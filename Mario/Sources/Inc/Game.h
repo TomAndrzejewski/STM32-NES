@@ -22,6 +22,7 @@ int 	COLLISION_Resolve(GameContext_t* ctx);
 int 	COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t* obj, const Bump_t* bump, const GameContext_t* ctx);
 int 	COLLISION_Player_Floor(PlayerState_t* player, const Bump_t* bump, const GameContext_t* ctx);
 int 	COLLISION_Player_Enemy(PlayerState_t* player, EnemyState_t* enemy, const Bump_t* bump, const GameContext_t* ctx);
+int     COLLISION_FGObject_Player_Action(ForegroundObject_t* obj, PlayerState_t* player, BumpSideEnum bumpSide, const GameContext_t* ctx);
 
 int		PHYSICS_Update(GameContext_t* ctx);
 int		PHYSICS_Player_Update(PlayerState_t* player, const GameContext_t* ctx);
@@ -51,6 +52,13 @@ int     ANIMATOR_Update(GameContext_t* ctx);
 int     ANIMATOR_Player_Update(PlayerState_t* player, const GameContext_t* ctx);
 int     ANIMATOR_Player_Decide(PlayerState_t* player, const GameContext_t* ctx);
 int     ANIMATOR_Player_SetAsset(PlayerState_t* player);
+int     ANIMATOR_FGObject_Update(ForegroundObject_t* obj, const GameContext_t* ctx);
+int     ANIMATOR_FGObject_Decide(ForegroundObject_t* obj, const GameContext_t* ctx);
+int     ANIMATOR_FGObject_SetAsset(ForegroundObject_t* obj);
+
+
+
+
 
 
 int 	RENDERER_Update(GameContext_t* ctx);

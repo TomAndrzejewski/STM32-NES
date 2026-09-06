@@ -22,11 +22,14 @@ typedef struct{
 	Point_t p2; //RIGHT-UP
 }Rect_t;
 
+#define SPRITE_RENDER_COLOR_SWAP_SIZE	(4)
 typedef struct
 {
 	Rect_t	commonRect;
 	Rect_t	baseRect;
 	Point_t	baseToSpriteOffset;
+	int		activeColorSwap;
+	uint16_t colorSwap[SPRITE_RENDER_COLOR_SWAP_SIZE][2];
 	int		LCDOffsetX;
 	bool 	mirrorX;
 

@@ -19,7 +19,7 @@ extern const AnimableAsset_t MARIO_ANIMABLE_ASSET;
 // FOREGROUND
 ///////////////////
 extern const SimpleAsset_t BRICKS_ASSET;
-extern const SimpleAsset_t BLOCK_QMARK_ASSET;
+extern const AnimableAsset_t BLOCK_QMARK_ANIMABLE_ASSET;
 extern const SimpleAsset_t RURA_DOL_ASSET;
 extern const SimpleAsset_t RURA_GORA_ASSET;
 extern const SimpleAsset_t PYRAMID_BLOCK_ASSET;
