@@ -30,6 +30,11 @@ extern const SimpleAsset_t PYRAMID_BLOCK_ASSET;
 extern const BackgroundAsset_t JEDYNKA_ASSET;
 extern const BackgroundAsset_t DWOJKA_ASSET;
 extern const BackgroundAsset_t CHMURKA_ASSET;
+extern const BackgroundAsset_t HILL_0_ASSET;
+extern const BackgroundAsset_t HILL_1_ASSET;
+extern const BackgroundAsset_t HILL_2_ASSET;
+extern const BackgroundAsset_t HILL_3_ASSET;
+extern const BackgroundAsset_t HILL_4_ASSET;
 
 ///////////////////
 // BACKGROUND REP

@@ -63,6 +63,11 @@ typedef enum
 	BG_JEDYNKA_OBJECT_ID = BACKGROUND_OBJECT_ID_START,
 	BG_DWOJKA_OBJECT_ID,
 	BG_CHMURKA_OBJECT_ID,
+	BG_HILL_0_OBJECT_ID,
+	BG_HILL_1_OBJECT_ID,
+	BG_HILL_2_OBJECT_ID,
+	BG_HILL_3_OBJECT_ID,
+	BG_HILL_4_OBJECT_ID,
 
 	FG_RURA_OBJECT_ID = FOREGROUND_OBJECT_ID_START,
 	FG_BRICKS_OBJECT_ID,
@@ -133,12 +138,6 @@ typedef struct
 	Rect_t BBox; // p1 - offset from (0,0) in sprite, p2 - length
 
 }AnimableAsset_t;
-
-// typedef struct
-// {
-// 	AnimationID_t currAnimation;
-	
-// }Animator_t;
 
 typedef struct
 {
@@ -242,7 +241,7 @@ typedef struct
 	bool IsImmune;
 	bool damageTaken;
 	bool IsGrounded;
-	// bool JustKilledFGObject;
+	bool JustKilledFGObject;
 
 }PlayerState_t;
 
@@ -267,6 +266,7 @@ typedef struct
 	Point_t mapPos;
 
 	const BackgroundAsset_t* asset;
+	uint32_t flags; // treat as const! parameters set from map maker
 
 }BackgroundObject_t;
 

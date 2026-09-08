@@ -39,5 +39,6 @@
 											| COLL_LEFT_ENABLED \
 											| COLL_RIGHT_ENABLED)
 #define FG_SCROLL_RENDER					(0x00000010)
+#define MIRROR_X							(0x00000020)
 
 #endif /* SOURCES_INC_GAME_DEFS_H_ */

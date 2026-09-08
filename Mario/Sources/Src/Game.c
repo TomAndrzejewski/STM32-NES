@@ -63,6 +63,7 @@ int GAME_InitContext(GameContext_t* ctx)
 		bgObject->id = ObjectsPos[i].id;
 		bgObject->mapPos.x = ObjectsPos[i].x;
 		bgObject->mapPos.y = ObjectsPos[i].y;
+		bgObject->flags = ObjectsPos[i].flags;
 
 		switch (ObjectsPos[i].id)
 		{
@@ -76,6 +77,26 @@ int GAME_InitContext(GameContext_t* ctx)
 		}
 		case BG_CHMURKA_OBJECT_ID: {
 			bgObject->asset = &CHMURKA_ASSET;
+			break;
+		}
+		case BG_HILL_0_OBJECT_ID: {
+			bgObject->asset = &HILL_0_ASSET;
+			break;
+		}
+		case BG_HILL_1_OBJECT_ID: {
+			bgObject->asset = &HILL_1_ASSET;
+			break;
+		}
+		case BG_HILL_2_OBJECT_ID: {
+			bgObject->asset = &HILL_2_ASSET;
+			break;
+		}
+		case BG_HILL_3_OBJECT_ID: {
+			bgObject->asset = &HILL_3_ASSET;
+			break;
+		}
+		case BG_HILL_4_OBJECT_ID: {
+			bgObject->asset = &HILL_4_ASSET;
 			break;
 		}
 		default:
@@ -293,7 +314,7 @@ int GAME_InitContext(GameContext_t* ctx)
 	ctx->player.IsImmune = false;
 	ctx->player.damageTaken = false;
 	ctx->player.IsGrounded = true;
-	// ctx->player.JustKilledFGObject = false;
+	ctx->player.JustKilledFGObject = false;
 	ctx->player.playerLevel = PLAYER_BIG;
 
 	///////////////////
@@ -592,16 +613,18 @@ int COLLISION_FGObject_Player_Action(ForegroundObject_t* obj, PlayerState_t* pla
 	{
 	case FG_BLOCK_QMARK_OBJECT_ID:
 	{
-		if (bumpSide == BUMP_SIDE_BOTTOM) {
+		if (bumpSide == BUMP_SIDE_BOTTOM && !player->JustKilledFGObject) {
 			obj->playerBumpedFromBelow = true;
+			player->JustKilledFGObject = true;
 		}
 		break;
 	}
 	case FG_BRICKS_OBJECT_ID:
 	{
 		bool isPlayerBig = (player->playerLevel == PLAYER_BIG || player->playerLevel == PLAYER_SHOOTING) ? true : false;
-		if (isPlayerBig && bumpSide == BUMP_SIDE_BOTTOM) {
+		if (isPlayerBig && bumpSide == BUMP_SIDE_BOTTOM && !player->JustKilledFGObject) {
 			obj->IsAlive = false;
+			player->JustKilledFGObject = true;
 		}
 		break;
 	}
@@ -868,7 +891,7 @@ int PLAYER_ClearFlags(PlayerState_t* player)
 	if (player == NULL) { return -1; }
 
 	player->IsGrounded = false;
-	// player->JustKilledFGObject = false;
+	player->JustKilledFGObject = false;
 
 	return 0;
 }
@@ -1203,12 +1226,12 @@ int RENDERER_FirstRender(const GameContext_t* ctx)
 
 	RENDERER_RenderFloor(&ctx->bgRepObjects[ctx->floorIndex]);
 
-	for (int i = 0; i < LCD_WIDTH/20; i++)
+	for (int i = 0; i < LCD_WIDTH/16; i++)
 	{
 		Rect_t mapRect;
-		mapRect.p1.x = i * 20;
+		mapRect.p1.x = i * 16;
 		mapRect.p1.y = ctx->map.floorYLevel;
-		mapRect.p2.x = i * 20 + 20;
+		mapRect.p2.x = i * 16 + 16;
 		mapRect.p2.y = LCD_HEIGHT;
 
 		Rect_t screenRect = mapRect;
@@ -1549,6 +1572,7 @@ int RENDERER_RenderFloor(const BackgroundRepObject_t* floor)
 			renderContext.baseToSpriteOffset.y = 0;
 			renderContext.LCDOffsetX = 0;
 			renderContext.mirrorX = false;
+			renderContext.activeColorSwap = 0;
 
 			RE_RenderSprite(&baseAsset->sprite, renderContext, false);
 		}
@@ -1578,7 +1602,8 @@ int RENDERER_RenderBGObject(const BackgroundObject_t* obj, const Rect_t* mapRect
 		renderContext.baseToSpriteOffset.x = posRect.p1.x - mapRectToDraw->p1.x;
 		renderContext.baseToSpriteOffset.y = posRect.p1.y - mapRectToDraw->p1.y;
 		renderContext.LCDOffsetX = LCDOffsetX;
-		renderContext.mirrorX = false;
+		renderContext.mirrorX = (obj->flags & MIRROR_X) ? true : false;
+		renderContext.activeColorSwap = 0;
 
 		RE_FillSprite(&obj->asset->baseAsset.sprite, &renderContext);
 	}
@@ -1607,7 +1632,8 @@ int	RENDERER_RenderFGObject(const ForegroundObject_t* obj, const Rect_t* mapRect
 		renderContext.baseToSpriteOffset.x = obj->mapPos.x - mapRectToDraw->p1.x;
 		renderContext.baseToSpriteOffset.y = obj->mapPos.y - mapRectToDraw->p1.y;
 		renderContext.LCDOffsetX = LCDOffsetX;
-		renderContext.mirrorX = false;
+		renderContext.mirrorX = (obj->flags & MIRROR_X) ? true : false;;
+		renderContext.activeColorSwap = 0;
 
 		RE_FillSprite(&obj->asset.baseAsset.sprite, &renderContext);
 	}
@@ -1637,6 +1663,7 @@ int	RENDERER_RenderEnemy(const EnemyState_t* enemy, const Rect_t* mapRectToDraw,
 		renderContext.baseToSpriteOffset.y = enemy->currMapPos.y - mapRectToDraw->p1.y;
 		renderContext.LCDOffsetX = LCDOffsetX;
 		renderContext.mirrorX = false;
+		renderContext.activeColorSwap = 0;
 
 		RE_FillSprite(&enemy->asset->baseAsset.sprite, &renderContext);
 	}
@@ -1666,6 +1693,7 @@ int	RENDERER_RenderPlayer(const PlayerState_t* player, const Rect_t* mapRectToDr
 		renderContext.baseToSpriteOffset.y = player->currMapPos.y - mapRectToDraw->p1.y;
 		renderContext.LCDOffsetX = LCDOffsetX;
 		renderContext.mirrorX = player->currPhysicsFlags.lastMovementDirectionRight ? false : true;
+		renderContext.activeColorSwap = 0;
 		// renderContext.activeColorSwap = 4;
 		// renderContext.colorSwap[0][0] = 0x00f8;
 		// renderContext.colorSwap[0][1] = 0xe0fd;
