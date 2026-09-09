@@ -1360,7 +1360,7 @@ int	RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_t
 	//////////////////////////
 	for (int i = 0; i < ctx->activefgObjects; i++)
 	{
-		if ((ctx->fgObjects[i].flags & FG_SCROLL_RENDER)) { break; }
+		if ((ctx->fgObjects[i].flags & FG_SCROLL_RENDER)) { continue; }
 
 		Rect_t dirtyRect;
 		dirtyRect.p1 = ctx->fgObjects[i].mapPos;
@@ -1427,6 +1427,12 @@ int	RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_t
 	//////////////////////////
 	// COMPOUNDING OVERLAPPING DIRTY RECTS
 	//////////////////////////
+	// printf_str("\nPrzed:\n");
+	// for (int i = 0; i < renderer->activeDirtyRects; i++)
+	// {
+	// 	printf_v("x1: %d, y1: %d, x2: %d, y2: %d\n", dirtyRects[i].rect.p1.x, dirtyRects[i].rect.p1.y, dirtyRects[i].rect.p2.x, dirtyRects[i].rect.p2.y);
+	// }
+
 	for (int i = 0; i < renderer->activeDirtyRects; i++)
 	{
 		if (dirtyRects[i].used)	{ continue; }
@@ -1460,6 +1466,13 @@ int	RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_t
 			i--;
 		}
 	}
+
+	// printf_str("Po:\n");
+	// for (int i = 0; i < renderer->activeDirtyRects; i++)
+	// {
+	// 	if (dirtyRects[i].used)	{ continue; }
+	// 	printf_v("x1: %d, y1: %d, x2: %d, y2: %d\n", dirtyRects[i].rect.p1.x, dirtyRects[i].rect.p1.y, dirtyRects[i].rect.p2.x, dirtyRects[i].rect.p2.y);
+	// }
 
 	return 0;
 }
@@ -1704,10 +1717,10 @@ int	RENDERER_RenderPlayer(const PlayerState_t* player, const Rect_t* mapRectToDr
 		// renderContext.colorSwap[3][0] = 0x00fb;
 		// renderContext.colorSwap[3][1] = 0xe0ff;
 
-		uint32_t t1 = GetTimestamp();
+		// uint32_t t1 = GetTimestamp();
 		RE_FillSprite(&player->asset.baseAsset.sprite, &renderContext);
-		uint32_t tdiff = CalcTimeUS(t1);
-		printf_int(tdiff); printf_c('\n');
+		// uint32_t tdiff = CalcTimeUS(t1);
+		// printf_int(tdiff); printf_c('\n');
 	}
 
 	return 0;

@@ -16,9 +16,9 @@
 ///////////////////////////////////////////////////////////////////
 #define ENEMIES_MAX_SIZE				(64)
 
-#define BACKGROUND_OBJECTS_MAX_SIZE		(64)
+#define BACKGROUND_OBJECTS_MAX_SIZE		(256)
 
-#define FOREGROUND_OBJECTS_MAX_SIZE		(128)
+#define FOREGROUND_OBJECTS_MAX_SIZE		(256)
 
 #define BACKGROUND_REP_OBJECTS_MAX_SIZE	(8)
 
