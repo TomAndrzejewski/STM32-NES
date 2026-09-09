@@ -549,6 +549,7 @@ void I2S_Start(void)
 
 #endif
 
+
 void print_start()
 {
  	printf_v("Welcome!\n");
@@ -695,7 +696,7 @@ int main(void)
 			if (ret < 0)	{ delay(1); continue; }
 			timeStaps++;
 
-			if (0)
+			if (1)
 			{
 				printf_v("Frame %d time: %d us, timestamps:\n", frameNumber, CalcDiffTimeUS(startTime[0], finishTime[timeStaps-1]));
 				for (int i = 0; i < timeStaps; i++)

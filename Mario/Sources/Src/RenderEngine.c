@@ -322,7 +322,7 @@ int RE_FillSprite(const Sprite_t* sprite, const SpriteRender_t* renderContext)
 
 		for (int i = 0; i < endX; i++)
 		{
-			int spriteIndX = (renderContext->mirrorX) ? (spriteStartOffsetX + endX - 1 - i) : i + spriteStartOffsetX;
+			int spriteIndX = (renderContext->mirrorX) ? (sprite->size.x - spriteStartOffsetX - 1 - i) : i + spriteStartOffsetX;
 			int fbIndX = i + fbStartOffsetX;
 
 			const uint16_t* srcColumn = s2d[spriteIndX];
