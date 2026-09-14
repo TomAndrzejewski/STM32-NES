@@ -690,10 +690,28 @@ int main(void)
 			if (ret < 0)	{ delay(1); continue; }
 			timeStaps++;
 
+			// startTime[timeStaps] = GetTimestamp();
+			// ret = RENDERER_Update(pGameCtx);
+			// finishTime[timeStaps] = GetTimestamp();
+			// if (ret < 0)	{ delay(1); continue; }
+			// timeStaps++;
+
 			startTime[timeStaps] = GetTimestamp();
-			ret = RENDERER_Update(pGameCtx);
-			finishTime[timeStaps] = GetTimestamp();
+			ret = RENDERER_ScrollRender(&pGameCtx->renderer, pGameCtx);
 			if (ret < 0)	{ delay(1); continue; }
+			finishTime[timeStaps] = GetTimestamp();
+			timeStaps++;
+
+			startTime[timeStaps] = GetTimestamp();
+			ret = RENDERER_DirtyRects_Calculate(&pGameCtx->renderer, pGameCtx);
+			if (ret < 0)	{ delay(1); continue; }
+			finishTime[timeStaps] = GetTimestamp();
+			timeStaps++;
+
+			startTime[timeStaps] = GetTimestamp();
+			ret = RENDERER_DirtyRects_Render(&pGameCtx->renderer, pGameCtx);
+			if (ret < 0)	{ delay(1); continue; }
+			finishTime[timeStaps] = GetTimestamp();
 			timeStaps++;
 
 			if (1)

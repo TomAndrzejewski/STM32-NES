@@ -30,6 +30,7 @@ extern const SimpleAsset_t PYRAMID_BLOCK_ASSET;
 extern const BackgroundAsset_t JEDYNKA_ASSET;
 extern const BackgroundAsset_t DWOJKA_ASSET;
 extern const BackgroundAsset_t CHMURKA_ASSET;
+extern const BackgroundAsset_t KRZAK_ASSET;
 extern const BackgroundAsset_t HILL_0_ASSET;
 extern const BackgroundAsset_t HILL_1_ASSET;
 extern const BackgroundAsset_t HILL_2_ASSET;
@@ -45,6 +46,7 @@ extern const BackgroundAsset_t FLOOR_ASSET;
 // ENEMIES
 ///////////////////
 extern const SimpleAsset_t GOOMBA_ASSET;
+extern const AnimableAsset_t KOOPA_ANIMABLE_ASSET;
 
 
 #endif /* SOURCES_INC_GRAPHICSASSETS_H_ */

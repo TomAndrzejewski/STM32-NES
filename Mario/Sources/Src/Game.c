@@ -8,6 +8,7 @@
 #include <string.h>
 #include <math.h>
 
+#include "NES_Defs.h"
 #include "NES_Functions.h"
 
 #include "LCDControl.h"
@@ -77,6 +78,10 @@ int GAME_InitContext(GameContext_t* ctx)
 		}
 		case BG_CHMURKA_OBJECT_ID: {
 			bgObject->asset = &CHMURKA_ASSET;
+			break;
+		}
+		case BG_KRZAK_OBJECT_ID: {
+			bgObject->asset = &KRZAK_ASSET;
 			break;
 		}
 		case BG_HILL_0_OBJECT_ID: {
@@ -195,13 +200,6 @@ int GAME_InitContext(GameContext_t* ctx)
 
 		EnemyState_t* enemy = &ctx->enemies.pool[ctx->enemies.activeEnemies];
 
-		enemy->id = ObjectsPos[i].id;
-		enemy->IsAlive = true;
-		enemy->IsOnScreen = false;
-		enemy->currMapPos.x = ObjectsPos[i].x;
-		enemy->currMapPos.y = ObjectsPos[i].y;
-		enemy->prevMapPos = enemy->currMapPos;
-
 		switch (ObjectsPos[i].id)
 		{
 		case ENEMY_GOOMBA_ID: {
@@ -212,6 +210,13 @@ int GAME_InitContext(GameContext_t* ctx)
 			break;
 		}
 
+		enemy->id = ObjectsPos[i].id;
+		enemy->IsAlive = true;
+		enemy->IsOnScreen = false;
+		enemy->currMapPos.x = ObjectsPos[i].x;
+		enemy->currMapPos.y = ObjectsPos[i].y;
+		enemy->prevMapPos = enemy->currMapPos;
+		enemy->prevSpriteSize = enemy->asset->baseAsset.sprite.size;
 
 		if (ctx->enemies.activeEnemies >= ENEMIES_MAX_SIZE - 1) {
 			printf_str("\n### ERROR, max Enemies reached ###\n");
@@ -295,12 +300,17 @@ int GAME_InitContext(GameContext_t* ctx)
 	// PLAYER
 	///////////////////
 	ctx->player.animableAsset = &MARIO_ANIMABLE_ASSET;
+	if (ctx->player.animableAsset->baseAssetsCount <= 0 || ctx->player.animableAsset->baseAssets[0].baseAsset == NULL) {
+		return -30; //sanity check
+	}
+	ctx->player.asset.baseAsset = *ctx->player.animableAsset->baseAssets[0].baseAsset;
 	ctx->player.asset.id = ctx->player.animableAsset->id;
 	ctx->player.asset.BBox = ctx->player.animableAsset->BBox;
 	ctx->player.id = ctx->player.asset.id;
 	ctx->player.currMapPos.x = 80;
 	ctx->player.currMapPos.y = ctx->map.floorYLevel;
 	ctx->player.prevMapPos = ctx->player.currMapPos;
+	ctx->player.prevSpriteSize = ctx->player.asset.baseAsset.sprite.size;
 	ctx->player.currPhysicsFlags.lastMovementDirectionRight = true;
 	ctx->player.currPhysicsFlags.IsDecelerating = false;
 	ctx->player.prevPhysicsFlags = ctx->player.currPhysicsFlags;
@@ -903,8 +913,8 @@ int PLAYER_GetDirtyRect(const PlayerState_t* player, Rect_t* dirtyRect)
 
 	Rect_t prevDirtyRect;
 	prevDirtyRect.p1 = player->prevMapPos;
-	prevDirtyRect.p2.x = player->prevMapPos.x + player->asset.baseAsset.sprite.size.x;
-	prevDirtyRect.p2.y = player->prevMapPos.y + player->asset.baseAsset.sprite.size.y;
+	prevDirtyRect.p2.x = player->prevMapPos.x + player->prevSpriteSize.x;
+	prevDirtyRect.p2.y = player->prevMapPos.y + player->prevSpriteSize.y;
 
 	Rect_t currDirtyRect;
 	currDirtyRect.p1 = player->currMapPos;
@@ -1097,17 +1107,20 @@ int ANIMATOR_Player_SetAsset(PlayerState_t* player)
 	if (player->animableAsset == NULL) { return -5; }
 	if (player->animableAsset->baseAssetsCount <= 0) { return -10; }
 
+	// save sprite size for dirty rects
+	player->prevSpriteSize = player->asset.baseAsset.sprite.size;
+
 	int assetIndex = 0;
 	for (int i = 0; i < player->animableAsset->baseAssetsCount; i++)
 	{
-		if (player->animableAsset->animationIDs[i] == player->animator.currAnimation) {
+		if (player->animableAsset->baseAssets[i].animationID == player->animator.currAnimation) {
 			assetIndex = i;
 			break;
 		}
 	}
 
-	if (player->animableAsset->baseAssets[assetIndex] != NULL) {
-		player->asset.baseAsset = *player->animableAsset->baseAssets[assetIndex];
+	if (player->animableAsset->baseAssets[assetIndex].baseAsset != NULL) {
+		player->asset.baseAsset = *player->animableAsset->baseAssets[assetIndex].baseAsset;
 	}
 
 	return 0;
@@ -1155,17 +1168,20 @@ int ANIMATOR_FGObject_SetAsset(ForegroundObject_t* obj)
 	if (obj->animableAsset == NULL) { return -5; }
 	if (obj->animableAsset->baseAssetsCount <= 0) { return -10; }
 
+	// save sprite size for dirty rects
+	// obj->
+
 	int assetIndex = 0;
 	for (int i = 0; i < obj->animableAsset->baseAssetsCount; i++)
 	{
-		if (obj->animableAsset->animationIDs[i] == obj->currAnimation) {
+		if (obj->animableAsset->baseAssets[0].animationID == obj->currAnimation) {
 			assetIndex = i;
 			break;
 		}
 	}
 
-	if (obj->animableAsset->baseAssets[assetIndex] != NULL) {
-		obj->asset.baseAsset = *obj->animableAsset->baseAssets[assetIndex];
+	if (obj->animableAsset->baseAssets[assetIndex].baseAsset != NULL) {
+		obj->asset.baseAsset = *obj->animableAsset->baseAssets[assetIndex].baseAsset;
 	}
 
 	return 0;
@@ -1306,11 +1322,13 @@ int RENDERER_ScrollRender(RendererState_t* renderer, const GameContext_t* ctx)
 		baseRectArea = CalcRectArea(rightScreenRect);
 		RE_FillBackgroud(LCD_COLOR_BLUESKY, baseRectArea);
 
-
+		// uint32_t t1 = GetTimestamp();
 		for (int i = 0; i < ctx->activebgObjects; i++)
 		{
 			RENDERER_RenderBGObject(&ctx->bgObjects[i], &rightMapRect, &rightScreenRect, renderer->LCDOffsetX);
 		}
+		// uint32_t tdiff = CalcTimeUS(t1);
+		// printf_v("tdiff BG: %d\n", tdiff);
 
 
 		const GameObjectID* prioArray = NULL;
@@ -1318,6 +1336,16 @@ int RENDERER_ScrollRender(RendererState_t* renderer, const GameContext_t* ctx)
 		int ret = LEVEL_GetObjRenderPriorities(&prioArray, &numOfPriorities);
 		if (ret < 0) { return -5; }
 
+		// 		GameObjectID prioArray[] = {
+		// 			FG_PYRAMID_BLOCK_OBJECT_ID,
+		// 			FG_RURA_DOL_OBJECT_ID,
+		// 			FG_RURA_GORA_OBJECT_ID,
+		// 			FG_BLOCK_QMARK_OBJECT_ID,
+		// 			FG_BRICKS_OBJECT_ID,
+		// };
+		// int numOfPriorities = 5;
+
+		// t1 = GetTimestamp();
 		for (int i = 0; i < numOfPriorities; i++)
 		{
 			GameObjectID currentPrioObject = prioArray[i];
@@ -1333,6 +1361,8 @@ int RENDERER_ScrollRender(RendererState_t* renderer, const GameContext_t* ctx)
 				RENDERER_RenderFGObject(obj, &rightMapRect, &rightScreenRect, renderer->LCDOffsetX);
 			}
 		}
+		// tdiff = CalcTimeUS(t1);
+		// printf_v("tdiff FG: %d\n\n", tdiff);
 
 		RE_SendRect(rightScreenRect, renderer->LCDOffsetX);
 	}

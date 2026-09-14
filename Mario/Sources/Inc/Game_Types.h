@@ -59,10 +59,12 @@ typedef enum
 	OBJECT_NOT_USED = -1,
 
 	ENEMY_GOOMBA_ID = ENEMY_ID_START,
+	ENEMY_KOOPA_ID,
 
 	BG_JEDYNKA_OBJECT_ID = BACKGROUND_OBJECT_ID_START,
 	BG_DWOJKA_OBJECT_ID,
 	BG_CHMURKA_OBJECT_ID,
+	BG_KRZAK_OBJECT_ID,
 	BG_HILL_0_OBJECT_ID,
 	BG_HILL_1_OBJECT_ID,
 	BG_HILL_2_OBJECT_ID,
@@ -122,6 +124,11 @@ typedef enum
 	MARIO_DECELERATE_ANIMATION_ID,
 	MARIO_JUMP_ANIMATION_ID,
 
+	KOOPA_WALK_1_ANIMATION_ID,
+	KOOPA_WALK_2_ANIMATION_ID,
+	KOOPA_SHELL_1_ANIMATION_ID,
+	KOOPA_SHELL_2_ANIMATION_ID,
+	
 	FG_BLOCK_QMARK_1_ANIMATION_ID,
 	FG_BLOCK_QMARK_2_ANIMATION_ID,
 
@@ -129,11 +136,17 @@ typedef enum
 
 typedef struct
 {
+	const BaseAsset_t* baseAsset;
+	const AnimationIDEnum animationID;
+
+}BaseAnimationAsset_t;
+
+typedef struct
+{
 	GameObjectID id;
 
 	int baseAssetsCount;
-	const BaseAsset_t** baseAssets;
-	const AnimationIDEnum* animationIDs;
+	const BaseAnimationAsset_t* baseAssets;
 
 	Rect_t BBox; // p1 - offset from (0,0) in sprite, p2 - length
 
@@ -226,6 +239,7 @@ typedef struct
 
 	Point_t		currMapPos;
 	Point_t		prevMapPos;
+	Point_t		prevSpriteSize;
 
 	Body_t body;
 	PlayerPhysicsFlags_t currPhysicsFlags;
@@ -251,6 +265,7 @@ typedef struct
 
 	Point_t		currMapPos;
 	Point_t		prevMapPos;
+	Point_t		prevSpriteSize;
 
 	const SimpleAsset_t* asset;
 
