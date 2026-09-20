@@ -64,8 +64,6 @@ int     ANIMATOR_FGObject_Decide(ForegroundObject_t* obj, const GameContext_t* c
 int     ANIMATOR_FGObject_SetAsset(ForegroundObject_t* obj);
 
 int 	RENDERER_Update(GameContext_t* ctx);
-int 	RENDERER_Update1(GameContext_t* ctx);
-int 	RENDERER_Update2(GameContext_t* ctx);
 int 	RENDERER_FirstRender(const GameContext_t* ctx);
 int 	RENDERER_ScrollRender(RendererState_t* renderer, const GameContext_t* ctx);
 int		RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_t* ctx);

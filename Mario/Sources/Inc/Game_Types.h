@@ -319,6 +319,7 @@ typedef struct
 	bool IsAlive;
 	bool IsOnScreen;
 	bool playerBumpedFromBelow;
+	bool clearRenderedSprite;
 
 }ForegroundObject_t;
 
@@ -383,7 +384,8 @@ typedef struct
 
 typedef struct
 {
-	// int activeEnemies;
+	int activeEnemies;
+	int enemiesLUT[ENEMIES_MAX_SIZE];
 	bool IsEnemyActive[ENEMIES_MAX_SIZE];
 	EnemyState_t pool[ENEMIES_MAX_SIZE];
 
