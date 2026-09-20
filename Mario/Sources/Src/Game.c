@@ -1511,7 +1511,7 @@ int ANIMATOR_FGObject_SetAsset(ForegroundObject_t* obj)
 	int assetIndex = 0;
 	for (int i = 0; i < obj->animableAsset->baseAssetsCount; i++)
 	{
-		if (obj->animableAsset->baseAssets[0].animationID == obj->currAnimation) {
+		if (obj->animableAsset->baseAssets[i].animationID == obj->currAnimation) {
 			assetIndex = i;
 			break;
 		}

@@ -555,7 +555,7 @@ void print_start()
  	printf_v("Welcome!\n");
 }
 
-#define TIMESTAMPS_SIZE		16
+#define TIMESTAMPS_SIZE		32
 
 int main(void)
 {
@@ -729,7 +729,7 @@ int main(void)
 			finishTime[timeStaps] = GetTimestamp();
 			timeStaps++;
 
-			if (0)
+			if (1)
 			{
 				printf_v("Frame %d time: %d us, timestamps:\n", frameNumber, CalcDiffTimeUS(startTime[0], finishTime[timeStaps-1]));
 				for (int i = 0; i < timeStaps; i++)
