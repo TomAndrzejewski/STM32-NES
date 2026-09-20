@@ -60,72 +60,9 @@ int GAME_InitContext(GameContext_t* ctx)
 	{
 		ctx->bgObjects[i].id = OBJECT_NOT_USED;
 		ctx->IsBGObjectActive[i] = false;
+		ctx->bgObjectsLUT[i] = 0;
 	}
-
-	// ctx->activebgObjects = 0;
-	// for (int i = 0; i < numOfObjects; i++)
-	// {
-	// 	if (!MISC_IsThisBGID(ObjectsPos[i].id))
-	// 	{
-	// 		continue;
-	// 	}
-
-	// 	BackgroundObject_t* bgObject = &ctx->bgObjects[ctx->activebgObjects];
-
-	// 	bgObject->id = ObjectsPos[i].id;
-	// 	bgObject->mapPos.x = ObjectsPos[i].x;
-	// 	bgObject->mapPos.y = ObjectsPos[i].y;
-	// 	bgObject->flags = ObjectsPos[i].flags;
-
-	// 	switch (ObjectsPos[i].id)
-	// 	{
-	// 	case BG_JEDYNKA_OBJECT_ID: {
-	// 		bgObject->asset = &JEDYNKA_ASSET;
-	// 		break;
-	// 	}
-	// 	case BG_DWOJKA_OBJECT_ID: {
-	// 		bgObject->asset = &DWOJKA_ASSET;
-	// 		break;
-	// 	}
-	// 	case BG_CHMURKA_OBJECT_ID: {
-	// 		bgObject->asset = &CHMURKA_ASSET;
-	// 		break;
-	// 	}
-	// 	case BG_KRZAK_OBJECT_ID: {
-	// 		bgObject->asset = &KRZAK_ASSET;
-	// 		break;
-	// 	}
-	// 	case BG_HILL_0_OBJECT_ID: {
-	// 		bgObject->asset = &HILL_0_ASSET;
-	// 		break;
-	// 	}
-	// 	case BG_HILL_1_OBJECT_ID: {
-	// 		bgObject->asset = &HILL_1_ASSET;
-	// 		break;
-	// 	}
-	// 	case BG_HILL_2_OBJECT_ID: {
-	// 		bgObject->asset = &HILL_2_ASSET;
-	// 		break;
-	// 	}
-	// 	case BG_HILL_3_OBJECT_ID: {
-	// 		bgObject->asset = &HILL_3_ASSET;
-	// 		break;
-	// 	}
-	// 	case BG_HILL_4_OBJECT_ID: {
-	// 		bgObject->asset = &HILL_4_ASSET;
-	// 		break;
-	// 	}
-	// 	default:
-	// 		break;
-	// 	}
-
-	// 	if (ctx->activebgObjects >= BACKGROUND_OBJECTS_MAX_SIZE - 1) {
-	// 		printf_str("\n### ERROR, max FGObjects reached ###\n");
-	// 		break;
-	// 	}
-
-	// 	ctx->activebgObjects++;
-	// }
+	ctx->activebgObjects = 0;
 
 	///////////////////
 	// FOREGROUND
@@ -134,65 +71,9 @@ int GAME_InitContext(GameContext_t* ctx)
 	{
 		ctx->IsFGObjectActive[i] = false;
 		ctx->fgObjects[i].id = OBJECT_NOT_USED;
+		ctx->fgObjectsLUT[i] = 0;
 	}
-
-	// ctx->activefgObjects = 0;
-	// for (int i = 0; i < numOfObjects; i++)
-	// {
-	// 	if (!MISC_IsThisFGID(ObjectsPos[i].id))
-	// 	{
-	// 		continue;
-	// 	}
-
-	// 	ForegroundObject_t* fgObject = &ctx->fgObjects[ctx->activefgObjects];
-	// 	fgObject->animableAsset = NULL;
-
-	// 	switch (ObjectsPos[i].id)
-	// 	{
-	// 	case FG_BRICKS_OBJECT_ID: {
-	// 		fgObject->asset = BRICKS_ASSET;
-	// 		break;
-	// 	}
-	// 	case FG_BLOCK_QMARK_OBJECT_ID: {
-	// 		fgObject->animableAsset = &BLOCK_QMARK_ANIMABLE_ASSET;
-	// 		fgObject->asset.id = fgObject->animableAsset->id;
-	// 		fgObject->asset.BBox = fgObject->animableAsset->BBox;
-	// 		fgObject->currAnimation = FG_BLOCK_QMARK_1_ANIMATION_ID;
-	// 		break;
-	// 	}
-	// 	case FG_RURA_DOL_OBJECT_ID: {
-	// 		fgObject->asset = RURA_DOL_ASSET;
-	// 		break;
-	// 	}
-	// 	case FG_RURA_GORA_OBJECT_ID: {
-	// 		fgObject->asset = RURA_GORA_ASSET;
-	// 		break;
-	// 	}
-	// 	case FG_PYRAMID_BLOCK_OBJECT_ID: {
-	// 		fgObject->asset = PYRAMID_BLOCK_ASSET;
-	// 		break;
-	// 	}
-	// 	default:
-	// 		break;
-	// 	}
-
-	// 	fgObject->id = ObjectsPos[i].id;
-	// 	fgObject->flags = ObjectsPos[i].flags;
-	// 	fgObject->mapPos.x = ObjectsPos[i].x;
-	// 	fgObject->mapPos.y = ObjectsPos[i].y;
-	// 	fgObject->BBoxCenter.x = ObjectsPos[i].x + (fgObject->asset.BBox.p1.x + fgObject->asset.BBox.p2.x) / 2;
-	// 	fgObject->BBoxCenter.y = ObjectsPos[i].y + (fgObject->asset.BBox.p1.y + fgObject->asset.BBox.p2.y) / 2;
-	// 	fgObject->IsAlive = true;
-	// 	fgObject->IsOnScreen = true;
-	// 	fgObject->playerBumpedFromBelow = false;
-
-	// 	if (ctx->activefgObjects >= FOREGROUND_OBJECTS_MAX_SIZE - 1) {
-	// 		printf_str("\n### ERROR, max FGObjects reached ###\n");
-	// 		break;
-	// 	}
-
-	// 	ctx->activefgObjects++;
-	// }
+	ctx->activefgObjects = 0;
 
 	///////////////////
 	// ENEMIES
@@ -435,10 +316,10 @@ int OBJECTS_MANAGER_LoadObjects(GameContext_t* ctx)
 
 		// load object
 		if (MISC_IsThisFGID(objectDef->id)) {
-			// if (ctx->activefgObjects >= FOREGROUND_OBJECTS_MAX_SIZE - 1) {
-			// 	printf_str("\n### ERROR, max FGObjects reached ###\n");
-			// 	continue;
-			// }
+			if (ctx->activefgObjects >= FOREGROUND_OBJECTS_MAX_SIZE - 1) {
+				printf_str("\n### ERROR, max FGObjects reached ###\n");
+				continue;
+			}
 
 			// find free slot
 			int index = -1;
@@ -459,7 +340,10 @@ int OBJECTS_MANAGER_LoadObjects(GameContext_t* ctx)
 			ctx->IsFGObjectActive[index] = true;
 			ForegroundObject_t* fgObject = &ctx->fgObjects[index];
 			OBJECTS_MANAGER_FGObject_Load(fgObject, objectDef);
-			// ctx->activefgObjects++;
+
+			// update LUT
+			ctx->fgObjectsLUT[ctx->activefgObjects] = index;
+			ctx->activefgObjects++;
 		}
 		else if (MISC_IsThisEnemyID(objectDef->id)) {
 			// if (ctx->enemies.activeEnemies >= ENEMIES_MAX_SIZE - 1) {
@@ -489,10 +373,10 @@ int OBJECTS_MANAGER_LoadObjects(GameContext_t* ctx)
 			// ctx->enemies.activeEnemies++;
 		}
 		else if (MISC_IsThisBGID(objectDef->id)) {
-			// if (ctx->activebgObjects >= BACKGROUND_OBJECTS_MAX_SIZE - 1) {
-			// 	printf_str("\n### ERROR, max BGObjects reached ###\n");
-			// 	continue;
-			// }
+			if (ctx->activebgObjects >= BACKGROUND_OBJECTS_MAX_SIZE - 1) {
+				printf_str("\n### ERROR, max BGObjects reached ###\n");
+				continue;
+			}
 
 			// find free slot
 			int index = -1;
@@ -512,7 +396,10 @@ int OBJECTS_MANAGER_LoadObjects(GameContext_t* ctx)
 			ctx->IsBGObjectActive[index] = true;
 			BackgroundObject_t* bgObject = &ctx->bgObjects[index];
 			OBJECTS_MANAGER_BGObject_Load(bgObject, objectDef);
-			// ctx->activebgObjects++;
+
+			// update LUT
+			ctx->bgObjectsLUT[ctx->activebgObjects] = index;
+			ctx->activebgObjects++;
 		}
 
 		loadedObjects++;
@@ -535,6 +422,19 @@ int OBJECTS_MANAGER_DeleteObjects(GameContext_t* ctx)
 
 		if (fgObject->mapPos.x < mgr->activeWorldRect.p1.x) { // object is out of active region
 			ctx->IsFGObjectActive[i] = false;
+
+			// delete object from LUT and make LUT sorted again
+			for (int j = 0; j < ctx->activefgObjects; j++)
+			{
+				if (ctx->fgObjectsLUT[j] == i) { // found object to delete
+					for (int k = j; k < ctx->activefgObjects - 1; k++) 
+					{ 
+						ctx->fgObjectsLUT[k] = ctx->fgObjectsLUT[k + 1]; // move by one position
+					}
+					ctx->activefgObjects--;
+					break;
+				}
+			}
 		}
 	}
 
@@ -548,6 +448,19 @@ int OBJECTS_MANAGER_DeleteObjects(GameContext_t* ctx)
 
 		if (bgObject->mapPos.x < mgr->activeWorldRect.p1.x) { // object is out of active region
 			ctx->IsBGObjectActive[i] = false;
+
+			// delete object from LUT and make LUT sorted again
+			for (int j = 0; j < ctx->activebgObjects; j++)
+			{
+				if (ctx->bgObjectsLUT[j] == i) { // found object to delete
+					for (int k = j; k < ctx->activebgObjects - 1; k++) 
+					{ 
+						ctx->bgObjectsLUT[k] = ctx->bgObjectsLUT[k + 1]; // move by one position
+					}
+					ctx->activebgObjects--;
+					break;
+				}
+			}
 		}
 	}
 
@@ -751,13 +664,16 @@ int	COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx)
 	//-------------------------
 	// PLAYER BUMPS FG OBJECTS
 	//-------------------------
-	for (int i = 0; i < FOREGROUND_OBJECTS_MAX_SIZE; i++)
+	// for (int i = 0; i < FOREGROUND_OBJECTS_MAX_SIZE; i++)
+	for (int i = 0; i < ctx->activefgObjects; i++)
 	{
-		if (!ctx->IsFGObjectActive[i]) {
+		int indexLUT = ctx->fgObjectsLUT[i];
+
+		if (!ctx->IsFGObjectActive[indexLUT]) {
 			continue;
 		}
 
-		const ForegroundObject_t* fgObject = &ctx->fgObjects[i];
+		const ForegroundObject_t* fgObject = &ctx->fgObjects[indexLUT];
 		if (!fgObject->IsOnScreen) {
 			continue;
 		}
@@ -776,7 +692,7 @@ int	COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx)
 			if (coll->size < COLLISIONS_SIZE) {
 				coll->bumps[coll->size].bumpID = PLAYER_BUMP_FG_OBJECT;
 				coll->bumps[coll->size].actor1 = (GameObjectRef_t){ .id = ctx->player.id, .index = 0 };
-				coll->bumps[coll->size].actor2 = (GameObjectRef_t){ .id = fgObject->id, .index = i };
+				coll->bumps[coll->size].actor2 = (GameObjectRef_t){ .id = fgObject->id, .index = indexLUT };
 				coll->bumps[coll->size].bumpRect = bumpRect;
 				coll->size++;
 			}
@@ -1343,16 +1259,19 @@ int ANIMATOR_Update(GameContext_t* ctx)
 	ret = ANIMATOR_Player_Update(&ctx->player, ctx);
 	if (ret < 0) { return -5; }
 
-	for (int i = 0; i < FOREGROUND_OBJECTS_MAX_SIZE; i++)
+	// for (int i = 0; i < FOREGROUND_OBJECTS_MAX_SIZE; i++)
+	for (int i = 0; i < ctx->activefgObjects; i++)
 	{
-		if (!ctx->IsFGObjectActive[i]) {
+		int indexLUT = ctx->fgObjectsLUT[i];
+
+		if (!ctx->IsFGObjectActive[indexLUT]) {
 			continue;
 		}
 
-		if (ctx->fgObjects[i].animableAsset == NULL) {
+		if (ctx->fgObjects[indexLUT].animableAsset == NULL) {
 			continue;
 		}
-		ret = ANIMATOR_FGObject_Update(&ctx->fgObjects[i], ctx);
+		ret = ANIMATOR_FGObject_Update(&ctx->fgObjects[indexLUT], ctx);
 		if (ret < 0) { return -10; }
 	}
 
@@ -1592,12 +1511,13 @@ int RENDERER_FirstRender(const GameContext_t* ctx)
 		int baseRectArea = CalcRectArea(screenRect);
 		RE_FillBackgroud(LCD_COLOR_BLUESKY, baseRectArea);
 
-		for (int j = 0; j < BACKGROUND_OBJECTS_MAX_SIZE; j++)
+		for (int j = 0; j < ctx->activebgObjects; j++)
 		{
-			if (!ctx->IsBGObjectActive[j]) {
+			int indexLUT = ctx->bgObjectsLUT[j];
+			if (!ctx->IsBGObjectActive[indexLUT]) {
 				continue;
 			}
-			RENDERER_RenderBGObject(&ctx->bgObjects[j], &mapRect, &screenRect, ctx->renderer.LCDOffsetX);
+			RENDERER_RenderBGObject(&ctx->bgObjects[indexLUT], &mapRect, &screenRect, ctx->renderer.LCDOffsetX);
 		}
 
 		RE_SendRect(screenRect, ctx->renderer.LCDOffsetX);
@@ -1663,12 +1583,13 @@ int RENDERER_ScrollRender(RendererState_t* renderer, const GameContext_t* ctx)
 		RE_FillBackgroud(LCD_COLOR_BLUESKY, baseRectArea);
 
 		// uint32_t t1 = GetTimestamp();
-		for (int i = 0; i < BACKGROUND_OBJECTS_MAX_SIZE; i++)
+		for (int i = 0; i < ctx->activebgObjects; i++)
 		{
-			if (!ctx->IsBGObjectActive[i]) {
+			int indexLUT = ctx->bgObjectsLUT[i];
+			if (!ctx->IsBGObjectActive[indexLUT]) {
 				continue;
 			}
-			RENDERER_RenderBGObject(&ctx->bgObjects[i], &rightMapRect, &rightScreenRect, renderer->LCDOffsetX);
+			RENDERER_RenderBGObject(&ctx->bgObjects[indexLUT], &rightMapRect, &rightScreenRect, renderer->LCDOffsetX);
 		}
 		// uint32_t tdiff = CalcTimeUS(t1);
 		// printf_v("tdiff BG: %d\n", tdiff);
@@ -1693,13 +1614,16 @@ int RENDERER_ScrollRender(RendererState_t* renderer, const GameContext_t* ctx)
 		{
 			GameObjectID currentPrioObject = prioArray[i];
 
-			for (int j = 0; j < FOREGROUND_OBJECTS_MAX_SIZE; j++)
+			// for (int j = 0; j < FOREGROUND_OBJECTS_MAX_SIZE; j++)
+			for (int j = 0; j < ctx->activefgObjects; j++)
 			{
-				if (!ctx->IsFGObjectActive[j]) {
+				int indexLUT = ctx->fgObjectsLUT[j];
+
+				if (!ctx->IsFGObjectActive[indexLUT]) {
 					continue;
 				}
 
-				const ForegroundObject_t* obj = &ctx->fgObjects[j];
+				const ForegroundObject_t* obj = &ctx->fgObjects[indexLUT];
 
 				if (obj->id != currentPrioObject) { continue; }
 				if (!obj->IsAlive) { continue; }
@@ -1735,17 +1659,22 @@ int	RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_t
 	//////////////////////////
 	// FOREGROUND OBJECTS DIRTY RECTS
 	//////////////////////////
-	for (int i = 0; i < FOREGROUND_OBJECTS_MAX_SIZE; i++)
+	// for (int i = 0; i < FOREGROUND_OBJECTS_MAX_SIZE; i++)
+	for (int i = 0; i < ctx->activefgObjects; i++)
 	{
-		if (!ctx->IsFGObjectActive[i]) {
+		int indexLUT = ctx->fgObjectsLUT[i];
+
+		if (!ctx->IsFGObjectActive[indexLUT]) {
 			continue;
 		}
-		if ((ctx->fgObjects[i].flags & FG_SCROLL_RENDER)) { continue; }
+
+		const ForegroundObject_t* obj = &ctx->fgObjects[indexLUT];
+		if ((obj->flags & FG_SCROLL_RENDER)) { continue; }
 
 		Rect_t dirtyRect;
-		dirtyRect.p1 = ctx->fgObjects[i].mapPos;
-		dirtyRect.p2.x = ctx->fgObjects[i].mapPos.x + ctx->fgObjects[i].asset.baseAsset.sprite.size.x;
-		dirtyRect.p2.y = ctx->fgObjects[i].mapPos.y + ctx->fgObjects[i].asset.baseAsset.sprite.size.y;
+		dirtyRect.p1 = obj->mapPos;
+		dirtyRect.p2.x = obj->mapPos.x + obj->asset.baseAsset.sprite.size.x;
+		dirtyRect.p2.y = obj->mapPos.y + obj->asset.baseAsset.sprite.size.y;
 
 		Rect_t commonRect = {0};
 		Rect_GetIntersection(&cameraRect, &dirtyRect, &commonRect);
@@ -1889,12 +1818,13 @@ int	RENDERER_DirtyRects_Render(RendererState_t* renderer, const GameContext_t* c
 		//-----------------------
 		// BACKGROUND OBJECTS
 		//-----------------------
-		for (int j = 0; j < BACKGROUND_OBJECTS_MAX_SIZE; j++)
+		for (int j = 0; j < ctx->activebgObjects; j++)
 		{
-			if (!ctx->IsBGObjectActive[j]) {
+			int indexLUT = ctx->bgObjectsLUT[j];
+			if (!ctx->IsBGObjectActive[indexLUT]) {
 				continue;
 			}
-			RENDERER_RenderBGObject(&ctx->bgObjects[j], &dirtyRect->rect, &screenRect, renderer->LCDOffsetX);
+			RENDERER_RenderBGObject(&ctx->bgObjects[indexLUT], &dirtyRect->rect, &screenRect, renderer->LCDOffsetX);
 		}
 
 		const GameObjectID* prioArray = NULL;
@@ -1911,12 +1841,15 @@ int	RENDERER_DirtyRects_Render(RendererState_t* renderer, const GameContext_t* c
 			//-----------------------
 			if (MISC_IsThisFGID(currentPrioObject))
 			{
-				for (int k = 0; k < FOREGROUND_OBJECTS_MAX_SIZE; k++)
+				// for (int k = 0; k < FOREGROUND_OBJECTS_MAX_SIZE; k++)
+				for (int k = 0; k < ctx->activefgObjects; k++)
 				{
-					if (!ctx->IsFGObjectActive[k]) {
+					int indexLUT = ctx->fgObjectsLUT[k];
+
+					if (!ctx->IsFGObjectActive[indexLUT]) {
 						continue;
 					}
-					const ForegroundObject_t* obj = &ctx->fgObjects[k];
+					const ForegroundObject_t* obj = &ctx->fgObjects[indexLUT];
 
 					if (obj->id != currentPrioObject) { continue; }
 					if (!obj->IsAlive) { continue; }

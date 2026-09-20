@@ -415,11 +415,13 @@ typedef struct
 	// Visible background objects
 	// Visible enemies
 	// Visible collision objects
-	// int activebgObjects;
+	int activebgObjects;
+	int bgObjectsLUT[BACKGROUND_OBJECTS_MAX_SIZE];
 	bool IsBGObjectActive[BACKGROUND_OBJECTS_MAX_SIZE];
 	BackgroundObject_t bgObjects[BACKGROUND_OBJECTS_MAX_SIZE];
 
-	// int activefgObjects;
+	int activefgObjects;
+	int fgObjectsLUT[FOREGROUND_OBJECTS_MAX_SIZE];
 	bool IsFGObjectActive[FOREGROUND_OBJECTS_MAX_SIZE];
 	ForegroundObject_t fgObjects[FOREGROUND_OBJECTS_MAX_SIZE];
 
