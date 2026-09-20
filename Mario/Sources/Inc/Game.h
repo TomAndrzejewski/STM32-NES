@@ -16,6 +16,14 @@ int 	INPUT_Update(InputState_t* input, const GameContext_t* ctx, const u32 frame
 int 	INPUT_SetButtonsState(InputState_t* input, uint32_t buttons_state);
 int 	INPUT_SetFrameTimeUS(InputState_t* frameData, u32 frameTimeUS);
 
+int     OBJECTS_MANAGER_Update(GameContext_t* ctx);
+void    OBJECTS_MANAGER_CalcActiveRegion(ObjectsManager_t* mgr, const GameContext_t* ctx);
+int     OBJECTS_MANAGER_LoadObjects(GameContext_t* ctx);
+int     OBJECTS_MANAGER_DeleteObjects(GameContext_t* ctx);
+int     OBJECTS_MANAGER_Enemy_Load(EnemyState_t* enemy, const ObjectLevelInstance_t* objectDef);
+int     OBJECTS_MANAGER_FGObject_Load(ForegroundObject_t* obj, const ObjectLevelInstance_t* objectDef);
+int     OBJECTS_MANAGER_BGObject_Load(BackgroundObject_t* obj, const ObjectLevelInstance_t* objectDef);
+
 int		COLLISION_Update(GameContext_t* ctx);
 int		COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx);
 int 	COLLISION_Resolve(GameContext_t* ctx);
@@ -47,7 +55,6 @@ int		ENEMIES_UpdateFlags(Enemies_t* enemies, const GameContext_t* ctx);
 int		ENEMIES_GetDirtyRect(const EnemyState_t* enemy, Rect_t* dirtyRect);
 bool	ENEMIES_CalcIsOnScreen(const EnemyState_t* enemy, const Rect_t* screenRect);
 
-
 int     ANIMATOR_Update(GameContext_t* ctx);
 int     ANIMATOR_Player_Update(PlayerState_t* player, const GameContext_t* ctx);
 int     ANIMATOR_Player_Decide(PlayerState_t* player, const GameContext_t* ctx);
@@ -55,11 +62,6 @@ int     ANIMATOR_Player_SetAsset(PlayerState_t* player);
 int     ANIMATOR_FGObject_Update(ForegroundObject_t* obj, const GameContext_t* ctx);
 int     ANIMATOR_FGObject_Decide(ForegroundObject_t* obj, const GameContext_t* ctx);
 int     ANIMATOR_FGObject_SetAsset(ForegroundObject_t* obj);
-
-
-
-
-
 
 int 	RENDERER_Update(GameContext_t* ctx);
 int 	RENDERER_Update1(GameContext_t* ctx);

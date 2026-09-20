@@ -627,14 +627,12 @@ int main(void)
 
 //	Timer_10_start();
 
-
 	GAME_InitContext(pGameCtx);
-
-	RENDERER_FirstRender(pGameCtx);
 
 	u32 timeSpentInLoopUS = 0;
 	u32 targetFrameTimeUS = 1000000/TARGET_FRAMERATE_HZ;
 
+	bool firstLoop = true;
 
 	while(1)
 	{
@@ -655,6 +653,24 @@ int main(void)
 			timeStaps++;
 
 			startTime[timeStaps] = GetTimestamp();
+			ret = PHYSICS_Player_Update(&pGameCtx->player, pGameCtx);
+			finishTime[timeStaps] = GetTimestamp();
+			if (ret < 0)	{ delay(1); continue; }
+			timeStaps++;
+
+			startTime[timeStaps] = GetTimestamp();
+			ret = CAMERA_Update(&pGameCtx->camera, pGameCtx);
+			finishTime[timeStaps] = GetTimestamp();
+			if (ret < 0)	{ delay(1); continue; }
+			timeStaps++;
+
+			startTime[timeStaps] = GetTimestamp();
+			ret = OBJECTS_MANAGER_Update(pGameCtx);
+			finishTime[timeStaps] = GetTimestamp();
+			if (ret < 0)	{ delay(1); continue; }
+			timeStaps++;
+
+			startTime[timeStaps] = GetTimestamp();
 			ret = ENEMIES_UpdateFlags(&pGameCtx->enemies, pGameCtx);
 			finishTime[timeStaps] = GetTimestamp();
 			if (ret < 0)	{ delay(1); continue; }
@@ -662,12 +678,6 @@ int main(void)
 
 			startTime[timeStaps] = GetTimestamp();
 			ret = PHYSICS_Update(pGameCtx);
-			finishTime[timeStaps] = GetTimestamp();
-			if (ret < 0)	{ delay(1); continue; }
-			timeStaps++;
-
-			startTime[timeStaps] = GetTimestamp();
-			ret = CAMERA_Update(&pGameCtx->camera, pGameCtx);
 			finishTime[timeStaps] = GetTimestamp();
 			if (ret < 0)	{ delay(1); continue; }
 			timeStaps++;
@@ -689,6 +699,11 @@ int main(void)
 			finishTime[timeStaps] = GetTimestamp();
 			if (ret < 0)	{ delay(1); continue; }
 			timeStaps++;
+
+			if (firstLoop) {
+				firstLoop = false;
+				RENDERER_FirstRender(pGameCtx);
+			}
 
 			// startTime[timeStaps] = GetTimestamp();
 			// ret = RENDERER_Update(pGameCtx);
@@ -714,7 +729,7 @@ int main(void)
 			finishTime[timeStaps] = GetTimestamp();
 			timeStaps++;
 
-			if (1)
+			if (0)
 			{
 				printf_v("Frame %d time: %d us, timestamps:\n", frameNumber, CalcDiffTimeUS(startTime[0], finishTime[timeStaps-1]));
 				for (int i = 0; i < timeStaps; i++)

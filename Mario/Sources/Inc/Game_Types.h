@@ -154,6 +154,25 @@ typedef struct
 
 typedef struct
 {
+	GameObjectID id;
+	int		x;
+	int		y;
+	uint32_t flags;
+
+}ObjectLevelInstance_t;
+
+typedef struct
+{
+	GameObjectID id;
+	int		x;
+	int		y;
+	int		mulX;
+	int		mulY;
+
+}RepObjectLevelPos_t;
+
+typedef struct
+{
 	float		subpixelX;
 	float		subpixelY;
 
@@ -331,6 +350,16 @@ typedef struct
 
 typedef struct
 {
+	Rect_t activeWorldRect;
+
+	int objectPoolSize;
+	const ObjectLevelInstance_t* objectPool;
+	int objectPoolIndex;
+
+}ObjectsManager_t;
+
+typedef struct
+{
 	int frameTimeUS;
 	float frameTimeS; // same as frameTimeUS only in float and in S
 
@@ -354,7 +383,8 @@ typedef struct
 
 typedef struct
 {
-	int activeEnemies;
+	// int activeEnemies;
+	bool IsEnemyActive[ENEMIES_MAX_SIZE];
 	EnemyState_t pool[ENEMIES_MAX_SIZE];
 
 }Enemies_t;
@@ -375,6 +405,8 @@ typedef struct
 	// Player physics
 	PlayerState_t player;
 
+	ObjectsManager_t objectsManager;
+
 	// Enemies position
 	// Enemies physics
 	Enemies_t enemies;
@@ -383,10 +415,12 @@ typedef struct
 	// Visible background objects
 	// Visible enemies
 	// Visible collision objects
-	int activebgObjects;
+	// int activebgObjects;
+	bool IsBGObjectActive[BACKGROUND_OBJECTS_MAX_SIZE];
 	BackgroundObject_t bgObjects[BACKGROUND_OBJECTS_MAX_SIZE];
 
-	int activefgObjects;
+	// int activefgObjects;
+	bool IsFGObjectActive[FOREGROUND_OBJECTS_MAX_SIZE];
 	ForegroundObject_t fgObjects[FOREGROUND_OBJECTS_MAX_SIZE];
 
 	int activebgRepObjects;
@@ -395,6 +429,7 @@ typedef struct
 
 	MapState_t map;
 	CameraState_t camera;
+
 
 	InputState_t input;
 

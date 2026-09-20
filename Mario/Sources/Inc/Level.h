@@ -12,26 +12,6 @@
 #include "Sound.h"
 
 
-typedef struct
-{
-	GameObjectID id;
-	int		x;
-	int		y;
-	uint32_t flags;
-
-}ObjectLevelInstance_t;
-
-typedef struct
-{
-	GameObjectID id;
-	int		x;
-	int		y;
-	int		mulX;
-	int		mulY;
-
-}RepObjectLevelPos_t;
-
-
 int LEVEL_GetObjectsLocations(const ObjectLevelInstance_t** posTable, int* numOfObjects);
 
 int LEVEL_GetBGRepObjectsLocations(const RepObjectLevelPos_t** posTable, int* numOfObjects);

@@ -7,6 +7,7 @@
             "type": "cortex-debug",             //Debug 
             "executable": "build/Debug/Mario.elf", //or fixed file path: build/project-name.elf
             "request": "launch",                //Use "attach" to connect to target w/o elf download
+            // "request": "attach",
             "servertype": "stlink",             //Use stlink setup of cortex-M debug
             "device": "STM32F446RE",            //MCU used
             "interface": "swd",                 //Interface setup

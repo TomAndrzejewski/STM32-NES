@@ -471,7 +471,7 @@ int LEVEL_GetNextSoundNote(const NoteAsset_t** note)
 {
 	if (note == NULL) return -1;
 
-	if (_CurrNoteAsset >= 0 && _CurrNoteAsset < SOUND_NOTES_SIZE)
+	if (_CurrNoteAsset >= 0 && _CurrNoteAsset < (int)SOUND_NOTES_SIZE)
 	{
 		*note = &SoundNotes[_CurrNoteAsset];
 	}

@@ -14,6 +14,10 @@
 #define SUBPIXEL_RESOLUTION				(16)
 
 ///////////////////////////////////////////////////////////////////
+#define OBJECTS_MANAGER_LEFT_DESPAWN_OFFSET		(64)
+#define OBJECTS_MANAGER_RIGHT_SPAWN_OFFSET		(64)
+
+///////////////////////////////////////////////////////////////////
 #define ENEMIES_MAX_SIZE				(64)
 
 #define BACKGROUND_OBJECTS_MAX_SIZE		(256)
