@@ -316,10 +316,10 @@ typedef struct
 	uint32_t flags; // treat as const! parameters set from map maker
 	AnimationIDEnum currAnimation;
 
-	bool IsAlive;
-	bool IsOnScreen;
-	bool playerBumpedFromBelow;
-	bool clearRenderedSprite;
+	bool IsAlive				: 1;
+	bool IsOnScreen				: 1;
+	bool playerBumpedFromBelow	: 1;
+	bool clearRenderedSprite	: 1;
 
 }ForegroundObject_t;
 
