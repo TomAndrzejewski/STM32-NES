@@ -9,6 +9,7 @@
 #define SOURCES_INC_GAME_H_
 
 #include "Game_Types.h"
+#include <sys/_intsup.h>
 
 int 	GAME_InitContext(GameContext_t* ctx);
 
@@ -38,6 +39,10 @@ int     PHYSICS_Player_RestartFlags(PlayerState_t* player);
 int 	PHYSICS_Player_Movement(PlayerState_t* player, const GameContext_t* ctx);
 int 	PHYSICS_Player_CalcMapPos(PlayerState_t* player, const GameContext_t* ctx);
 int     PHYSICS_Player_CalcMovementDirection(PlayerState_t* player);
+int     PHYSICS_FGObject_Update(ForegroundObject_t* obj, const GameContext_t* ctx);
+void    PHYSICS_FGObject_SaveFlags(ForegroundObject_t* obj);
+void    PHYSICS_FGObject_Movement(ForegroundObject_t* obj, const GameContext_t* ctx);
+void    PHYSICS_FGObject_CalcMapPos(ForegroundObject_t* obj);
 
 int 	CAMERA_Update(CameraState_t* camera, const GameContext_t* ctx);
 int 	CAMERA_CalcPos(CameraState_t* camera, const PlayerState_t* player);
@@ -55,6 +60,9 @@ int		ENEMIES_UpdateFlags(Enemies_t* enemies, const GameContext_t* ctx);
 int		ENEMIES_GetDirtyRect(const EnemyState_t* enemy, Rect_t* dirtyRect);
 bool	ENEMIES_CalcIsOnScreen(const EnemyState_t* enemy, const Rect_t* screenRect);
 
+void    FGOBJECTS_ClearFlags(GameContext_t* ctx);
+int     FGOBJECTS_GetDirtyRect(const ForegroundObject_t* obj, Rect_t* dirtyRect);
+
 int     ANIMATOR_Update(GameContext_t* ctx);
 int     ANIMATOR_Player_Update(PlayerState_t* player, const GameContext_t* ctx);
 int     ANIMATOR_Player_Decide(PlayerState_t* player, const GameContext_t* ctx);
@@ -62,6 +70,10 @@ int     ANIMATOR_Player_SetAsset(PlayerState_t* player);
 int     ANIMATOR_FGObject_Update(ForegroundObject_t* obj, const GameContext_t* ctx);
 int     ANIMATOR_FGObject_Decide(ForegroundObject_t* obj, const GameContext_t* ctx);
 int     ANIMATOR_FGObject_SetAsset(ForegroundObject_t* obj);
+// int     ANIMATOR_FGObject_Movement(ForegroundObject_t* obj);
+int     ANIMATOR_Enemy_Update(EnemyState_t* enemy, const GameContext_t* ctx);
+int     ANIMATOR_Enemy_Decide(EnemyState_t* enemy, const GameContext_t* ctx);
+int     ANIMATOR_Enemy_SetAsset(EnemyState_t* enemy);
 
 int 	RENDERER_Update(GameContext_t* ctx);
 int 	RENDERER_FirstRender(const GameContext_t* ctx);

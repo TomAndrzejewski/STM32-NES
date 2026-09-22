@@ -18,11 +18,11 @@
 #define OBJECTS_MANAGER_RIGHT_SPAWN_OFFSET		(64)
 
 ///////////////////////////////////////////////////////////////////
-#define ENEMIES_MAX_SIZE				(64)
+#define ENEMIES_MAX_SIZE				(32)
 
-#define BACKGROUND_OBJECTS_MAX_SIZE		(256)
+#define BACKGROUND_OBJECTS_MAX_SIZE		(64)
 
-#define FOREGROUND_OBJECTS_MAX_SIZE		(256)
+#define FOREGROUND_OBJECTS_MAX_SIZE		(128)
 
 #define BACKGROUND_REP_OBJECTS_MAX_SIZE	(8)
 

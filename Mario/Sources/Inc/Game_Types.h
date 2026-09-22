@@ -274,7 +274,7 @@ typedef struct
 	bool IsImmune;
 	bool damageTaken;
 	bool IsGrounded;
-	bool JustKilledFGObject;
+	bool JustHitFGObjectFromBottom;
 
 }PlayerState_t;
 
@@ -286,7 +286,10 @@ typedef struct
 	Point_t		prevMapPos;
 	Point_t		prevSpriteSize;
 
-	const SimpleAsset_t* asset;
+	SimpleAsset_t asset;
+	const AnimableAsset_t* animableAsset;
+	uint32_t flags; // treat as const! parameters set from map maker
+	AnimationIDEnum currAnimation;
 
 	bool IsAlive;
 	bool IsOnScreen;
@@ -306,20 +309,32 @@ typedef struct
 
 typedef struct
 {
+	bool IsAlive					: 1;
+	bool IsOnScreen					: 1;
+	bool playerBumpedFromBelow		: 1;
+	bool bumpedAnimationOngoing		: 1;
+	bool clearRenderedSprite		: 1;
+
+}FGObjectFlags_t;
+
+typedef struct
+{
 	GameObjectID id;
 
-	Point_t mapPos;
+	Point_t origMapPos;
+	Point_t currMapPos;
+	Point_t prevMapPos;
 	Point_t BBoxCenter;
+
+	Body_t body;
 
 	SimpleAsset_t asset;
 	const AnimableAsset_t* animableAsset;
-	uint32_t flags; // treat as const! parameters set from map maker
+	uint32_t assetFlags; // treat as const! parameters set from map maker
 	AnimationIDEnum currAnimation;
 
-	bool IsAlive				: 1;
-	bool IsOnScreen				: 1;
-	bool playerBumpedFromBelow	: 1;
-	bool clearRenderedSprite	: 1;
+	FGObjectFlags_t currFlags;
+	FGObjectFlags_t prevFlags;
 
 }ForegroundObject_t;
 

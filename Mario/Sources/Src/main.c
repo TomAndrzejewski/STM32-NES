@@ -618,9 +618,8 @@ int main(void)
 
 	LCD_init();
 
-	I2S_Start();
+	// I2S_Start();
 
-	// ZROB LICZENIE MAXA DLA KAŻDEGO ELEMENTU, ZSUMOWANEGO MAXA I ZAPAMIETUJ W KAZDEJ OPCJI WSZYSTKIE CZASY I WYSWIETLAJ CO SEKUNDE
 	uint32_t printStatsTimer = GetTimestamp();
 	uint32_t startTime[TIMESTAMPS_SIZE] = {0}, finishTime[TIMESTAMPS_SIZE] = {0};
 	uint32_t maxTime[TIMESTAMPS_SIZE] = {0};
@@ -656,6 +655,11 @@ int main(void)
 			finishTime[timeStamps] = GetTimestamp();
 			if (ret < 0)	{ delay(1); continue; }
 			timeStamps++;
+
+			// startTime[timeStamps] = GetTimestamp();
+			// FGOBJECTS_ClearFlags(pGameCtx);
+			// finishTime[timeStamps] = GetTimestamp();
+			// timeStamps++;
 
 			startTime[timeStamps] = GetTimestamp();
 			ret = PHYSICS_Player_Update(&pGameCtx->player, pGameCtx);
@@ -734,7 +738,7 @@ int main(void)
 			timeStamps++;
 
 			// Statistics
-			if (1 && !firstLoop)
+			if (0 && !firstLoop)
 			{
 				maxTimeSum = 0;
 				for (int i = 0; i < timeStamps; i++)
