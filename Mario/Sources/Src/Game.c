@@ -1010,9 +1010,19 @@ int COLLISION_FGObject_Player_Action(
 			// -------------------
 			// Go over rewards from highest to lowest bitmask
 			// -------------------
-			if ((obj->assetFlags & REWARD_SINGLE_COIN) == REWARD_SINGLE_COIN) {
+			uint32_t rewardType = obj->assetFlags & REWARD_BIT_MASK;
+			switch (rewardType)
+			{
+			case REWARD_SINGLE_COIN: {
 				rewardToSpawn.id = FG_COIN_OBJECT_ID;
 				rewardToSpawn.flags = 0;
+				break;
+			}
+			default: {
+				rewardToSpawn.id = FG_COIN_OBJECT_ID;
+				rewardToSpawn.flags = 0;
+				break;
+			}
 			}
 
 			OBJECTS_MANAGER_OrderSpawn(mgr, &rewardToSpawn);
