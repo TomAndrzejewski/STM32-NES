@@ -51,6 +51,7 @@ target_compile_options(${PROJECT_NAME}.elf PRIVATE
 
     # Warnings
     -Wall
+    -Wextra
     -Wno-switch
 
     # Debug / Release

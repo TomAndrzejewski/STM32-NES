@@ -77,6 +77,7 @@ typedef enum
 	FG_RURA_DOL_OBJECT_ID,
 	FG_RURA_GORA_OBJECT_ID,
 	FG_PYRAMID_BLOCK_OBJECT_ID,
+	FG_COIN_OBJECT_ID,
 
 	BG_REP_FLOOR_ID = BACKGROUND_REP_OBJECT_ID_START,
 
@@ -131,6 +132,11 @@ typedef enum
 	
 	FG_BLOCK_QMARK_1_ANIMATION_ID,
 	FG_BLOCK_QMARK_2_ANIMATION_ID,
+
+	FG_COIN_1_ANIMATION_ID,
+	FG_COIN_2_ANIMATION_ID,
+	FG_COIN_3_ANIMATION_ID,
+	FG_COIN_4_ANIMATION_ID,
 
 }AnimationIDEnum;
 
@@ -198,7 +204,7 @@ typedef enum
 
 typedef enum 
 {
-	BUMP_SIDE_TOP,
+	BUMP_SIDE_TOP = 1,
 	BUMP_SIDE_BOTTOM,
 	BUMP_SIDE_LEFT,
 	BUMP_SIDE_RIGHT,
@@ -333,6 +339,8 @@ typedef struct
 	uint32_t assetFlags; // treat as const! parameters set from map maker
 	AnimationIDEnum currAnimation;
 
+	uint8_t bumpCounter;
+
 	FGObjectFlags_t currFlags;
 	FGObjectFlags_t prevFlags;
 
@@ -371,6 +379,9 @@ typedef struct
 	int objectPoolSize;
 	const ObjectLevelInstance_t* objectPool;
 	int objectPoolIndex;
+
+	int spawnBufferSize;
+	ObjectLevelInstance_t spawnBuffer[OBJECTS_MANAGER_SPAWN_BUFFER_MAX_SIZE];
 
 }ObjectsManager_t;
 
@@ -439,6 +450,8 @@ typedef struct
 
 	int activefgObjects;
 	int fgObjectsLUT[FOREGROUND_OBJECTS_MAX_SIZE];
+	// This ActivePool below is always set the next frame.
+	// Use for delayed action like clearing sprite on screen.
 	bool IsFGObjectActive[FOREGROUND_OBJECTS_MAX_SIZE];
 	ForegroundObject_t fgObjects[FOREGROUND_OBJECTS_MAX_SIZE];
 

@@ -20,10 +20,12 @@ int 	INPUT_SetFrameTimeUS(InputState_t* frameData, u32 frameTimeUS);
 int     OBJECTS_MANAGER_Update(GameContext_t* ctx);
 void    OBJECTS_MANAGER_CalcActiveRegion(ObjectsManager_t* mgr, const GameContext_t* ctx);
 int     OBJECTS_MANAGER_LoadObjects(GameContext_t* ctx);
+int     OBJECTS_MANAGER_SpawnObject(GameContext_t* ctx, const ObjectLevelInstance_t* objectDef);
 int     OBJECTS_MANAGER_DeleteObjects(GameContext_t* ctx);
 int     OBJECTS_MANAGER_Enemy_Load(EnemyState_t* enemy, const ObjectLevelInstance_t* objectDef);
 int     OBJECTS_MANAGER_FGObject_Load(ForegroundObject_t* obj, const ObjectLevelInstance_t* objectDef);
 int     OBJECTS_MANAGER_BGObject_Load(BackgroundObject_t* obj, const ObjectLevelInstance_t* objectDef);
+int     OBJECTS_MANAGER_OrderSpawn(ObjectsManager_t* mgr, const ObjectLevelInstance_t* objectToSpawn);
 
 int		COLLISION_Update(GameContext_t* ctx);
 int		COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx);
@@ -31,7 +33,7 @@ int 	COLLISION_Resolve(GameContext_t* ctx);
 int 	COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t* obj, const Bump_t* bump, const GameContext_t* ctx);
 int 	COLLISION_Player_Floor(PlayerState_t* player, const Bump_t* bump, const GameContext_t* ctx);
 int 	COLLISION_Player_Enemy(PlayerState_t* player, EnemyState_t* enemy, const Bump_t* bump, const GameContext_t* ctx);
-int     COLLISION_FGObject_Player_Action(ForegroundObject_t* obj, PlayerState_t* player, BumpSideEnum bumpSide, const GameContext_t* ctx);
+int     COLLISION_FGObject_Player_Action(ForegroundObject_t* obj, PlayerState_t* player, BumpSideEnum bumpSide, ObjectsManager_t* mgr, const GameContext_t* ctx);
 
 int		PHYSICS_Update(GameContext_t* ctx);
 int		PHYSICS_Player_Update(PlayerState_t* player, const GameContext_t* ctx);

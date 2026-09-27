@@ -154,30 +154,3 @@ bool Rect_IsIntersection(const Rect_t* commonRect)
 	}
 	return false;
 }
-
-//void Rect_GetUnion(const Rect_t *r1, const Rect_t *r2, Rect_t *result)
-//{
-//	if (r1 == NULL || r2 == NULL || result == NULL) { return; }
-//
-//	result->p1.x = min(r1->p1.x, r2->p1.x);
-//	result->p1.y = min(r1->p1.y, r2->p1.y);
-//	result->p2.x = max(r1->p2.x, r2->p2.x);
-//	result->p2.y = max(r1->p2.y, r2->p2.y);
-//}
-//
-//int Rect_Intersect_AND(Rect_t* a, Rect_t* b)
-//{
-//	if (a == NULL || b == NULL) { return -1; }
-//
-//	Rect_t commonRect;
-//	commonRect.p1.x = max(a->p1.x, b->p1.x);
-//	commonRect.p1.y = max(a->p1.y, b->p1.y);
-//	commonRect.p2.x = min(a->p2.x, b->p2.x);
-//	commonRect.p2.y = min(a->p2.y, b->p2.y);
-//
-//	if (commonRect.p1.x <= commonRect.p2.x && commonRect.p1.y <= commonRect.p2.y) {
-//		return 1;
-//	} else {
-//		return 0;
-//	}
-//}

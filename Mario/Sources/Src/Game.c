@@ -50,6 +50,8 @@ int GAME_InitContext(GameContext_t* ctx)
 	ctx->objectsManager.objectPool = ObjectsPos;
 	ctx->objectsManager.objectPoolSize = numOfObjects;
 	ctx->objectsManager.objectPoolIndex = 0;
+	ctx->objectsManager.spawnBufferSize = 0;
+	memset(&ctx->objectsManager.spawnBuffer, 0, sizeof(ctx->objectsManager.spawnBuffer));
 	ctx->objectsManager.activeWorldRect.p1 = (Point_t){0,0};
 	ctx->objectsManager.activeWorldRect.p2 = (Point_t){LCD_WIDTH,LCD_HEIGHT};
 
@@ -300,6 +302,9 @@ int OBJECTS_MANAGER_LoadObjects(GameContext_t* ctx)
 {
 	ObjectsManager_t* mgr = &ctx->objectsManager;
 
+	//----------------
+	// OBJECTS FROM LEVEL POOL
+	//----------------
 	if (mgr->objectPool == NULL) { return -1; }
 
 	int loadedObjects = 0;
@@ -316,97 +321,122 @@ int OBJECTS_MANAGER_LoadObjects(GameContext_t* ctx)
 
 		mgr->objectPoolIndex++; // assume load went succesfully to not block next objects
 
-		// load object
-		if (MISC_IsThisFGID(objectDef->id)) {
-			if (ctx->activefgObjects >= FOREGROUND_OBJECTS_MAX_SIZE - 1) {
-				printf_str("\n### ERROR, max FGObjects reached ###\n");
-				continue;
-			}
-
-			// find free slot
-			int index = -1;
-			for (int i = 0; i < FOREGROUND_OBJECTS_MAX_SIZE; i++)
-			{
-				if (!ctx->IsFGObjectActive[i]) {
-					index = i;
-					break;
-				}
-			}
-
-			if (index < 0) {
-				printf_str("\n### ERROR, no free FGObject found ###\n");
-				continue;
-			}
-
-			// fill free slot with new object
-			ctx->IsFGObjectActive[index] = true;
-			ForegroundObject_t* fgObject = &ctx->fgObjects[index];
-			OBJECTS_MANAGER_FGObject_Load(fgObject, objectDef);
-
-			// update LUT
-			ctx->fgObjectsLUT[ctx->activefgObjects] = index;
-			ctx->activefgObjects++;
-		}
-		else if (MISC_IsThisEnemyID(objectDef->id)) {
-			if (ctx->enemies.activeEnemies >= ENEMIES_MAX_SIZE - 1) {
-				printf_str("\n### ERROR, max enemies reached ###\n");
-				continue;
-			}
-
-			// find free slot
-			int index = -1;
-			for (int i = 0; i < ENEMIES_MAX_SIZE; i++)
-			{
-				if (!ctx->enemies.IsEnemyActive[i]) {
-					index = i;
-					break;
-				}
-			}
-
-			if (index < 0) {
-				printf_str("\n### ERROR, no free enemies found ###\n");
-				continue;
-			}
-
-			// fill free slot with new object
-			ctx->enemies.IsEnemyActive[index] = true;
-			EnemyState_t* enemy = &ctx->enemies.pool[index];
-			OBJECTS_MANAGER_Enemy_Load(enemy, objectDef);
-
-			ctx->enemies.enemiesLUT[ctx->enemies.activeEnemies] = index;
-			ctx->enemies.activeEnemies++;
-		}
-		else if (MISC_IsThisBGID(objectDef->id)) {
-			if (ctx->activebgObjects >= BACKGROUND_OBJECTS_MAX_SIZE - 1) {
-				printf_str("\n### ERROR, max BGObjects reached ###\n");
-				continue;
-			}
-
-			// find free slot
-			int index = -1;
-			for (int i = 0; i < BACKGROUND_OBJECTS_MAX_SIZE; i++)
-			{
-				if (!ctx->IsBGObjectActive[i]) {
-					index = i;
-					break;
-				}
-			}
-
-			if (index < 0) {
-				printf_str("\n### ERROR, no free BGObject found ###\n");
-				continue;
-			}
-
-			ctx->IsBGObjectActive[index] = true;
-			BackgroundObject_t* bgObject = &ctx->bgObjects[index];
-			OBJECTS_MANAGER_BGObject_Load(bgObject, objectDef);
-
-			// update LUT
-			ctx->bgObjectsLUT[ctx->activebgObjects] = index;
-			ctx->activebgObjects++;
-		}
+		OBJECTS_MANAGER_SpawnObject(ctx, objectDef);
 
 		loadedObjects++;
+	}
+
+	//----------------
+	// OBJECTS FROM SPAWN QUEUE
+	//----------------
+	for (int i = 0; i < mgr->spawnBufferSize; i++)
+	{
+		const ObjectLevelInstance_t* objectDef = &mgr->spawnBuffer[i];
+
+		if (objectDef->x > mgr->activeWorldRect.p2.x) { // object is outside of active region
+			break;
+		}
+
+		OBJECTS_MANAGER_SpawnObject(ctx, objectDef);
+	}
+	mgr->spawnBufferSize = 0; // assume every object has been spawned
+
+	return 0;
+}
+
+int OBJECTS_MANAGER_SpawnObject(GameContext_t* ctx, const ObjectLevelInstance_t* objectDef)
+{
+	// load object
+	if (MISC_IsThisFGID(objectDef->id)) 
+	{
+		if (ctx->activefgObjects >= FOREGROUND_OBJECTS_MAX_SIZE - 1) {
+			printf_str("\n### ERROR, max FGObjects reached ###\n");
+			return -5;
+		}
+
+		// find free slot
+		int index = -1;
+		for (int i = 0; i < FOREGROUND_OBJECTS_MAX_SIZE; i++)
+		{
+			if (!ctx->IsFGObjectActive[i]) {
+				index = i;
+				break;
+			}
+		}
+
+		if (index < 0) {
+			printf_str("\n### ERROR, no free FGObject found ###\n");
+			return -10;
+		}
+
+		// fill free slot with new object
+		ctx->IsFGObjectActive[index] = true;
+		ForegroundObject_t* fgObject = &ctx->fgObjects[index];
+		OBJECTS_MANAGER_FGObject_Load(fgObject, objectDef);
+
+		// update LUT
+		ctx->fgObjectsLUT[ctx->activefgObjects] = index;
+		ctx->activefgObjects++;
+	}
+	else if (MISC_IsThisEnemyID(objectDef->id)) 
+	{
+		if (ctx->enemies.activeEnemies >= ENEMIES_MAX_SIZE - 1) {
+			printf_str("\n### ERROR, max enemies reached ###\n");
+			return -15;
+		}
+
+		// find free slot
+		int index = -1;
+		for (int i = 0; i < ENEMIES_MAX_SIZE; i++)
+		{
+			if (!ctx->enemies.IsEnemyActive[i]) {
+				index = i;
+				break;
+			}
+		}
+
+		if (index < 0) {
+			printf_str("\n### ERROR, no free enemies found ###\n");
+			return -20;
+		}
+
+		// fill free slot with new object
+		ctx->enemies.IsEnemyActive[index] = true;
+		EnemyState_t* enemy = &ctx->enemies.pool[index];
+		OBJECTS_MANAGER_Enemy_Load(enemy, objectDef);
+
+		ctx->enemies.enemiesLUT[ctx->enemies.activeEnemies] = index;
+		ctx->enemies.activeEnemies++;
+	}
+	else if (MISC_IsThisBGID(objectDef->id)) 
+	{
+		if (ctx->activebgObjects >= BACKGROUND_OBJECTS_MAX_SIZE - 1) {
+			printf_str("\n### ERROR, max BGObjects reached ###\n");
+			return -25;
+		}
+
+		// find free slot
+		int index = -1;
+		for (int i = 0; i < BACKGROUND_OBJECTS_MAX_SIZE; i++)
+		{
+			if (!ctx->IsBGObjectActive[i]) {
+				index = i;
+				break;
+			}
+		}
+
+		if (index < 0) {
+			printf_str("\n### ERROR, no free BGObject found ###\n");
+			return -30;
+		}
+
+		ctx->IsBGObjectActive[index] = true;
+		BackgroundObject_t* bgObject = &ctx->bgObjects[index];
+		OBJECTS_MANAGER_BGObject_Load(bgObject, objectDef);
+
+		// update LUT
+		ctx->bgObjectsLUT[ctx->activebgObjects] = index;
+		ctx->activebgObjects++;
 	}
 
 	return 0;
@@ -562,6 +592,13 @@ int OBJECTS_MANAGER_FGObject_Load(ForegroundObject_t* obj, const ObjectLevelInst
 		obj->asset = PYRAMID_BLOCK_ASSET;
 		break;
 	}
+	case FG_COIN_OBJECT_ID: {
+		obj->animableAsset = &COIN_ANIMABLE_ASSET;
+		obj->asset.id = obj->animableAsset->id;
+		obj->asset.BBox = obj->animableAsset->BBox;
+		obj->currAnimation = FG_COIN_1_ANIMATION_ID;
+		break;
+	}
 	default:
 		break;
 	}
@@ -579,6 +616,7 @@ int OBJECTS_MANAGER_FGObject_Load(ForegroundObject_t* obj, const ObjectLevelInst
 	obj->currFlags.playerBumpedFromBelow = false;
 	obj->currFlags.clearRenderedSprite = false;
 	obj->prevFlags = obj->currFlags;
+	obj->bumpCounter = 0;
 	
 	return 0;
 }
@@ -634,6 +672,20 @@ int OBJECTS_MANAGER_BGObject_Load(BackgroundObject_t* obj, const ObjectLevelInst
 		break;
 	}
 	
+	return 0;
+}
+
+int	OBJECTS_MANAGER_OrderSpawn(ObjectsManager_t* mgr, const ObjectLevelInstance_t* objectToSpawn)
+{
+	if (mgr == NULL || objectToSpawn == NULL) { return -1;}
+
+	if (mgr->spawnBufferSize > OBJECTS_MANAGER_SPAWN_BUFFER_MAX_SIZE - 1) {
+		return -5;
+	}
+
+	mgr->spawnBuffer[mgr->spawnBufferSize] = *objectToSpawn;
+	mgr->spawnBufferSize++;
+
 	return 0;
 }
 
@@ -795,6 +847,10 @@ int COLLISION_Resolve(GameContext_t* ctx)
 			ForegroundObject_t* obj = &ctx->fgObjects[actor->index];
 
 			ret = COLLISION_Player_FGObject(&ctx->player, obj, bump, ctx);
+			if (ret > 0) { // call action after collision, collision side set as return value
+				BumpSideEnum bumpSide = ret;
+				COLLISION_FGObject_Player_Action(obj, &ctx->player, bumpSide, &ctx->objectsManager, ctx);
+			}
 			break;
 		}
 		}
@@ -804,6 +860,7 @@ int COLLISION_Resolve(GameContext_t* ctx)
 	return ret; // todo nie mam jeszcze pomyslu jak obsluzyc ret < 0
 }
 
+// return code: < 0 error, 0 ok, > 0 BumpSideEnum returned
 int COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t* obj, const Bump_t* bump, const GameContext_t* ctx)
 {
 	if (player == NULL || obj == NULL || bump == NULL || ctx == NULL) { return -1; }
@@ -815,6 +872,8 @@ int COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t* obj, co
 
 	const int COLLISION_THRESHOLD_VERTICAL = 3;
 	const int COLLISION_THRESHOLD_HORIZONTAL = 1;
+
+	int retCode = 0;
 
 	// 1. VERTICAL COLLISION (UP/DOWN)
 	if (bumpLenX >= bumpLenY) {
@@ -837,8 +896,7 @@ int COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t* obj, co
 			if ((obj->assetFlags & COLL_DOWN_ENABLED)) {
 				player->body.vy = -0.5f;
 				player->currMapPos.y = obj->currMapPos.y - player->asset.BBox.p2.y;
-
-				COLLISION_FGObject_Player_Action(obj, player, BUMP_SIDE_BOTTOM, ctx);
+				retCode = BUMP_SIDE_BOTTOM;
 			}
 		}
 	}
@@ -867,7 +925,7 @@ int COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t* obj, co
 		}
 	}
 
-	return 0;
+	return retCode;
 }
 
 int COLLISION_Player_Floor(PlayerState_t* player, const Bump_t* bump, const GameContext_t* ctx)
@@ -891,34 +949,75 @@ int COLLISION_Player_Enemy(PlayerState_t* player, EnemyState_t* enemy, const Bum
 	return 0;
 }
 
-int COLLISION_FGObject_Player_Action(ForegroundObject_t* obj, PlayerState_t* player, BumpSideEnum bumpSide, const GameContext_t* ctx)
+int COLLISION_FGObject_Player_Action(
+	ForegroundObject_t* obj, 
+	PlayerState_t* player, 
+	BumpSideEnum bumpSide, 
+	ObjectsManager_t* mgr, 
+	const GameContext_t* ctx)
 {
 	if (obj == NULL || player == NULL || ctx == NULL) { return -1; }
 
-	switch (obj->id)
+	//--------------
+	if (obj->assetFlags & BUMPABLE) 
 	{
-	case FG_BRICKS_OBJECT_ID:
-	case FG_BLOCK_QMARK_OBJECT_ID:
-	{
-		if (bumpSide == BUMP_SIDE_BOTTOM && !player->JustHitFGObjectFromBottom) {
-			obj->currFlags.playerBumpedFromBelow = true;
+		if (bumpSide == BUMP_SIDE_BOTTOM && !player->JustHitFGObjectFromBottom) 
+		{
+			// only one bump per frame!
 			player->JustHitFGObjectFromBottom = true;
-		}
+			// General info to other systems: I've beed bumped!
+			obj->currFlags.playerBumpedFromBelow = true;
 
-		if (obj->id == FG_BRICKS_OBJECT_ID) {
+			if (!(obj->assetFlags & BUMPABLE_MULTIPLE_TIMES)) {
+				obj->assetFlags &= ~BUMPABLE; // NO MORE BUMPING FOR YOU!
+			}
+			obj->bumpCounter++;
+		}
+	}
+
+	//--------------
+	if (obj->assetFlags & DESTROYABLE) 
+	{
+		if (bumpSide == BUMP_SIDE_BOTTOM) {
 			bool isPlayerBig = (player->playerLevel == PLAYER_BIG || player->playerLevel == PLAYER_SHOOTING) ? true : false;
 			if (isPlayerBig) {
+				// General Info to every system: I'm dead!
 				obj->currFlags.IsAlive = false;
+				// Specific info for renderer to clear previous dirty rect 
 				obj->currFlags.clearRenderedSprite = true;
-			} else {
-				obj->assetFlags &= ~FG_SCROLL_RENDER; //todotomka bardzo zle ze zmieniam flags, ale nie mam pomyslu jak zrobic to inaczej
 			}
 		}
-
-		break;
 	}
-	default:
-		break;
+
+	//--------------
+	if (obj->assetFlags & HIDDEN)
+	{
+		if (bumpSide == BUMP_SIDE_BOTTOM) 
+		{
+			obj->assetFlags &= ~HIDDEN; // IM NOT HIDDEN ANYMORE!
+		}
+	}
+
+	if (obj->assetFlags & REWARD_BIT_MASK)
+	{
+		if (obj->bumpCounter >= 1) 
+		{
+			ObjectLevelInstance_t rewardToSpawn = {0};
+
+			rewardToSpawn.x = obj->origMapPos.x + (obj->asset.baseAsset.sprite.size.x / 4);
+			rewardToSpawn.y = obj->origMapPos.y + obj->asset.baseAsset.sprite.size.y;
+
+			// -------------------
+			// Go over rewards from highest to lowest bitmask
+			// -------------------
+			if ((obj->assetFlags & REWARD_SINGLE_COIN) == REWARD_SINGLE_COIN) {
+				rewardToSpawn.id = FG_COIN_OBJECT_ID;
+				rewardToSpawn.flags = 0;
+			}
+
+			OBJECTS_MANAGER_OrderSpawn(mgr, &rewardToSpawn);
+		}
+
 	}
 
 	return 0;
@@ -1143,17 +1242,21 @@ void PHYSICS_FGObject_Movement(ForegroundObject_t* obj, const GameContext_t* ctx
 	{
 		Body_t* body = &obj->body;
 
-		if (!obj->prevFlags.playerBumpedFromBelow 
-			&& obj->currFlags.playerBumpedFromBelow // this just happened
-			&& !obj->currFlags.bumpedAnimationOngoing) 
+		if (	!obj->prevFlags.playerBumpedFromBelow
+			&& 	 obj->currFlags.playerBumpedFromBelow // this just happened
+			&& 	!obj->currFlags.bumpedAnimationOngoing) 
 		{ 
+			// Start bump animation
 			if (obj->id == FG_BRICKS_OBJECT_ID) {
 				obj->currFlags.playerBumpedFromBelow = false; // allow multiple bumps
 			}
 			obj->currFlags.bumpedAnimationOngoing = true;
 			printf_str("\nPodbitka\n");
+
+			// Bump up a bit!
 			body->vy = 0.3f;
 		} else if (body->vy > -1.0f) {
+			// Slowdown
 			body->vy -= ctx->input.frameData.frameTimeS * 4;
 		}
 
@@ -1542,7 +1645,7 @@ int ANIMATOR_Player_Decide(PlayerState_t* player, const GameContext_t* ctx)
 
 			uint32_t runAnimationVelTimeMultiplier = player->animator.runAnimationFrameTimeUS * fabsf(player->body.vx);
 			
-			if (runAnimationVelTimeMultiplier >= 0 && player->animator.runAnimationFrameTimeUS < 75000) {
+			if (player->animator.runAnimationFrameTimeUS < 75000) {
 				player->animator.currAnimation = MARIO_RUN_1_ANIMATION_ID;
 			} else if (runAnimationVelTimeMultiplier > 75000 && runAnimationVelTimeMultiplier < 150000) {
 				player->animator.currAnimation = MARIO_RUN_2_ANIMATION_ID;
@@ -1619,6 +1722,11 @@ int ANIMATOR_FGObject_Decide(ForegroundObject_t* obj, const GameContext_t* ctx)
 		}
 		break;
 	}
+	case FG_COIN_OBJECT_ID:
+	{
+		obj->currAnimation = FG_COIN_1_ANIMATION_ID;
+		break;
+	}
 	default:
 		break;
 	}
@@ -1647,61 +1755,6 @@ int ANIMATOR_FGObject_SetAsset(ForegroundObject_t* obj)
 
 	return 0;
 }
-
-// int ANIMATOR_FGObject_Movement(ForegroundObject_t* obj)
-// {
-// 	if (obj == NULL) { return -1; }
-
-// 	switch (obj->id)
-// 	{
-// 	case FG_BLOCK_QMARK_OBJECT_ID:
-// 	{
-// 		SimpleBlockAnimator_t* anim = &obj->animator.simpleBlockAnim;
-
-// 		if (obj->playerJustBumpedFromBelow && anim->timeUS == 0) { // start animation
-// 			anim->timeUS = GetTimestamp();
-// 			anim->numOfMoves = 0;
-// 		} 
-
-// 		 // animation started, react
-// 		if (anim->timeUS > 0)
-// 		{
-// 			obj->prevMapPos = obj->currMapPos; // backup for dirty rects
-
-// 			// proper animation below
-// 			uint32_t tdiff = CalcTimeMS(anim->timeUS);
-// 			if (tdiff <= 30 && anim->numOfMoves == 0) {
-// 				anim->numOfMoves = 1;
-// 				obj->currMapPos.y++;
-// 			} else if (tdiff > 30 && tdiff <= 75 && anim->numOfMoves == 1) {
-// 				anim->numOfMoves = 2;
-// 				obj->currMapPos.y++;
-// 			} else if (tdiff > 75 && tdiff <= 150 && anim->numOfMoves == 2) {
-// 				anim->numOfMoves = 3;
-// 				obj->currMapPos.y++;
-// 			} else if (tdiff > 150 && tdiff <= 225 && anim->numOfMoves == 3) {
-// 				anim->numOfMoves = 4;
-// 				obj->currMapPos.y--;
-// 			} else if (tdiff > 225 && tdiff <= 270 && anim->numOfMoves == 4) {
-// 				anim->numOfMoves = 5;
-// 				obj->currMapPos.y--;
-// 			} else if (tdiff > 270 && tdiff <= 300 && anim->numOfMoves == 5) {
-// 				anim->numOfMoves = 6;
-// 				obj->currMapPos.y--;
-// 			} else if (anim->numOfMoves == 6) { // finish, clear animation
-// 				anim->timeUS = 0;
-// 				anim->numOfMoves = 0;
-// 			}
-// 		}
-		
-// 		break;
-// 	}
-// 	default:
-// 		break;
-// 	}
-
-// 	return 0;
-// }
 
 int ANIMATOR_Enemy_Update(EnemyState_t* enemy, const GameContext_t* ctx)
 {
@@ -1899,6 +1952,7 @@ int RENDERER_ScrollRender(RendererState_t* renderer, const GameContext_t* ctx)
 			const ForegroundObject_t* obj = &ctx->fgObjects[indexLUT];
 			if (!obj->currFlags.IsAlive) { continue; }
 			if (!(obj->assetFlags & FG_SCROLL_RENDER)) { continue; }
+			if (obj->assetFlags & HIDDEN) { continue; }
 
 			RENDERER_RenderFGObject(obj, &rightMapRect, &rightScreenRect, renderer->LCDOffsetX);
 		}
@@ -1937,8 +1991,16 @@ int	RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_t
 		}
 		const ForegroundObject_t* obj = &ctx->fgObjects[indexLUT];
 
-		if ((obj->assetFlags & FG_SCROLL_RENDER) && !obj->currFlags.clearRenderedSprite) {
+		if (obj->assetFlags & HIDDEN) {
 			continue;
+		}
+
+		// Code below is very bad, fix pls :(
+		if (obj->assetFlags & FG_SCROLL_RENDER) { // OBJECT WILL BE RENDERED IN SCROLL RENDER
+			if (!obj->currFlags.clearRenderedSprite) { // FCK IT, I WANT IT DIRTY RECTS ANYWAY!
+				*((uint32_t*)&obj->assetFlags) &= ~FG_SCROLL_RENDER; // BULLSHIT! DO IT OTHER WAY!
+				continue;
+			}
 		}
 
 		Rect_t dirtyRect;
@@ -2107,6 +2169,8 @@ int	RENDERER_DirtyRects_Render(RendererState_t* renderer, const GameContext_t* c
 			}
 			const ForegroundObject_t* obj = &ctx->fgObjects[indexLUT];
 			if (!obj->currFlags.IsAlive) { continue; }
+			if (obj->assetFlags & HIDDEN) { continue; }
+
 
 			RENDERER_RenderFGObject(obj, &dirtyRect->rect, &screenRect, renderer->LCDOffsetX);
 		}
@@ -2125,7 +2189,6 @@ int	RENDERER_DirtyRects_Render(RendererState_t* renderer, const GameContext_t* c
 			RENDERER_RenderEnemy(enemy, &dirtyRect->rect, &screenRect, renderer->LCDOffsetX);
 		}
 
-		//
 		//-----------------------
 		// PLAYER
 		//-----------------------
