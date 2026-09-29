@@ -730,7 +730,7 @@ const SimpleAsset_t PYRAMID_BLOCK_ASSET = {
 		.BBox.p2.y = 16,
 };
 
-static const uint16_t coin_1_16x8_dma[16*8] = {
+static const uint16_t reward_coin_1_16x8_dma[16*8] = {
 0xffff, 0xffff, 0xffff, 0xffff, 0x20fc, 0x20fc, 0x20fc, 0x20fc, 
 0x20fc, 0x20fc, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 
 0xffff, 0xffff, 0x20fc, 0x20fc, 0x20fc, 0x20fc, 0x20fc, 0x20fc, 
@@ -749,7 +749,7 @@ static const uint16_t coin_1_16x8_dma[16*8] = {
 0x20fc, 0x20fc, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff
 };
 
-static const uint16_t coin_2_16x8_dma[16*8] = {
+static const uint16_t reward_coin_2_16x8_dma[16*8] = {
 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 
 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 
 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 
@@ -768,7 +768,7 @@ static const uint16_t coin_2_16x8_dma[16*8] = {
 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff
 };
 
-static const uint16_t coin_3_16x8_dma[16*8] = {
+static const uint16_t reward_coin_3_16x8_dma[16*8] = {
 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 
 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 
 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 
@@ -787,7 +787,7 @@ static const uint16_t coin_3_16x8_dma[16*8] = {
 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff
 };
 
-static const uint16_t coin_4_16x8_dma[16*8] = {
+static const uint16_t reward_coin_4_16x8_dma[16*8] = {
 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 
 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 
 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 
@@ -806,41 +806,52 @@ static const uint16_t coin_4_16x8_dma[16*8] = {
 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff
 };
 
-static const BaseAsset_t COIN_ASSET_1 = {
-		.sprite.bitmap = coin_1_16x8_dma,
+static const BaseAsset_t REWARD_COIN_ASSET_1 = {
+		.sprite.bitmap = reward_coin_1_16x8_dma,
 		.sprite.size.x = 8,
 		.sprite.size.y = 16,
 };
 
-static const BaseAsset_t COIN_ASSET_2 = {
-		.sprite.bitmap = coin_2_16x8_dma,
+static const BaseAsset_t REWARD_COIN_ASSET_2 = {
+		.sprite.bitmap = reward_coin_2_16x8_dma,
 		.sprite.size.x = 8,
 		.sprite.size.y = 16,
 };
 
-static const BaseAsset_t COIN_ASSET_3 = {
-		.sprite.bitmap = coin_3_16x8_dma,
+static const BaseAsset_t REWARD_COIN_ASSET_3 = {
+		.sprite.bitmap = reward_coin_3_16x8_dma,
 		.sprite.size.x = 8,
 		.sprite.size.y = 16,
 };
 
-static const BaseAsset_t COIN_ASSET_4 = {
-		.sprite.bitmap = coin_4_16x8_dma,
+static const BaseAsset_t REWARD_COIN_ASSET_4 = {
+		.sprite.bitmap = reward_coin_4_16x8_dma,
 		.sprite.size.x = 8,
 		.sprite.size.y = 16,
 };
 
-static const BaseAnimationAsset_t COIN_BASE_ASSET[] = {
-		{&COIN_ASSET_1, FG_COIN_1_ANIMATION_ID},
-		{&COIN_ASSET_2, FG_COIN_2_ANIMATION_ID},
-		{&COIN_ASSET_3, FG_COIN_3_ANIMATION_ID},
-		{&COIN_ASSET_4, FG_COIN_4_ANIMATION_ID},
+static const BaseAnimationAsset_t REWARD_COIN_BASE_ASSET[] = {
+		{&REWARD_COIN_ASSET_1, FG_REWARD_COIN_1_ANIMATION_ID},
+		{&REWARD_COIN_ASSET_2, FG_REWARD_COIN_2_ANIMATION_ID},
+		{&REWARD_COIN_ASSET_3, FG_REWARD_COIN_3_ANIMATION_ID},
+		{&REWARD_COIN_ASSET_4, FG_REWARD_COIN_4_ANIMATION_ID},
 };
 
-const AnimableAsset_t COIN_ANIMABLE_ASSET = {
-		.id = FG_COIN_OBJECT_ID,
-		.baseAssetsCount = sizeof(COIN_BASE_ASSET)/sizeof(COIN_BASE_ASSET[0]),
-		.baseAssets = COIN_BASE_ASSET,
+const MovementFrameY_t REWARD_COIN_MOVEMENT_ASSET[] = {
+		{20000, 8, 2},
+		{20000, 6, 2},
+		{20000, 4, 2},
+		{20000, 2, 2},
+		{20000, 0, 3},
+		{20000, -1, 2},
+		{20000, -2, 2},
+		{20000, -4, 2},
+};
+
+const AnimableAsset_t REWARD_COIN_ANIMABLE_ASSET = {
+		.id = FG_REWARD_COIN_OBJECT_ID,
+		.baseAssetsCount = sizeof(REWARD_COIN_BASE_ASSET)/sizeof(REWARD_COIN_BASE_ASSET[0]),
+		.baseAssets = REWARD_COIN_BASE_ASSET,
 		.BBox.p1.x = 0,
 		.BBox.p1.y = 0,
 		.BBox.p2.x = 8,

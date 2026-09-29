@@ -77,7 +77,7 @@ typedef enum
 	FG_RURA_DOL_OBJECT_ID,
 	FG_RURA_GORA_OBJECT_ID,
 	FG_PYRAMID_BLOCK_OBJECT_ID,
-	FG_COIN_OBJECT_ID,
+	FG_REWARD_COIN_OBJECT_ID,
 
 	BG_REP_FLOOR_ID = BACKGROUND_REP_OBJECT_ID_START,
 
@@ -133,10 +133,10 @@ typedef enum
 	FG_BLOCK_QMARK_1_ANIMATION_ID,
 	FG_BLOCK_QMARK_2_ANIMATION_ID,
 
-	FG_COIN_1_ANIMATION_ID,
-	FG_COIN_2_ANIMATION_ID,
-	FG_COIN_3_ANIMATION_ID,
-	FG_COIN_4_ANIMATION_ID,
+	FG_REWARD_COIN_1_ANIMATION_ID,
+	FG_REWARD_COIN_2_ANIMATION_ID,
+	FG_REWARD_COIN_3_ANIMATION_ID,
+	FG_REWARD_COIN_4_ANIMATION_ID,
 
 }AnimationIDEnum;
 
@@ -318,10 +318,32 @@ typedef struct
 	bool IsAlive					: 1;
 	bool IsOnScreen					: 1;
 	bool playerBumpedFromBelow		: 1;
-	bool bumpedAnimationOngoing		: 1;
+	bool animationOngoing			: 1;
 	bool clearRenderedSprite		: 1;
 
 }FGObjectFlags_t;
+
+typedef struct {
+	uint32_t durationUS;
+	int16_t dy;
+	int16_t repeatCount;
+} MovementFrameY_t;
+
+typedef struct {
+	uint32_t elapsedTimeUS;
+
+	int16_t currentIndex;
+	int16_t numOfMovementFramesY;
+	const MovementFrameY_t* movementFramesY;
+	int16_t repeatedCounter;
+} TimeBasedMovement_t;
+
+typedef union
+{
+	Body_t body;
+	TimeBasedMovement_t timeBasedMovement;
+
+}MovementLayer_t;
 
 typedef struct
 {
@@ -332,12 +354,14 @@ typedef struct
 	Point_t prevMapPos;
 	Point_t BBoxCenter;
 
-	Body_t body;
+	// Body_t body;
+	MovementLayer_t movement;
 
 	SimpleAsset_t asset;
 	const AnimableAsset_t* animableAsset;
 	uint32_t assetFlags; // treat as const! parameters set from map maker
 	AnimationIDEnum currAnimation;
+	uint32_t animationFrameTimeUS;
 
 	uint8_t bumpCounter;
 

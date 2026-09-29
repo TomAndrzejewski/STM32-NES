@@ -578,6 +578,7 @@ int OBJECTS_MANAGER_FGObject_Load(ForegroundObject_t* obj, const ObjectLevelInst
 		obj->asset.id = obj->animableAsset->id;
 		obj->asset.BBox = obj->animableAsset->BBox;
 		obj->currAnimation = FG_BLOCK_QMARK_1_ANIMATION_ID;
+		obj->animationFrameTimeUS = 0;
 		break;
 	}
 	case FG_RURA_DOL_OBJECT_ID: {
@@ -592,11 +593,17 @@ int OBJECTS_MANAGER_FGObject_Load(ForegroundObject_t* obj, const ObjectLevelInst
 		obj->asset = PYRAMID_BLOCK_ASSET;
 		break;
 	}
-	case FG_COIN_OBJECT_ID: {
-		obj->animableAsset = &COIN_ANIMABLE_ASSET;
+	case FG_REWARD_COIN_OBJECT_ID: {
+		obj->animableAsset = &REWARD_COIN_ANIMABLE_ASSET;
 		obj->asset.id = obj->animableAsset->id;
 		obj->asset.BBox = obj->animableAsset->BBox;
-		obj->currAnimation = FG_COIN_1_ANIMATION_ID;
+		obj->currAnimation = FG_REWARD_COIN_1_ANIMATION_ID;
+		obj->animationFrameTimeUS = 0;
+		obj->movement.timeBasedMovement.movementFramesY = &REWARD_COIN_MOVEMENT_ASSET;
+		obj->movement.timeBasedMovement.numOfMovementFramesY = 8;
+		obj->movement.timeBasedMovement.elapsedTimeUS = 0;
+		obj->movement.timeBasedMovement.currentIndex = 0;
+		obj->movement.timeBasedMovement.repeatedCounter = 0;
 		break;
 	}
 	default:
@@ -969,6 +976,7 @@ int COLLISION_FGObject_Player_Action(
 			obj->currFlags.playerBumpedFromBelow = true;
 
 			if (!(obj->assetFlags & BUMPABLE_MULTIPLE_TIMES)) {
+				//todotomka very bad, assetFlags should be const!
 				obj->assetFlags &= ~BUMPABLE; // NO MORE BUMPING FOR YOU!
 			}
 			obj->bumpCounter++;
@@ -998,6 +1006,7 @@ int COLLISION_FGObject_Player_Action(
 		}
 	}
 
+	//--------------
 	if (obj->assetFlags & REWARD_BIT_MASK)
 	{
 		if (obj->bumpCounter >= 1) 
@@ -1007,19 +1016,17 @@ int COLLISION_FGObject_Player_Action(
 			rewardToSpawn.x = obj->origMapPos.x + (obj->asset.baseAsset.sprite.size.x / 4);
 			rewardToSpawn.y = obj->origMapPos.y + obj->asset.baseAsset.sprite.size.y;
 
-			// -------------------
-			// Go over rewards from highest to lowest bitmask
-			// -------------------
+			// Spawn reward
 			uint32_t rewardType = obj->assetFlags & REWARD_BIT_MASK;
 			switch (rewardType)
 			{
 			case REWARD_SINGLE_COIN: {
-				rewardToSpawn.id = FG_COIN_OBJECT_ID;
+				rewardToSpawn.id = FG_REWARD_COIN_OBJECT_ID;
 				rewardToSpawn.flags = 0;
 				break;
 			}
 			default: {
-				rewardToSpawn.id = FG_COIN_OBJECT_ID;
+				rewardToSpawn.id = FG_REWARD_COIN_OBJECT_ID;
 				rewardToSpawn.flags = 0;
 				break;
 			}
@@ -1250,17 +1257,17 @@ void PHYSICS_FGObject_Movement(ForegroundObject_t* obj, const GameContext_t* ctx
 	case FG_BRICKS_OBJECT_ID:
 	case FG_BLOCK_QMARK_OBJECT_ID:
 	{
-		Body_t* body = &obj->body;
+		Body_t* body = &obj->movement.body;
 
 		if (	!obj->prevFlags.playerBumpedFromBelow
 			&& 	 obj->currFlags.playerBumpedFromBelow // this just happened
-			&& 	!obj->currFlags.bumpedAnimationOngoing) 
+			&& 	!obj->currFlags.animationOngoing) 
 		{ 
 			// Start bump animation
-			if (obj->id == FG_BRICKS_OBJECT_ID) {
+			if (obj->assetFlags == BUMPABLE_MULTIPLE_TIMES) {
 				obj->currFlags.playerBumpedFromBelow = false; // allow multiple bumps
 			}
-			obj->currFlags.bumpedAnimationOngoing = true;
+			obj->currFlags.animationOngoing = true;
 			printf_str("\nPodbitka\n");
 
 			// Bump up a bit!
@@ -1270,7 +1277,7 @@ void PHYSICS_FGObject_Movement(ForegroundObject_t* obj, const GameContext_t* ctx
 			body->vy -= ctx->input.frameData.frameTimeS * 4;
 		}
 
-		if (obj->currFlags.bumpedAnimationOngoing) {
+		if (obj->currFlags.animationOngoing) {
 			body->subpixelY += (body->vy * SUBPIXEL_RESOLUTION * 256) / TARGET_FRAMERATE_HZ;
 		}
 
@@ -1290,26 +1297,60 @@ void PHYSICS_FGObject_CalcMapPos(ForegroundObject_t* obj)
 	// New map position
 	switch (obj->id)
 	{
+	case FG_REWARD_COIN_OBJECT_ID: //todotomka dorobić moduł timebasedmovement
+	{
+		TimeBasedMovement_t* mv = &obj->movement.timeBasedMovement;
+
+		if (mv->elapsedTimeUS == 0) { // object just spawned, start animation 
+			obj->currFlags.animationOngoing = true;
+			mv->elapsedTimeUS = GetTimestamp();
+		}
+
+		if (obj->currFlags.animationOngoing) 
+		{ 
+			if (mv->currentIndex >= mv->numOfMovementFramesY) { // finish 
+				obj->currFlags.animationOngoing = false;
+				obj->currMapPos = obj->origMapPos;
+				obj->currFlags.IsAlive = false;
+			}
+
+			if (mv->movementFramesY != NULL) {
+				const MovementFrameY_t* mvFrame = &mv->movementFramesY[mv->currentIndex];
+				uint32_t tdiffUS = CalcTimeUS(mv->elapsedTimeUS);
+				if (tdiffUS > mvFrame->durationUS) { // proceed with movement frame
+					obj->currMapPos.y += mvFrame->dy; // movement
+					mv->elapsedTimeUS = GetTimestamp(); // get ready for next tdiff
+					mv->repeatedCounter++;
+					if (mv->repeatedCounter >= mvFrame->repeatCount) { 
+						mv->currentIndex++; // next movement frame
+						mv->repeatedCounter = 0;
+					}
+				} 
+			}
+		}
+
+		break;
+	}
 	case FG_BRICKS_OBJECT_ID:
 	case FG_BLOCK_QMARK_OBJECT_ID:
 	{
 		///////////////////
 		// Y AXIS
 		///////////////////
-		if (obj->currFlags.bumpedAnimationOngoing) {
-			pixelsToMove = (int)obj->body.subpixelY / SUBPIXEL_RESOLUTION;
+		if (obj->currFlags.animationOngoing) {
+			pixelsToMove = (int)obj->movement.body.subpixelY / SUBPIXEL_RESOLUTION;
 			if (pixelsToMove != 0) {
-				obj->body.subpixelY -= pixelsToMove * SUBPIXEL_RESOLUTION;
+				obj->movement.body.subpixelY -= pixelsToMove * SUBPIXEL_RESOLUTION;
 
 				int movedPosY = obj->currMapPos.y + pixelsToMove;
 				if (movedPosY >= obj->origMapPos.y) {
 					obj->currMapPos.y += pixelsToMove;
 					printf_str("Ruch\n");
 				} else {
-					obj->currFlags.bumpedAnimationOngoing = false; // finish animation
+					obj->currFlags.animationOngoing = false; // finish animation
 					obj->currMapPos.y = obj->origMapPos.y; // make sure object is back in original position 
-					obj->body.subpixelY = 0.0f;
-					obj->body.vy = 0.0f;
+					obj->movement.body.subpixelY = 0.0f;
+					obj->movement.body.vy = 0.0f;
 					printf_str("Zero\n");
 				}
 			}
@@ -1732,9 +1773,34 @@ int ANIMATOR_FGObject_Decide(ForegroundObject_t* obj, const GameContext_t* ctx)
 		}
 		break;
 	}
-	case FG_COIN_OBJECT_ID:
+	case FG_REWARD_COIN_OBJECT_ID:
 	{
-		obj->currAnimation = FG_COIN_1_ANIMATION_ID;
+		if (obj->currFlags.animationOngoing && obj->animationFrameTimeUS == 0) {
+			obj->animationFrameTimeUS = GetTimestamp();
+		}
+
+		uint32_t tdiff = CalcTimeUS(obj->animationFrameTimeUS);
+		if (tdiff > 60000) {
+			obj->animationFrameTimeUS = GetTimestamp();
+			switch (obj->currAnimation)
+			{
+			case FG_REWARD_COIN_1_ANIMATION_ID: 
+				obj->currAnimation = FG_REWARD_COIN_2_ANIMATION_ID;
+				break;
+			case FG_REWARD_COIN_2_ANIMATION_ID: 
+				obj->currAnimation = FG_REWARD_COIN_3_ANIMATION_ID;
+				break;
+			case FG_REWARD_COIN_3_ANIMATION_ID: 
+				obj->currAnimation = FG_REWARD_COIN_4_ANIMATION_ID;
+				break;
+			case FG_REWARD_COIN_4_ANIMATION_ID: 
+				obj->currAnimation = FG_REWARD_COIN_1_ANIMATION_ID;
+				break;
+			default:
+				break;
+			}
+		}
+
 		break;
 	}
 	default:
@@ -2001,17 +2067,27 @@ int	RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_t
 		}
 		const ForegroundObject_t* obj = &ctx->fgObjects[indexLUT];
 
+		// Code below is very bad, fix pls :(
+		if ((obj->assetFlags & DESTROYABLE) || (obj->assetFlags & HIDDEN) | (obj->assetFlags & BUMPABLE))
+		{
+			*((uint32_t*)&obj->assetFlags) &= ~FG_SCROLL_RENDER;
+		}
+
 		if (obj->assetFlags & HIDDEN) {
 			continue;
 		}
 
-		// Code below is very bad, fix pls :(
-		if (obj->assetFlags & FG_SCROLL_RENDER) { // OBJECT WILL BE RENDERED IN SCROLL RENDER
-			if (!obj->currFlags.clearRenderedSprite) { // FCK IT, I WANT IT DIRTY RECTS ANYWAY!
-				*((uint32_t*)&obj->assetFlags) &= ~FG_SCROLL_RENDER; // BULLSHIT! DO IT OTHER WAY!
-				continue;
-			}
+		if (obj->assetFlags & FG_SCROLL_RENDER) {
+			continue;
 		}
+
+		// Code below is very bad, fix pls :(
+		// if (obj->assetFlags & FG_SCROLL_RENDER) { // OBJECT WILL BE RENDERED IN SCROLL RENDER
+		// 	if (!obj->currFlags.clearRenderedSprite) { // FCK IT, I WANT IT IN DIRTY RECTS ANYWAY!
+		// 		*((uint32_t*)&obj->assetFlags) &= ~FG_SCROLL_RENDER; // BULLSHIT! DO IT OTHER WAY!
+		// 		continue;
+		// 	}
+		// }
 
 		Rect_t dirtyRect;
 		if (FGOBJECTS_GetDirtyRect(obj, &dirtyRect) < 0) { continue; }
@@ -2150,10 +2226,18 @@ int	RENDERER_DirtyRects_Render(RendererState_t* renderer, const GameContext_t* c
 		screenRect.p2.x = dirtyRect->rect.p2.x - ctx->camera.currPos.x;
 		screenRect.p2.y = dirtyRect->rect.p2.y - ctx->camera.currPos.y;
 
+		//todotomka dodac dzielenie na kilka gdy za duży na jeden framebuffer
+		//todotomka scroll_render nie powiniene dzialac przy pierwszym renderze
+
+
+		int baseRectArea = CalcRectArea(dirtyRect->rect);
+		if (baseRectArea > FRAMEBUFFER_NUMOF_PIXELS) { // validate if framebuffer is too large
+			continue;
+		}
+
 		//-----------------------
 		// BACKGROUND COLOR
 		//-----------------------
-		int baseRectArea = CalcRectArea(dirtyRect->rect);
 		RE_FillBackgroud(LCD_COLOR_BLUESKY, baseRectArea);
 
 		//-----------------------

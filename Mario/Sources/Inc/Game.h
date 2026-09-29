@@ -9,7 +9,6 @@
 #define SOURCES_INC_GAME_H_
 
 #include "Game_Types.h"
-#include <sys/_intsup.h>
 
 int 	GAME_InitContext(GameContext_t* ctx);
 

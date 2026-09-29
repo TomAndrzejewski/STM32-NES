@@ -549,6 +549,18 @@ void I2S_Start(void)
 
 #endif
 
+void BusFault_Init()
+{
+	SCB->SHCSR |= SCB_SHCSR_BUSFAULTENA_Msk |
+              SCB_SHCSR_USGFAULTENA_Msk |
+              SCB_SHCSR_MEMFAULTENA_Msk;
+}
+
+void BusFault_Handler(void)
+{
+    __BKPT(0);   // zatrzymaj debugger
+    while (1);
+}
 
 void print_start()
 {
@@ -560,6 +572,7 @@ void print_start()
 int main(void)
 {
 	Flash_init();
+	BusFault_Init();
 	Clock_init();
 	FPU_init();
 	IRQ_init();

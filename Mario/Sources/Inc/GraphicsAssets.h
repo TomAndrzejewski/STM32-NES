@@ -23,7 +23,8 @@ extern const AnimableAsset_t BLOCK_QMARK_ANIMABLE_ASSET;
 extern const SimpleAsset_t RURA_DOL_ASSET;
 extern const SimpleAsset_t RURA_GORA_ASSET;
 extern const SimpleAsset_t PYRAMID_BLOCK_ASSET;
-extern const AnimableAsset_t COIN_ANIMABLE_ASSET;
+extern const AnimableAsset_t REWARD_COIN_ANIMABLE_ASSET;
+extern const MovementFrameY_t REWARD_COIN_MOVEMENT_ASSET;
 
 ///////////////////
 // BACKGROUND
