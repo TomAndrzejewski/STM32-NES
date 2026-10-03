@@ -29,10 +29,12 @@ int     OBJECTS_MANAGER_OrderSpawn(ObjectsManager_t* mgr, const ObjectLevelInsta
 int		COLLISION_Update(GameContext_t* ctx);
 int		COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx);
 int 	COLLISION_Resolve(GameContext_t* ctx);
-int 	COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t* obj, const Bump_t* bump, const GameContext_t* ctx);
+int 	COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t* obj, const Bump_t* bump);
 int 	COLLISION_Player_Floor(PlayerState_t* player, const Bump_t* bump, const GameContext_t* ctx);
 int 	COLLISION_Player_Enemy(PlayerState_t* player, EnemyState_t* enemy, const Bump_t* bump, const GameContext_t* ctx);
 int     COLLISION_FGObject_Player_Action(ForegroundObject_t* obj, PlayerState_t* player, BumpSideEnum bumpSide, ObjectsManager_t* mgr, const GameContext_t* ctx);
+int     COLLISION_FGObject_FGObject(ForegroundObject_t* actor, ForegroundObject_t* obj, const Bump_t* bump);
+void    COLLISION_FGObject_Floor(ForegroundObject_t* actor, const GameContext_t* ctx);
 
 int		PHYSICS_Update(GameContext_t* ctx);
 int		PHYSICS_Player_Update(PlayerState_t* player, const GameContext_t* ctx);
@@ -42,8 +44,10 @@ int 	PHYSICS_Player_CalcMapPos(PlayerState_t* player, const GameContext_t* ctx);
 int     PHYSICS_Player_CalcMovementDirection(PlayerState_t* player);
 int     PHYSICS_FGObject_Update(ForegroundObject_t* obj, const GameContext_t* ctx);
 void    PHYSICS_FGObject_SaveFlags(ForegroundObject_t* obj);
-void    PHYSICS_FGObject_Movement(ForegroundObject_t* obj, const GameContext_t* ctx);
-void    PHYSICS_FGObject_CalcMapPos(ForegroundObject_t* obj);
+void    PHYSICS_FGObject_Velocity_Movement(ForegroundObject_t* obj, const GameContext_t* ctx);
+void    PHYSICS_FGObject_Velocity_CalcMapPos(ForegroundObject_t* obj);
+void    PHYSICS_FGObject_Time_Movement(ForegroundObject_t* obj);
+void    PHYSICS_FGObject_Time_Movement_Finish(ForegroundObject_t* obj);
 
 int 	CAMERA_Update(CameraState_t* camera, const GameContext_t* ctx);
 int 	CAMERA_CalcPos(CameraState_t* camera, const PlayerState_t* player);

@@ -594,16 +594,39 @@ int OBJECTS_MANAGER_FGObject_Load(ForegroundObject_t* obj, const ObjectLevelInst
 		break;
 	}
 	case FG_REWARD_COIN_OBJECT_ID: {
+		// animations
 		obj->animableAsset = &REWARD_COIN_ANIMABLE_ASSET;
 		obj->asset.id = obj->animableAsset->id;
 		obj->asset.BBox = obj->animableAsset->BBox;
 		obj->currAnimation = FG_REWARD_COIN_1_ANIMATION_ID;
 		obj->animationFrameTimeUS = 0;
-		obj->movement.timeBasedMovement.movementFramesY = &REWARD_COIN_MOVEMENT_ASSET;
-		obj->movement.timeBasedMovement.numOfMovementFramesY = 8;
-		obj->movement.timeBasedMovement.elapsedTimeUS = 0;
-		obj->movement.timeBasedMovement.currentIndex = 0;
-		obj->movement.timeBasedMovement.repeatedCounter = 0;
+
+
+		// Set time based movement
+		obj->physics.type = PHYSICS_TIME;
+
+		// Configure time based movement
+		TimeBasedMovement_t* tbased = &obj->physics.engine.timeBased;
+		tbased->asset = &REWARD_COIN_MOVEMENT_ASSET;
+		tbased->elapsedTimeUS = 0;
+		tbased->currentIndex = 0;
+		tbased->repeatedCounter = 0;
+
+		break;
+	}
+	case FG_REWARD_LEVEL_UP_MUSHROOM_OBJECT_ID: {
+		obj->asset = REWARD_LEVEL_UP_MUSHROOM_ASSET;
+
+		// Set time based movement
+		obj->physics.type = PHYSICS_TIME;
+
+		// Configure time based movement
+		TimeBasedMovement_t* tbased = &obj->physics.engine.timeBased;
+		tbased->asset = &REWARD_LEVEL_UP_MUSHROOM_MOVEMENT_ASSET;
+		tbased->elapsedTimeUS = 0;
+		tbased->currentIndex = 0;
+		tbased->repeatedCounter = 0;
+
 		break;
 	}
 	default:
@@ -619,11 +642,12 @@ int OBJECTS_MANAGER_FGObject_Load(ForegroundObject_t* obj, const ObjectLevelInst
 	obj->BBoxCenter.x = objectDef->x + (obj->asset.BBox.p1.x + obj->asset.BBox.p2.x) / 2;
 	obj->BBoxCenter.y = objectDef->y + (obj->asset.BBox.p1.y + obj->asset.BBox.p2.y) / 2;
 	obj->currFlags.IsAlive = true;
-	obj->currFlags.IsOnScreen = true;
 	obj->currFlags.playerBumpedFromBelow = false;
 	obj->currFlags.clearRenderedSprite = false;
+	obj->currFlags.IsGrounded = false;
 	obj->prevFlags = obj->currFlags;
 	obj->bumpCounter = 0;
+	obj->rewardCounter = 0;
 	
 	return 0;
 }
@@ -742,8 +766,8 @@ int	COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx)
 	if (Rect_IsIntersection(&bumpRect)) {
 		if (coll->size < COLLISIONS_SIZE) {
 			coll->bumps[coll->size].bumpID = PLAYER_BUMP_FLOOR;
-			coll->bumps[coll->size].actor1 = (GameObjectRef_t){ .id = ctx->player.id, .index = 0 };
-			coll->bumps[coll->size].actor2 = (GameObjectRef_t){ .id = 0, .index = 0 };
+			coll->bumps[coll->size].actor1 = (GameObjectRef_t){ ctx->player.id, 0 };
+			coll->bumps[coll->size].actor2 = (GameObjectRef_t){ 0, 0 };
 			coll->bumps[coll->size].bumpRect = bumpRect;
 			coll->size++;
 		}
@@ -761,10 +785,10 @@ int	COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx)
 		}
 
 		const ForegroundObject_t* fgObject = &ctx->fgObjects[indexLUT];
-		if (!fgObject->currFlags.IsOnScreen) {
-			continue;
-		}
+
 		if (!fgObject->currFlags.IsAlive) { continue; }
+
+		if (!(fgObject->assetFlags & COLL_ANY_ENABLED)) { continue; }
 
 		Rect_t objRect;
 		objRect.p1.x = fgObject->currMapPos.x + fgObject->asset.BBox.p1.x;
@@ -778,8 +802,8 @@ int	COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx)
 		if (Rect_IsIntersection(&bumpRect)) {
 			if (coll->size < COLLISIONS_SIZE) {
 				coll->bumps[coll->size].bumpID = PLAYER_BUMP_FG_OBJECT;
-				coll->bumps[coll->size].actor1 = (GameObjectRef_t){ .id = ctx->player.id, .index = 0 };
-				coll->bumps[coll->size].actor2 = (GameObjectRef_t){ .id = fgObject->id, .index = indexLUT };
+				coll->bumps[coll->size].actor1 = (GameObjectRef_t){ ctx->player.id, 0 };
+				coll->bumps[coll->size].actor2 = (GameObjectRef_t){ fgObject->id, indexLUT };
 				coll->bumps[coll->size].bumpRect = bumpRect;
 				coll->size++;
 			}
@@ -814,10 +838,116 @@ int	COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx)
 		if (Rect_IsIntersection(&bumpRect)) {
 			if (coll->size < COLLISIONS_SIZE) {
 				coll->bumps[coll->size].bumpID = PLAYER_BUMP_ENEMY;
-				coll->bumps[coll->size].actor1 = (GameObjectRef_t){ .id = ctx->player.id, .index = 0 };
-				coll->bumps[coll->size].actor2 = (GameObjectRef_t){ .id = enemy->id, .index = indexLUT };
+				coll->bumps[coll->size].actor1 = (GameObjectRef_t){ ctx->player.id, 0 };
+				coll->bumps[coll->size].actor2 = (GameObjectRef_t){ enemy->id, indexLUT };
 				coll->bumps[coll->size].bumpRect = bumpRect;
 				coll->size++;
+			}
+		}
+	}
+
+	//-------------------------
+	// FG OBJECTS BUMPS FG OBJECTS OR FLOOR
+	//-------------------------
+	for (int i = 0; i < ctx->activefgObjects; i++)
+	{
+		int indexLUT = ctx->fgObjectsLUT[i];
+
+		if (!ctx->IsFGObjectActive[indexLUT]) {
+			continue;
+		}
+
+		const ForegroundObject_t* fgObject = &ctx->fgObjects[indexLUT];
+
+		// Only objects below are allowed to initialize collision
+		if (fgObject->id != FG_REWARD_LEVEL_UP_MUSHROOM_OBJECT_ID) {
+			continue;
+		}
+
+		if (!fgObject->currFlags.IsAlive) { 
+			continue; 
+		}
+
+		if (fgObject->physics.type != PHYSICS_VELOCITY) {
+			continue; 
+		}
+
+		Rect_t objRect;
+		objRect.p1.x = fgObject->currMapPos.x + fgObject->asset.BBox.p1.x;
+		objRect.p1.y = fgObject->currMapPos.y + fgObject->asset.BBox.p1.y;
+		objRect.p2.x = fgObject->currMapPos.x + fgObject->asset.BBox.p2.x;
+		objRect.p2.y = fgObject->currMapPos.y + fgObject->asset.BBox.p2.y;
+
+
+		//-------------------------
+		// FG OBJECTS BUMPS FLOOR
+		//-------------------------
+		const Rect_t* levelBounds = NULL;
+		int ret = LEVEL_GetLevelBoundaries(&levelBounds);
+		if (ret < 0 || levelBounds == NULL) { return -5; }
+
+		Rect_t floorRect;
+		floorRect.p1.x = 0;
+		floorRect.p1.y = 0;
+		floorRect.p2.x = levelBounds->p2.x;
+		floorRect.p2.y = ctx->map.floorYLevel;
+
+		Rect_t bumpRect = {0};
+		Rect_GetIntersection(&objRect, &floorRect, &bumpRect);
+
+		if (Rect_IsIntersection(&bumpRect)) {
+			if (coll->size < COLLISIONS_SIZE) {
+				coll->bumps[coll->size].bumpID = FG_OBJECT_BUMP_FLOOR;
+				coll->bumps[coll->size].actor1 = (GameObjectRef_t){ fgObject->id, indexLUT};
+				coll->bumps[coll->size].actor2 = (GameObjectRef_t){ 0, 0 };
+				coll->bumps[coll->size].bumpRect = bumpRect;
+				coll->size++;
+			}
+		}
+
+
+		//-------------------------
+		// FG OBJECTS BUMPS FG OBJECTS
+		//-------------------------
+		for (int j = 0; j < ctx->activefgObjects; j++)
+		{
+			if (i == j) {
+				continue;
+			}
+
+			int indexLUT2 = ctx->fgObjectsLUT[j];
+
+			if (!ctx->IsFGObjectActive[indexLUT2]) {
+				continue;
+			}
+
+			const ForegroundObject_t* fgObject2 = &ctx->fgObjects[indexLUT2];
+
+			if (!fgObject2->currFlags.IsAlive) { 
+				continue; 
+			}	
+
+			if ((fgObject2->assetFlags & COLL_ANY_ENABLED) == 0) {
+				continue;
+			}
+
+			Rect_t objRect2;
+			objRect2.p1.x = fgObject2->currMapPos.x + fgObject2->asset.BBox.p1.x;
+			objRect2.p1.y = fgObject2->currMapPos.y + fgObject2->asset.BBox.p1.y;
+			objRect2.p2.x = fgObject2->currMapPos.x + fgObject2->asset.BBox.p2.x;
+			objRect2.p2.y = fgObject2->currMapPos.y + fgObject2->asset.BBox.p2.y;
+
+			Rect_t bumpRect = {0};
+			Rect_GetIntersection(&objRect, &objRect2, &bumpRect);
+
+			if (Rect_IsIntersection(&bumpRect)) {
+				if (coll->size < COLLISIONS_SIZE) {
+					coll->bumps[coll->size].bumpID = FG_OBJECT_BUMP_FG_OBJECT;
+					coll->bumps[coll->size].actor1 = (GameObjectRef_t){ fgObject->id, indexLUT };
+					coll->bumps[coll->size].actor2 = (GameObjectRef_t){ fgObject2->id, indexLUT2 };
+					coll->bumps[coll->size].bumpRect = bumpRect;
+					coll->size++;
+				}
 			}
 		}
 	}
@@ -853,26 +983,39 @@ int COLLISION_Resolve(GameContext_t* ctx)
 			const GameObjectRef_t* actor = (bump->actor1.id == ctx->player.id) ? &bump->actor2 : &bump->actor1;
 			ForegroundObject_t* obj = &ctx->fgObjects[actor->index];
 
-			ret = COLLISION_Player_FGObject(&ctx->player, obj, bump, ctx);
+			ret = COLLISION_Player_FGObject(&ctx->player, obj, bump);
 			if (ret > 0) { // call action after collision, collision side set as return value
 				BumpSideEnum bumpSide = ret;
 				COLLISION_FGObject_Player_Action(obj, &ctx->player, bumpSide, &ctx->objectsManager, ctx);
 			}
 			break;
 		}
+		case FG_OBJECT_BUMP_FG_OBJECT:
+		{
+			ForegroundObject_t* obj1 = &ctx->fgObjects[bump->actor1.index];
+			ForegroundObject_t* obj2 = &ctx->fgObjects[bump->actor2.index];
+
+			ret = COLLISION_FGObject_FGObject(obj1, obj2, bump);
+			break;
+		}
+		case FG_OBJECT_BUMP_FLOOR:
+		{
+			ForegroundObject_t* obj = &ctx->fgObjects[bump->actor1.index];
+			COLLISION_FGObject_Floor(obj, ctx);
+			break;
+		}
+		default:
+			break;
 		}
 	}
 
-	// return 0;
-	return ret; // todo nie mam jeszcze pomyslu jak obsluzyc ret < 0
+	return 0;
 }
 
 // return code: < 0 error, 0 ok, > 0 BumpSideEnum returned
-int COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t* obj, const Bump_t* bump, const GameContext_t* ctx)
+int COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t* obj, const Bump_t* bump)
 {
-	if (player == NULL || obj == NULL || bump == NULL || ctx == NULL) { return -1; }
-
-	if (!(obj->assetFlags & COLL_ANY_ENABLED)) { return 0; }
+	if (player == NULL || obj == NULL || bump == NULL) { return -1; }
 
 	const int bumpLenX = CalcRectXLen(&bump->bumpRect);
 	const int bumpLenY = CalcRectYLen(&bump->bumpRect);
@@ -965,13 +1108,20 @@ int COLLISION_FGObject_Player_Action(
 {
 	if (obj == NULL || player == NULL || ctx == NULL) { return -1; }
 
+	bool prevPlayerHitFGObjectFromBottom = player->JustHitFGObjectFromBottom;
+
+	if (bumpSide == BUMP_SIDE_BOTTOM && !player->JustHitFGObjectFromBottom) {
+		// only one bump per frame!
+		player->JustHitFGObjectFromBottom = true;
+		// Code below is very bad, fix pls :(
+		obj->assetFlags &= ~FG_SCROLL_RENDER;
+	}
+
 	//--------------
 	if (obj->assetFlags & BUMPABLE) 
 	{
-		if (bumpSide == BUMP_SIDE_BOTTOM && !player->JustHitFGObjectFromBottom) 
+		if (bumpSide == BUMP_SIDE_BOTTOM && !prevPlayerHitFGObjectFromBottom) 
 		{
-			// only one bump per frame!
-			player->JustHitFGObjectFromBottom = true;
 			// General info to other systems: I've beed bumped!
 			obj->currFlags.playerBumpedFromBelow = true;
 
@@ -986,7 +1136,7 @@ int COLLISION_FGObject_Player_Action(
 	//--------------
 	if (obj->assetFlags & DESTROYABLE) 
 	{
-		if (bumpSide == BUMP_SIDE_BOTTOM) {
+		if (bumpSide == BUMP_SIDE_BOTTOM && !prevPlayerHitFGObjectFromBottom) {
 			bool isPlayerBig = (player->playerLevel == PLAYER_BIG || player->playerLevel == PLAYER_SHOOTING) ? true : false;
 			if (isPlayerBig) {
 				// General Info to every system: I'm dead!
@@ -1000,7 +1150,7 @@ int COLLISION_FGObject_Player_Action(
 	//--------------
 	if (obj->assetFlags & HIDDEN)
 	{
-		if (bumpSide == BUMP_SIDE_BOTTOM) 
+		if (bumpSide == BUMP_SIDE_BOTTOM && !prevPlayerHitFGObjectFromBottom) 
 		{
 			obj->assetFlags &= ~HIDDEN; // IM NOT HIDDEN ANYMORE!
 		}
@@ -1009,35 +1159,122 @@ int COLLISION_FGObject_Player_Action(
 	//--------------
 	if (obj->assetFlags & REWARD_BIT_MASK)
 	{
-		if (obj->bumpCounter >= 1) 
+		if (bumpSide == BUMP_SIDE_BOTTOM && !prevPlayerHitFGObjectFromBottom) 
 		{
-			ObjectLevelInstance_t rewardToSpawn = {0};
-
-			rewardToSpawn.x = obj->origMapPos.x + (obj->asset.baseAsset.sprite.size.x / 4);
-			rewardToSpawn.y = obj->origMapPos.y + obj->asset.baseAsset.sprite.size.y;
-
-			// Spawn reward
-			uint32_t rewardType = obj->assetFlags & REWARD_BIT_MASK;
-			switch (rewardType)
+			obj->rewardCounter++;
+			if (obj->rewardCounter == 1 ||
+				((obj->assetFlags & BUMPABLE_MULTIPLE_TIMES) && obj->rewardCounter <= 10))
 			{
-			case REWARD_SINGLE_COIN: {
-				rewardToSpawn.id = FG_REWARD_COIN_OBJECT_ID;
-				rewardToSpawn.flags = 0;
-				break;
-			}
-			default: {
-				rewardToSpawn.id = FG_REWARD_COIN_OBJECT_ID;
-				rewardToSpawn.flags = 0;
-				break;
-			}
-			}
+				ObjectLevelInstance_t rewardToSpawn = {0};
 
-			OBJECTS_MANAGER_OrderSpawn(mgr, &rewardToSpawn);
+				// Spawn reward
+				uint32_t rewardType = obj->assetFlags & REWARD_BIT_MASK;
+				switch (rewardType)
+				{
+				case REWARD_SINGLE_COIN: {
+					rewardToSpawn.id = FG_REWARD_COIN_OBJECT_ID;
+					rewardToSpawn.x = obj->origMapPos.x + (obj->asset.baseAsset.sprite.size.x / 4);
+					rewardToSpawn.y = obj->origMapPos.y + obj->asset.baseAsset.sprite.size.y;
+					rewardToSpawn.flags = 0;
+					break;
+				}
+				case REWARD_LEVEL_UP: {
+					rewardToSpawn.id = FG_REWARD_LEVEL_UP_MUSHROOM_OBJECT_ID;
+					rewardToSpawn.x = obj->origMapPos.x;
+					rewardToSpawn.y = obj->origMapPos.y;
+					rewardToSpawn.flags = 0;
+					break;
+				}
+				default: {
+					rewardToSpawn.id = FG_REWARD_COIN_OBJECT_ID;
+					rewardToSpawn.x = obj->origMapPos.x + (obj->asset.baseAsset.sprite.size.x / 4);
+					rewardToSpawn.y = obj->origMapPos.y + obj->asset.baseAsset.sprite.size.y;
+					rewardToSpawn.flags = 0;
+					break;
+				}
+				}
+
+				OBJECTS_MANAGER_OrderSpawn(mgr, &rewardToSpawn);
+			}
 		}
-
 	}
 
 	return 0;
+}
+
+int COLLISION_FGObject_FGObject(ForegroundObject_t* actor, ForegroundObject_t* obj, const Bump_t* bump)
+{	
+	int retCode = 0;
+	
+	const int bumpLenX = CalcRectXLen(&bump->bumpRect);
+	const int bumpLenY = CalcRectYLen(&bump->bumpRect);
+
+	const int COLLISION_THRESHOLD_VERTICAL = 3;
+	const int COLLISION_THRESHOLD_HORIZONTAL = 1;
+
+	Body_t* actorBody = &actor->physics.engine.body;
+	
+	// 1. VERTICAL COLLISION (UP/DOWN)
+	if (bumpLenX >= bumpLenY) {
+		if (!(obj->assetFlags & COLL_TOP_ENABLED) && !(obj->assetFlags & COLL_DOWN_ENABLED)) return 0;
+		if (bumpLenX <= COLLISION_THRESHOLD_VERTICAL) return 0;
+
+		int bumpCenterY = (bump->bumpRect.p1.y + bump->bumpRect.p2.y) / 2;
+
+		// LANDING ON OBJECT (TOP OF THE OBJECT)
+		if (bumpCenterY > obj->BBoxCenter.y) {
+			if ((obj->assetFlags & COLL_TOP_ENABLED) && !actor->currFlags.IsGrounded) {
+				actor->currFlags.IsGrounded = true;
+				actor->currMapPos.y = obj->currMapPos.y + obj->asset.BBox.p2.y;
+				actorBody->subpixelY = 0.0f;
+				actorBody->vy = 0.0f;
+			}
+		}
+		// BUMPING FROM THE BOTTOM
+		else {
+			if ((obj->assetFlags & COLL_DOWN_ENABLED)) {
+				actorBody->vy = -0.7f;
+				actor->currMapPos.y = obj->currMapPos.y - actor->asset.BBox.p2.y;
+				retCode = BUMP_SIDE_BOTTOM;
+			}
+		}
+	}
+	// 2. HORIZONTAL COLLISION (LEFT/RIGHT)
+	else {
+		if (!(obj->assetFlags & COLL_LEFT_ENABLED) && !(obj->assetFlags & COLL_RIGHT_ENABLED)) return 0;
+		if (bumpLenY <= COLLISION_THRESHOLD_HORIZONTAL) return 0;
+
+		int centerBumpX = (bump->bumpRect.p1.x + bump->bumpRect.p2.x) / 2;
+
+		// BUMPING FROM RIGHT
+		if (centerBumpX > obj->BBoxCenter.x) {
+			if ((obj->assetFlags & COLL_RIGHT_ENABLED)) {
+				actorBody->vx = 0.3f;
+				actorBody->subpixelX = 0.0f;
+				actor->currMapPos.x = obj->currMapPos.x + obj->asset.BBox.p2.x + 1; // +1 in order to not "glue" to the object
+			}
+		}
+		// BUMPING FROM LEFT
+		else {
+			if ((obj->assetFlags & COLL_LEFT_ENABLED)) {
+				actorBody->vx = -0.3f;
+				actorBody->subpixelX = 0.0f;
+				actor->currMapPos.x = obj->currMapPos.x - actor->asset.BBox.p2.x - 1; // - 1 in order to not "glue" to the object
+			}
+		}
+	}
+
+	return retCode;
+}
+
+void COLLISION_FGObject_Floor(ForegroundObject_t* actor, const GameContext_t* ctx)
+{
+	if (!actor->currFlags.IsGrounded) {
+		actor->currFlags.IsGrounded = true;
+		actor->currMapPos.y = ctx->map.floorYLevel;
+		actor->physics.engine.body.subpixelY = 0.0f;
+		actor->physics.engine.body.vy = 0.0f;
+	}
 }
 
 int PHYSICS_Update(GameContext_t* ctx)
@@ -1233,9 +1470,16 @@ int PHYSICS_FGObject_Update(ForegroundObject_t* obj, const GameContext_t* ctx)
 {
 	if (obj == NULL || ctx == NULL) { return -1; }
 
-	PHYSICS_FGObject_Movement(obj, ctx);
+	obj->prevMapPos = obj->currMapPos;
 
-	PHYSICS_FGObject_CalcMapPos(obj);
+	//todotomka slabo ze to sie tutaj robi, trzeba jakos usystematyzowac flagi
+	obj->currFlags.IsGrounded = false;
+
+	PHYSICS_FGObject_Time_Movement(obj);
+
+	PHYSICS_FGObject_Velocity_Movement(obj, ctx);
+
+	PHYSICS_FGObject_Velocity_CalcMapPos(obj);
 
 	PHYSICS_FGObject_SaveFlags(obj);
 
@@ -1250,24 +1494,118 @@ void PHYSICS_FGObject_SaveFlags(ForegroundObject_t* obj)
 	obj->prevFlags = obj->currFlags;
 }
 
-void PHYSICS_FGObject_Movement(ForegroundObject_t* obj, const GameContext_t* ctx)
+void PHYSICS_FGObject_Time_Movement(ForegroundObject_t* obj)
+{
+	if (obj->physics.type != PHYSICS_TIME) { // Time based physics switched off
+		return;
+	}
+
+	TimeBasedMovement_t* mv = &obj->physics.engine.timeBased;
+	if (mv->asset == NULL) {
+		return;
+	}
+
+	if (mv->elapsedTimeUS == 0) { // object just spawned, start animation 
+		obj->currFlags.physicsOngoing = true;
+		mv->elapsedTimeUS = GetTimestamp();
+	}
+
+	if (obj->currFlags.physicsOngoing) 
+	{ 
+		if (mv->currentIndex >= mv->asset->framesCount) { // finish 
+			obj->currFlags.physicsOngoing = false;
+			// Important call below!
+			PHYSICS_FGObject_Time_Movement_Finish(obj); // custom behaviour on movement frames finish	
+			return;
+		}
+
+		if (mv->asset->movementFramesY != NULL && obj->currFlags.physicsOngoing) {
+			const MovementFrameY_t* mvFrame = &mv->asset->movementFramesY[mv->currentIndex];
+
+			uint32_t tdiffUS = CalcTimeUS(mv->elapsedTimeUS);
+			if (tdiffUS > mvFrame->durationUS) { // proceed with movement frame
+				obj->currMapPos.y += mvFrame->dy; // movement
+				mv->elapsedTimeUS = GetTimestamp(); // get ready for next tdiff
+				mv->repeatedCounter++;
+				if (mv->repeatedCounter >= mvFrame->repeatCount) { 
+					mv->currentIndex++; // next movement frame
+					mv->repeatedCounter = 0;
+				}
+			} 
+		}
+	}
+
+
+}
+
+void PHYSICS_FGObject_Time_Movement_Finish(ForegroundObject_t* obj)
 {
 	switch(obj->id)
 	{
+	case FG_REWARD_COIN_OBJECT_ID:
+	{
+		obj->currFlags.IsAlive = false;
+		break;
+	}
+	case FG_REWARD_LEVEL_UP_MUSHROOM_OBJECT_ID:
+	{
+		// Switch to vecolity based physics
+		memset(&obj->physics.engine, 0, sizeof(obj->physics.engine));
+		obj->physics.type = PHYSICS_VELOCITY; 
+		obj->physics.engine.body.vx = 0.3f; // Init vx 
+		obj->currFlags.physicsOngoing = true; // Don't turn off the engine!
+		break;
+	}
+	default:
+		break;
+	}
+}
+
+void PHYSICS_FGObject_Velocity_Movement(ForegroundObject_t* obj, const GameContext_t* ctx)
+{
+	switch(obj->id)
+	{
+	case FG_REWARD_LEVEL_UP_MUSHROOM_OBJECT_ID:
+	{
+		if (obj->physics.type != PHYSICS_VELOCITY) {
+			break;
+		}
+
+		Body_t* body = &obj->physics.engine.body;
+
+		///////////////////
+		// Y AXIS
+		///////////////////
+		if (obj->currFlags.IsGrounded) {
+			body->vy = 0.0f;
+		}
+		else if (body->vy > -0.7f) {
+			float multiplier = 1.6f;
+			float dvy = ctx->input.frameData.frameTimeS * multiplier;
+			body->vy -= dvy;
+		}
+
+		if (obj->currFlags.physicsOngoing) {
+			body->subpixelX += (body->vx * SUBPIXEL_RESOLUTION * 256) / TARGET_FRAMERATE_HZ;
+			body->subpixelY += (body->vy * SUBPIXEL_RESOLUTION * 256) / TARGET_FRAMERATE_HZ;
+		}
+
+		break;
+	}
 	case FG_BRICKS_OBJECT_ID:
 	case FG_BLOCK_QMARK_OBJECT_ID:
 	{
-		Body_t* body = &obj->movement.body;
+		Body_t* body = &obj->physics.engine.body;
 
 		if (	!obj->prevFlags.playerBumpedFromBelow
 			&& 	 obj->currFlags.playerBumpedFromBelow // this just happened
-			&& 	!obj->currFlags.animationOngoing) 
-		{ 
+			&& 	!obj->currFlags.physicsOngoing) 
+		{
 			// Start bump animation
-			if (obj->assetFlags == BUMPABLE_MULTIPLE_TIMES) {
+			if (obj->assetFlags & BUMPABLE_MULTIPLE_TIMES) {
 				obj->currFlags.playerBumpedFromBelow = false; // allow multiple bumps
 			}
-			obj->currFlags.animationOngoing = true;
+			obj->currFlags.physicsOngoing = true;
 			printf_str("\nPodbitka\n");
 
 			// Bump up a bit!
@@ -1277,7 +1615,7 @@ void PHYSICS_FGObject_Movement(ForegroundObject_t* obj, const GameContext_t* ctx
 			body->vy -= ctx->input.frameData.frameTimeS * 4;
 		}
 
-		if (obj->currFlags.animationOngoing) {
+		if (obj->currFlags.physicsOngoing) {
 			body->subpixelY += (body->vy * SUBPIXEL_RESOLUTION * 256) / TARGET_FRAMERATE_HZ;
 		}
 
@@ -1288,44 +1626,54 @@ void PHYSICS_FGObject_Movement(ForegroundObject_t* obj, const GameContext_t* ctx
 	}
 }
 
-void PHYSICS_FGObject_CalcMapPos(ForegroundObject_t* obj)
+void PHYSICS_FGObject_Velocity_CalcMapPos(ForegroundObject_t* obj)
 {
 	int pixelsToMove = 0;
 
-	obj->prevMapPos = obj->currMapPos;
+	const Rect_t* levelBounds = NULL;
+	int ret = LEVEL_GetLevelBoundaries(&levelBounds);
+	if (ret < 0 || levelBounds == NULL) { return; }
 
 	// New map position
 	switch (obj->id)
 	{
-	case FG_REWARD_COIN_OBJECT_ID: //todotomka dorobić moduł timebasedmovement
+	case FG_REWARD_LEVEL_UP_MUSHROOM_OBJECT_ID:
 	{
-		TimeBasedMovement_t* mv = &obj->movement.timeBasedMovement;
-
-		if (mv->elapsedTimeUS == 0) { // object just spawned, start animation 
-			obj->currFlags.animationOngoing = true;
-			mv->elapsedTimeUS = GetTimestamp();
+		if (obj->physics.type != PHYSICS_VELOCITY) {
+			break;
 		}
 
-		if (obj->currFlags.animationOngoing) 
-		{ 
-			if (mv->currentIndex >= mv->numOfMovementFramesY) { // finish 
-				obj->currFlags.animationOngoing = false;
-				obj->currMapPos = obj->origMapPos;
-				obj->currFlags.IsAlive = false;
-			}
+		Body_t* body = &obj->physics.engine.body;
 
-			if (mv->movementFramesY != NULL) {
-				const MovementFrameY_t* mvFrame = &mv->movementFramesY[mv->currentIndex];
-				uint32_t tdiffUS = CalcTimeUS(mv->elapsedTimeUS);
-				if (tdiffUS > mvFrame->durationUS) { // proceed with movement frame
-					obj->currMapPos.y += mvFrame->dy; // movement
-					mv->elapsedTimeUS = GetTimestamp(); // get ready for next tdiff
-					mv->repeatedCounter++;
-					if (mv->repeatedCounter >= mvFrame->repeatCount) { 
-						mv->currentIndex++; // next movement frame
-						mv->repeatedCounter = 0;
-					}
-				} 
+		///////////////////
+		// Y AXIS
+		///////////////////
+		pixelsToMove = (int)body->subpixelY / SUBPIXEL_RESOLUTION;
+		if (pixelsToMove != 0) {
+			body->subpixelY -= pixelsToMove * SUBPIXEL_RESOLUTION;
+
+			int movedPosY = obj->currMapPos.y + pixelsToMove;
+			if (movedPosY >= levelBounds->p1.y && movedPosY < levelBounds->p2.y) {
+				obj->currMapPos.y += pixelsToMove;
+			}
+		}
+
+		///////////////////
+		// X AXIS
+		///////////////////
+		pixelsToMove = (int)body->subpixelX / SUBPIXEL_RESOLUTION;
+		if (pixelsToMove != 0) {
+			body->subpixelX -= pixelsToMove * SUBPIXEL_RESOLUTION;
+
+			int movedPosX = obj->currMapPos.x + pixelsToMove;
+			// if (	movedPosX >= levelBounds->p1.x &&
+			// 		movedPosX >= ctx->camera.screenRect.p1.x &&
+			// 		movedPosX < levelBounds->p2.x &&
+			// 		movedPosX < ctx->camera.screenRect.p2.x)
+			if (	movedPosX >= levelBounds->p1.x &&
+					movedPosX < levelBounds->p2.x)
+			{
+				obj->currMapPos.x += pixelsToMove;
 			}
 		}
 
@@ -1337,20 +1685,20 @@ void PHYSICS_FGObject_CalcMapPos(ForegroundObject_t* obj)
 		///////////////////
 		// Y AXIS
 		///////////////////
-		if (obj->currFlags.animationOngoing) {
-			pixelsToMove = (int)obj->movement.body.subpixelY / SUBPIXEL_RESOLUTION;
+		if (obj->currFlags.physicsOngoing) {
+			pixelsToMove = (int)obj->physics.engine.body.subpixelY / SUBPIXEL_RESOLUTION;
 			if (pixelsToMove != 0) {
-				obj->movement.body.subpixelY -= pixelsToMove * SUBPIXEL_RESOLUTION;
+				obj->physics.engine.body.subpixelY -= pixelsToMove * SUBPIXEL_RESOLUTION;
 
 				int movedPosY = obj->currMapPos.y + pixelsToMove;
 				if (movedPosY >= obj->origMapPos.y) {
 					obj->currMapPos.y += pixelsToMove;
 					printf_str("Ruch\n");
 				} else {
-					obj->currFlags.animationOngoing = false; // finish animation
+					obj->currFlags.physicsOngoing = false; // finish animation
 					obj->currMapPos.y = obj->origMapPos.y; // make sure object is back in original position 
-					obj->movement.body.subpixelY = 0.0f;
-					obj->movement.body.vy = 0.0f;
+					obj->physics.engine.body.subpixelY = 0.0f;
+					obj->physics.engine.body.vy = 0.0f;
 					printf_str("Zero\n");
 				}
 			}
@@ -1775,7 +2123,7 @@ int ANIMATOR_FGObject_Decide(ForegroundObject_t* obj, const GameContext_t* ctx)
 	}
 	case FG_REWARD_COIN_OBJECT_ID:
 	{
-		if (obj->currFlags.animationOngoing && obj->animationFrameTimeUS == 0) {
+		if (obj->animationFrameTimeUS == 0) {
 			obj->animationFrameTimeUS = GetTimestamp();
 		}
 
@@ -2068,10 +2416,10 @@ int	RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_t
 		const ForegroundObject_t* obj = &ctx->fgObjects[indexLUT];
 
 		// Code below is very bad, fix pls :(
-		if ((obj->assetFlags & DESTROYABLE) || (obj->assetFlags & HIDDEN) | (obj->assetFlags & BUMPABLE))
-		{
-			*((uint32_t*)&obj->assetFlags) &= ~FG_SCROLL_RENDER;
-		}
+		// if ((obj->assetFlags & DESTROYABLE) || (obj->assetFlags & HIDDEN) | (obj->assetFlags & BUMPABLE))
+		// {
+		// 	*((uint32_t*)&obj->assetFlags) &= ~FG_SCROLL_RENDER;
+		// }
 
 		if (obj->assetFlags & HIDDEN) {
 			continue;

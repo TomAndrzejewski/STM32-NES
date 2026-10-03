@@ -78,6 +78,7 @@ typedef enum
 	FG_RURA_GORA_OBJECT_ID,
 	FG_PYRAMID_BLOCK_OBJECT_ID,
 	FG_REWARD_COIN_OBJECT_ID,
+    FG_REWARD_LEVEL_UP_MUSHROOM_OBJECT_ID,
 
 	BG_REP_FLOOR_ID = BACKGROUND_REP_OBJECT_ID_START,
 
@@ -200,6 +201,9 @@ typedef enum
 	PLAYER_BUMP_FG_OBJECT,
 	PLAYER_BUMP_FLOOR,
 
+	FG_OBJECT_BUMP_FG_OBJECT,
+	FG_OBJECT_BUMP_FLOOR,
+
 }BumpID_t;
 
 typedef enum 
@@ -316,10 +320,10 @@ typedef struct
 typedef struct
 {
 	bool IsAlive					: 1;
-	bool IsOnScreen					: 1;
 	bool playerBumpedFromBelow		: 1;
-	bool animationOngoing			: 1;
+	bool physicsOngoing			    : 1;
 	bool clearRenderedSprite		: 1;
+	bool IsGrounded					: 1;
 
 }FGObjectFlags_t;
 
@@ -330,20 +334,31 @@ typedef struct {
 } MovementFrameY_t;
 
 typedef struct {
-	uint32_t elapsedTimeUS;
-
-	int16_t currentIndex;
-	int16_t numOfMovementFramesY;
 	const MovementFrameY_t* movementFramesY;
+	int framesCount;
+} MovementFramesY_Asset_t;
+
+typedef struct {
+	const MovementFramesY_Asset_t* asset;
+	uint32_t elapsedTimeUS;
+	int16_t currentIndex;
 	int16_t repeatedCounter;
 } TimeBasedMovement_t;
 
-typedef union
-{
+typedef union {
 	Body_t body;
-	TimeBasedMovement_t timeBasedMovement;
+	TimeBasedMovement_t timeBased;
+} PhysicsUnion_t;
 
-}MovementLayer_t;
+typedef enum {
+    PHYSICS_VELOCITY,
+    PHYSICS_TIME,
+} PhysicsEnum;
+
+typedef struct {
+    PhysicsUnion_t engine;
+    PhysicsEnum type;
+} Physics_t;
 
 typedef struct
 {
@@ -354,8 +369,7 @@ typedef struct
 	Point_t prevMapPos;
 	Point_t BBoxCenter;
 
-	// Body_t body;
-	MovementLayer_t movement;
+	Physics_t physics;
 
 	SimpleAsset_t asset;
 	const AnimableAsset_t* animableAsset;
@@ -364,6 +378,7 @@ typedef struct
 	uint32_t animationFrameTimeUS;
 
 	uint8_t bumpCounter;
+    uint8_t rewardCounter;
 
 	FGObjectFlags_t currFlags;
 	FGObjectFlags_t prevFlags;
