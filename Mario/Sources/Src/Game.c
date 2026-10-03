@@ -237,42 +237,6 @@ int GAME_InitContext(GameContext_t* ctx)
 	}
 	ctx->enemies.activeEnemies = 0;
 
-	// ctx->enemies.activeEnemies = 0;
-	// for (int i = 0; i < numOfObjects; i++)
-	// {
-	// 	if (!MISC_IsThisEnemyID(ObjectsPos[i].id))
-	// 	{
-	// 		continue;
-	// 	}
-
-	// 	EnemyState_t* enemy = &ctx->enemies.pool[ctx->enemies.activeEnemies];
-
-	// 	switch (ObjectsPos[i].id)
-	// 	{
-	// 	case ENEMY_GOOMBA_ID: {
-	// 		enemy->asset = &GOOMBA_ASSET;
-	// 		break;
-	// 	}
-	// 	default:
-	// 		break;
-	// 	}
-
-	// 	enemy->id = ObjectsPos[i].id;
-	// 	enemy->IsAlive = true;
-	// 	enemy->IsOnScreen = false;
-	// 	enemy->currMapPos.x = ObjectsPos[i].x;
-	// 	enemy->currMapPos.y = ObjectsPos[i].y;
-	// 	enemy->prevMapPos = enemy->currMapPos;
-	// 	enemy->prevSpriteSize = enemy->asset->baseAsset.sprite.size;
-
-	// 	if (ctx->enemies.activeEnemies >= ENEMIES_MAX_SIZE - 1) {
-	// 		printf_str("\n### ERROR, max Enemies reached ###\n");
-	// 		break;
-	// 	}
-
-	// 	ctx->enemies.activeEnemies++;
-	// }
-
 	///////////////////
 	// BACKGROUND REPETITION OBJECTS
 	///////////////////

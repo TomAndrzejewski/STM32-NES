@@ -571,6 +571,18 @@ const SimpleAsset_t BRICKS_ASSET = {
 		.BBox.p2.y = 16,
 };
 
+static const MovementFrameY_t BRICKS_MOVEMENT_BASE_ASSET[] = {
+		{20000, 1, 2},
+		{40000, 1, 1},
+		{40000, -1, 1},
+		{20000, -1, 2},
+};
+
+const MovementFramesY_Asset_t BRICKS_MOVEMENT_ASSET = {
+	.movementFramesY = BRICKS_MOVEMENT_BASE_ASSET,
+	.framesCount = sizeof(BRICKS_MOVEMENT_BASE_ASSET)/sizeof(BRICKS_MOVEMENT_BASE_ASSET[0]),
+};
+
 
 static const uint16_t block_questionmark_1_16x16_dma[256] = {
 0x0000, 0x44c2, 0x44c2, 0x44c2, 0x44c2, 0x44c2, 0x44c2, 0x44c2, 0x44c2, 0x44c2, 0x44c2, 0x44c2, 0x44c2, 0x44c2, 0x44c2, 0xffff,
@@ -635,6 +647,18 @@ const AnimableAsset_t BLOCK_QMARK_ANIMABLE_ASSET = {
 		.BBox.p1.y = 0,
 		.BBox.p2.x = 16,
 		.BBox.p2.y = 16,
+};
+
+static const MovementFrameY_t BLOCK_QMARK_MOVEMENT_BASE_ASSET[] = {
+		{20000, 1, 2},
+		{40000, 1, 1},
+		{40000, -1, 1},
+		{20000, -1, 2},
+};
+
+const MovementFramesY_Asset_t BLOCK_QMARK_MOVEMENT_ASSET = {
+	.movementFramesY = BLOCK_QMARK_MOVEMENT_BASE_ASSET,
+	.framesCount = sizeof(BLOCK_QMARK_MOVEMENT_BASE_ASSET)/sizeof(BLOCK_QMARK_MOVEMENT_BASE_ASSET[0]),
 };
 
 

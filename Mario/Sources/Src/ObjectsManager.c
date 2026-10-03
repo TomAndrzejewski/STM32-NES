@@ -333,11 +333,21 @@ int OBJECTS_MANAGER_FGObject_Load(ForegroundObject_t* obj, const ObjectLevelInst
 	if (obj == NULL || objectDef == NULL) { return -1;}
 
 	obj->animableAsset = NULL;
+    obj->currFlags.startPhysics = false;
 
 	switch (objectDef->id)
 	{
 	case FG_BRICKS_OBJECT_ID: {
 		obj->asset = BRICKS_ASSET;
+
+		// Configure time based movement
+		obj->physics.type = PHYSICS_TIME;
+        TimeBasedMovement_t* tbased = &obj->physics.engine.timeBased;
+		tbased->asset = &BLOCK_QMARK_MOVEMENT_ASSET;
+		tbased->elapsedTimeUS = 0;
+		tbased->currentIndex = 0;
+		tbased->repeatedCounter = 0;
+
 		break;
 	}
 	case FG_BLOCK_QMARK_OBJECT_ID: {
@@ -346,7 +356,16 @@ int OBJECTS_MANAGER_FGObject_Load(ForegroundObject_t* obj, const ObjectLevelInst
 		obj->asset.BBox = obj->animableAsset->BBox;
 		obj->currAnimation = FG_BLOCK_QMARK_1_ANIMATION_ID;
 		obj->animationFrameTimeUS = 0;
-		break;
+		
+		// Configure time based movement
+		obj->physics.type = PHYSICS_TIME;
+        TimeBasedMovement_t* tbased = &obj->physics.engine.timeBased;
+		tbased->asset = &BLOCK_QMARK_MOVEMENT_ASSET;
+		tbased->elapsedTimeUS = 0;
+		tbased->currentIndex = 0;
+		tbased->repeatedCounter = 0;
+
+        break;
 	}
 	case FG_RURA_DOL_OBJECT_ID: {
 		obj->asset = RURA_DOL_ASSET;
@@ -368,31 +387,30 @@ int OBJECTS_MANAGER_FGObject_Load(ForegroundObject_t* obj, const ObjectLevelInst
 		obj->currAnimation = FG_REWARD_COIN_1_ANIMATION_ID;
 		obj->animationFrameTimeUS = 0;
 
-
-		// Set time based movement
-		obj->physics.type = PHYSICS_TIME;
-
 		// Configure time based movement
-		TimeBasedMovement_t* tbased = &obj->physics.engine.timeBased;
+		obj->physics.type = PHYSICS_TIME;
+        TimeBasedMovement_t* tbased = &obj->physics.engine.timeBased;
 		tbased->asset = &REWARD_COIN_MOVEMENT_ASSET;
 		tbased->elapsedTimeUS = 0;
 		tbased->currentIndex = 0;
 		tbased->repeatedCounter = 0;
+
+        obj->currFlags.startPhysics = true; // trigger physics instantly
 
 		break;
 	}
 	case FG_REWARD_LEVEL_UP_MUSHROOM_OBJECT_ID: {
 		obj->asset = REWARD_LEVEL_UP_MUSHROOM_ASSET;
 
-		// Set time based movement
-		obj->physics.type = PHYSICS_TIME;
-
 		// Configure time based movement
-		TimeBasedMovement_t* tbased = &obj->physics.engine.timeBased;
+		obj->physics.type = PHYSICS_TIME;
+        TimeBasedMovement_t* tbased = &obj->physics.engine.timeBased;
 		tbased->asset = &REWARD_LEVEL_UP_MUSHROOM_MOVEMENT_ASSET;
 		tbased->elapsedTimeUS = 0;
 		tbased->currentIndex = 0;
 		tbased->repeatedCounter = 0;
+
+        obj->currFlags.startPhysics = true; // trigger physics instantly
 
 		break;
 	}
@@ -412,6 +430,7 @@ int OBJECTS_MANAGER_FGObject_Load(ForegroundObject_t* obj, const ObjectLevelInst
 	obj->currFlags.playerBumpedFromBelow = false;
 	obj->currFlags.clearRenderedSprite = false;
 	obj->currFlags.IsGrounded = false;
+    obj->currFlags.physicsOngoing = false;
 	obj->prevFlags = obj->currFlags;
 	obj->bumpCounter = 0;
 	obj->rewardCounter = 0;

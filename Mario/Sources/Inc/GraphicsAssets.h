@@ -19,12 +19,18 @@ extern const AnimableAsset_t MARIO_ANIMABLE_ASSET;
 // FOREGROUND
 ///////////////////
 extern const SimpleAsset_t BRICKS_ASSET;
+extern const MovementFramesY_Asset_t BRICKS_MOVEMENT_ASSET;
+
 extern const AnimableAsset_t BLOCK_QMARK_ANIMABLE_ASSET;
+extern const MovementFramesY_Asset_t BLOCK_QMARK_MOVEMENT_ASSET;
+
 extern const SimpleAsset_t RURA_DOL_ASSET;
 extern const SimpleAsset_t RURA_GORA_ASSET;
 extern const SimpleAsset_t PYRAMID_BLOCK_ASSET;
+
 extern const AnimableAsset_t REWARD_COIN_ANIMABLE_ASSET;
 extern const MovementFramesY_Asset_t REWARD_COIN_MOVEMENT_ASSET;
+
 extern const SimpleAsset_t REWARD_LEVEL_UP_MUSHROOM_ASSET;
 extern const MovementFramesY_Asset_t REWARD_LEVEL_UP_MUSHROOM_MOVEMENT_ASSET;
 

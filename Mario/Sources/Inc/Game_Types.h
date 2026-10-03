@@ -319,6 +319,7 @@ typedef struct
 {
 	bool IsAlive					: 1;
 	bool playerBumpedFromBelow		: 1;
+	bool startPhysics				: 1;
 	bool physicsOngoing			    : 1;
 	bool clearRenderedSprite		: 1;
 	bool IsGrounded					: 1;
