@@ -5,17 +5,14 @@
  *      Author: tomasz
  */
 
+#include "RenderEngine.h"
+
 #include <string.h>
 #include <stdbool.h>
 
 #include "NES_Functions.h"
-
 #include "LCDControl.h"
-
 #include "printf_logger.h"
-
-#define DEFINE_RENDER_ENGINE
-#include "RenderEngine.h"
 
 
 #define FB_0	(0)

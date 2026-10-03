@@ -634,19 +634,8 @@ int main(void)
 
 	GAME_InitContext(pGameCtx);
 
-	// uint32_t printStatsTimer = GetTimestamp();
-	// uint32_t startTime[TIMESTAMPS_SIZE] = {0}, finishTime[TIMESTAMPS_SIZE] = {0};
-	// uint32_t maxTime[TIMESTAMPS_SIZE] = {0};
-	// uint32_t maxFrameTime = 0;
-	// uint32_t maxTimeSum = 0;
-	// int timeStamps = 0;
-	// uint32_t frameNumber = 0;
-	// int ret = 0;
-
 	u32 timeSpentInLoopUS = 0;
 	u32 targetFrameTimeUS = 1000000/TARGET_FRAMERATE_HZ;
-
-	// bool firstLoop = true;
 
 	while(1)
 	{
@@ -657,133 +646,9 @@ int main(void)
 		}
 
 		u32 startLoopTime = GetTimestamp();
-		{
-			GAME_Update(pGameCtx);
-
-			// timeStamps = 0;
-
-			// startTime[timeStamps] = GetTimestamp();
-			// ret = INPUT_Update(&pGameCtx->input, pGameCtx, targetFrameTimeUS);
-			// finishTime[timeStamps] = GetTimestamp();
-			// if (ret < 0)	{ delay(1); continue; }
-			// timeStamps++;
-
-			// // startTime[timeStamps] = GetTimestamp();
-			// // FGOBJECTS_ClearFlags(pGameCtx);
-			// // finishTime[timeStamps] = GetTimestamp();
-			// // timeStamps++;
-
-			// startTime[timeStamps] = GetTimestamp();
-			// ret = PHYSICS_Player_Update(&pGameCtx->player, pGameCtx);
-			// finishTime[timeStamps] = GetTimestamp();
-			// if (ret < 0)	{ delay(1); continue; }
-			// timeStamps++;
-
-			// startTime[timeStamps] = GetTimestamp();
-			// ret = CAMERA_Update(&pGameCtx->camera, pGameCtx);
-			// finishTime[timeStamps] = GetTimestamp();
-			// if (ret < 0)	{ delay(1); continue; }
-			// timeStamps++;
-
-			// startTime[timeStamps] = GetTimestamp();
-			// ret = OBJECTS_MANAGER_Update(pGameCtx);
-			// finishTime[timeStamps] = GetTimestamp();
-			// if (ret < 0)	{ delay(1); continue; }
-			// timeStamps++;
-
-			// startTime[timeStamps] = GetTimestamp();
-			// ret = ENEMIES_UpdateFlags(&pGameCtx->enemies, pGameCtx);
-			// finishTime[timeStamps] = GetTimestamp();
-			// if (ret < 0)	{ delay(1); continue; }
-			// timeStamps++;
-
-			// startTime[timeStamps] = GetTimestamp();
-			// ret = PHYSICS_Update(pGameCtx);
-			// finishTime[timeStamps] = GetTimestamp();
-			// if (ret < 0)	{ delay(1); continue; }
-			// timeStamps++;
-
-			// startTime[timeStamps] = GetTimestamp();
-			// ret = PLAYER_ClearFlags(&pGameCtx->player);
-			// finishTime[timeStamps] = GetTimestamp();
-			// if (ret < 0)	{ delay(1); continue; }
-			// timeStamps++;
-
-			// startTime[timeStamps] = GetTimestamp();
-			// ret = COLLISION_Update(pGameCtx);
-			// finishTime[timeStamps] = GetTimestamp();
-			// if (ret < 0)	{ delay(1); continue; }
-			// timeStamps++;
-
-			// startTime[timeStamps] = GetTimestamp();
-			// ret = ANIMATOR_Update(pGameCtx);
-			// finishTime[timeStamps] = GetTimestamp();
-			// if (ret < 0)	{ delay(1); continue; }
-			// timeStamps++;
-
-			// if (firstLoop) {
-			// 	RENDERER_FirstRender(pGameCtx);
-			// }
-
-			// // startTime[timeStaps] = GetTimestamp();
-			// // ret = RENDERER_Update(pGameCtx);
-			// // finishTime[timeStaps] = GetTimestamp();
-			// // if (ret < 0)	{ delay(1); continue; }
-			// // timeStaps++;
-
-			// startTime[timeStamps] = GetTimestamp();
-			// ret = RENDERER_ScrollRender(&pGameCtx->renderer, pGameCtx);
-			// if (ret < 0)	{ delay(1); continue; }
-			// finishTime[timeStamps] = GetTimestamp();
-			// timeStamps++;
-
-			// startTime[timeStamps] = GetTimestamp();
-			// ret = RENDERER_DirtyRects_Calculate(&pGameCtx->renderer, pGameCtx);
-			// if (ret < 0)	{ delay(1); continue; }
-			// finishTime[timeStamps] = GetTimestamp();
-			// timeStamps++;
-
-			// startTime[timeStamps] = GetTimestamp();
-			// ret = RENDERER_DirtyRects_Render(&pGameCtx->renderer, pGameCtx);
-			// if (ret < 0)	{ delay(1); continue; }
-			// finishTime[timeStamps] = GetTimestamp();
-			// timeStamps++;
-
-			// // Statistics
-			// if (1 && !firstLoop)
-			// {
-			// 	maxTimeSum = 0;
-			// 	for (int i = 0; i < timeStamps; i++)
-			// 	{
-			// 		uint32_t tdiff = CalcDiffTimeUS(startTime[i], finishTime[i]);
-			// 		if (tdiff > maxTime[i]) {
-			// 			maxTime[i] = tdiff;
-			// 		}
-			// 		maxTimeSum += maxTime[i];
-			// 	}
-			// 	uint32_t tdiff = CalcDiffTimeUS(startTime[0], finishTime[timeStamps-1]);
-			// 	if (tdiff > maxFrameTime) {
-			// 		maxFrameTime = tdiff;
-			// 	}
-
-			// 	if (CalcTimeMS(printStatsTimer) > 1 * 1000) {
-			// 		printStatsTimer = GetTimestamp();
-			// 		printf_v("Frame %d maxFrameTime: %d us, maxTimeSum: %d us, max timestamps:\n", frameNumber, maxFrameTime, maxTimeSum);
-			// 		for (int i = 0; i < timeStamps; i++)
-			// 		{
-			// 			printf_uint(maxTime[i]);
-			// 			printf_c('\t');
-			// 		}
-			// 		printf_c('\n');
-			// 	}
-			// }
-
-			// if (firstLoop) {
-			// 	firstLoop = false;
-			// }
-
-			// frameNumber++;
-		}
+		
+		GAME_Update(pGameCtx);
+		
 		timeSpentInLoopUS = CalcTimeUS(startLoopTime);
 	}
 //#endif

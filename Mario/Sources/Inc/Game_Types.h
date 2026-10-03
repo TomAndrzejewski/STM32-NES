@@ -10,9 +10,7 @@
 
 #include <stdbool.h>
 
-// #include "NES_Defs.h"
 #include "NES_Types.h"
-
 #include "Game_Defs.h"
 
 
@@ -313,7 +311,7 @@ typedef struct
 	Point_t mapPos;
 
 	const BackgroundAsset_t* asset;
-	uint32_t flags; // treat as const! parameters set from map maker
+	uint32_t assetFlags; // treat as const! parameters set from map maker
 
 }BackgroundObject_t;
 

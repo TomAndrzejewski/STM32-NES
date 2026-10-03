@@ -15,18 +15,6 @@
 #include "NES_Types.h"
 
 
-#ifdef DEFINE_RENDER_ENGINE
-
-#define GLOBAL_RENDER_ENGINE
-#define INIT_RENDER_ENGINE(x) = x
-
-#else
-
-#define GLOBAL_RENDER_ENGINE extern
-#define INIT_RENDER_ENGINE(x)
-
-#endif
-
 #define BYTES_PER_PIXEL				(2)
 #define FRAMEBUFFER_SIZE			(64*240)
 #define FRAMEBUFFER_NUMOF_PIXELS	(FRAMEBUFFER_SIZE/BYTES_PER_PIXEL)
