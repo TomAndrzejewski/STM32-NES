@@ -465,6 +465,17 @@ typedef struct
 
 }RendererState_t;
 
+#define TIMESTAMPS_SIZE 32
+
+typedef struct {
+	uint32_t frameCounter;
+	uint32_t printStatsTimer;
+	uint32_t startTime[TIMESTAMPS_SIZE]; 
+	uint32_t finishTime[TIMESTAMPS_SIZE];
+	uint32_t maxTime[TIMESTAMPS_SIZE];
+	uint32_t maxFrameTime;
+	uint32_t maxTimeSum;
+} GameStats_t;
 
 typedef struct
 {
@@ -510,6 +521,10 @@ typedef struct
 	RendererState_t	renderer;
 
 	CollisionState_t collision;
+
+	GameStats_t stats;
+
+	bool firstGameLoop;
 
 }GameContext_t;
 

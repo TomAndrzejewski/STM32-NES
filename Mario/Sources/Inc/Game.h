@@ -11,6 +11,7 @@
 #include "Game_Types.h"
 
 int 	GAME_InitContext(GameContext_t* ctx);
+int     GAME_Update(GameContext_t* ctx);
 
 int 	INPUT_Update(InputState_t* input, const GameContext_t* ctx, const u32 frameTimeUS);
 int 	INPUT_SetButtonsState(InputState_t* input, uint32_t buttons_state);
@@ -35,19 +36,6 @@ int 	COLLISION_Player_Enemy(PlayerState_t* player, EnemyState_t* enemy, const Bu
 int     COLLISION_FGObject_Player_Action(ForegroundObject_t* obj, PlayerState_t* player, BumpSideEnum bumpSide, ObjectsManager_t* mgr, const GameContext_t* ctx);
 int     COLLISION_FGObject_FGObject(ForegroundObject_t* actor, ForegroundObject_t* obj, const Bump_t* bump);
 void    COLLISION_FGObject_Floor(ForegroundObject_t* actor, const GameContext_t* ctx);
-
-int		PHYSICS_Update(GameContext_t* ctx);
-int		PHYSICS_Player_Update(PlayerState_t* player, const GameContext_t* ctx);
-int     PHYSICS_Player_RestartFlags(PlayerState_t* player);
-int 	PHYSICS_Player_Movement(PlayerState_t* player, const GameContext_t* ctx);
-int 	PHYSICS_Player_CalcMapPos(PlayerState_t* player, const GameContext_t* ctx);
-int     PHYSICS_Player_CalcMovementDirection(PlayerState_t* player);
-int     PHYSICS_FGObject_Update(ForegroundObject_t* obj, const GameContext_t* ctx);
-void    PHYSICS_FGObject_SaveFlags(ForegroundObject_t* obj);
-void    PHYSICS_FGObject_Velocity_Movement(ForegroundObject_t* obj, const GameContext_t* ctx);
-void    PHYSICS_FGObject_Velocity_CalcMapPos(ForegroundObject_t* obj);
-void    PHYSICS_FGObject_Time_Movement(ForegroundObject_t* obj);
-void    PHYSICS_FGObject_Time_Movement_Finish(ForegroundObject_t* obj);
 
 int 	CAMERA_Update(CameraState_t* camera, const GameContext_t* ctx);
 int 	CAMERA_CalcPos(CameraState_t* camera, const PlayerState_t* player);
@@ -75,7 +63,6 @@ int     ANIMATOR_Player_SetAsset(PlayerState_t* player);
 int     ANIMATOR_FGObject_Update(ForegroundObject_t* obj, const GameContext_t* ctx);
 int     ANIMATOR_FGObject_Decide(ForegroundObject_t* obj, const GameContext_t* ctx);
 int     ANIMATOR_FGObject_SetAsset(ForegroundObject_t* obj);
-// int     ANIMATOR_FGObject_Movement(ForegroundObject_t* obj);
 int     ANIMATOR_Enemy_Update(EnemyState_t* enemy, const GameContext_t* ctx);
 int     ANIMATOR_Enemy_Decide(EnemyState_t* enemy, const GameContext_t* ctx);
 int     ANIMATOR_Enemy_SetAsset(EnemyState_t* enemy);
