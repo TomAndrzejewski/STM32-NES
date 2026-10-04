@@ -334,6 +334,7 @@ int OBJECTS_MANAGER_FGObject_Load(ForegroundObject_t* obj, const ObjectLevelInst
 
 	obj->animableAsset = NULL;
     obj->currFlags.startPhysics = false;
+	obj->currFlags.renderInBackground = false;
 
 	switch (objectDef->id)
 	{
@@ -411,6 +412,8 @@ int OBJECTS_MANAGER_FGObject_Load(ForegroundObject_t* obj, const ObjectLevelInst
 		tbased->repeatedCounter = 0;
 
         obj->currFlags.startPhysics = true; // trigger physics instantly
+
+		obj->currFlags.renderInBackground = true;
 
 		break;
 	}

@@ -322,6 +322,7 @@ typedef struct
 	bool startPhysics				: 1;
 	bool physicsOngoing			    : 1;
 	bool clearRenderedSprite		: 1;
+	bool renderInBackground			: 1;
 	bool IsGrounded					: 1;
 
 }FGObjectFlags_t;

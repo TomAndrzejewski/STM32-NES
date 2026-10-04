@@ -383,19 +383,31 @@ int	RENDERER_DirtyRects_Render(RendererState_t* renderer, const GameContext_t* c
 		//-----------------------
 		// FOREGROUND OBJECTS
 		//-----------------------
-		for (int j = 0; j < ctx->activefgObjects; j++)
+		for (int j = 0; j < 2; j++)
 		{
-			int indexLUT = ctx->fgObjectsLUT[j];
-			if (!ctx->IsFGObjectActive[indexLUT]) {
-				continue;
+			for (int k = 0; k < ctx->activefgObjects; k++)
+			{
+				int indexLUT = ctx->fgObjectsLUT[k];
+				if (!ctx->IsFGObjectActive[indexLUT]) {
+					continue;
+				}
+				const ForegroundObject_t* obj = &ctx->fgObjects[indexLUT];
+				if (!obj->currFlags.IsAlive) { continue; }
+				if (obj->assetFlags & HIDDEN) { continue; }
+
+				// 2 priority levels in rendering
+				// Objects renderded in second iteration are visible as "behind" these rendered in first iteration
+				if (j == 0 && !obj->currFlags.renderInBackground) {
+					continue;
+				}
+				if (j == 1 && obj->currFlags.renderInBackground) {
+					continue;
+				}
+
+				RENDERER_RenderFGObject(obj, &dirtyRect->rect, &screenRect, renderer->LCDOffsetX);
 			}
-			const ForegroundObject_t* obj = &ctx->fgObjects[indexLUT];
-			if (!obj->currFlags.IsAlive) { continue; }
-			if (obj->assetFlags & HIDDEN) { continue; }
-
-
-			RENDERER_RenderFGObject(obj, &dirtyRect->rect, &screenRect, renderer->LCDOffsetX);
 		}
+		
 
 		//-----------------------
 		// ENEMIES

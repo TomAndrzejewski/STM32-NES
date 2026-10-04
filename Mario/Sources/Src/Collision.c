@@ -476,7 +476,7 @@ int COLLISION_FGObject_Player_Action(
 				case REWARD_LEVEL_UP: {
 					rewardToSpawn.id = FG_REWARD_LEVEL_UP_MUSHROOM_OBJECT_ID;
 					rewardToSpawn.x = obj->origMapPos.x;
-					rewardToSpawn.y = obj->origMapPos.y;
+					rewardToSpawn.y = obj->origMapPos.y + 4; // Offset so mushroom spawns aligned with bumped parent block
 					rewardToSpawn.flags = 0;
 					break;
 				}
@@ -518,7 +518,18 @@ int COLLISION_FGObject_FGObject(ForegroundObject_t* actor, ForegroundObject_t* o
 
 		// LANDING ON OBJECT (TOP OF THE OBJECT)
 		if (bumpCenterY > obj->BBoxCenter.y) {
-			if ((obj->assetFlags & COLL_TOP_ENABLED) && !actor->currFlags.IsGrounded) {
+			if (!(obj->assetFlags & COLL_TOP_ENABLED)) return 0;
+			if (obj->currMapPos.y > obj->prevMapPos.y) {
+				actor->currFlags.IsGrounded = false;
+				actor->currMapPos.y = obj->currMapPos.y + obj->asset.BBox.p2.y + 1; // Bump one pixel above collision
+				actorBody->subpixelY = 0.0f;
+				actorBody->vy = 0.4f; // Make it fly!
+				if (actor->currMapPos.x < obj->BBoxCenter.x) {
+					actorBody->subpixelX = 0.0f;
+					actorBody->vx = -actorBody->vx; // Change direction!
+				}
+			}
+			else if (!actor->currFlags.IsGrounded) {
 				actor->currFlags.IsGrounded = true;
 				actor->currMapPos.y = obj->currMapPos.y + obj->asset.BBox.p2.y;
 				actorBody->subpixelY = 0.0f;

@@ -224,9 +224,6 @@ int PHYSICS_FGObject_Update(ForegroundObject_t* obj, const GameContext_t* ctx)
 
 	PHYSICS_FGObject_SaveFlags(obj);
 
-	// ret = PHYSICS_FGObject_CalcMovementDirection(obj);
-	// if (ret < 0) { return -15; }
-
 	return 0;
 }
 
@@ -346,34 +343,6 @@ void PHYSICS_FGObject_Velocity_Movement(ForegroundObject_t* obj, const GameConte
 
 		break;
 	}
-	// case FG_BRICKS_OBJECT_ID:
-	// case FG_BLOCK_QMARK_OBJECT_ID:
-	// {
-	// 	Body_t* body = &obj->physics.engine.body;
-
-	// 	if (	!obj->prevFlags.playerBumpedFromBelow
-	// 		&& 	 obj->currFlags.playerBumpedFromBelow // this just happened
-	// 		&& 	!obj->currFlags.physicsOngoing) 
-	// 	{
-	// 		// Start bump animation
-	// 		if (obj->assetFlags & BUMPABLE_MULTIPLE_TIMES) {
-	// 			obj->currFlags.playerBumpedFromBelow = false; // allow multiple bumps
-	// 		}
-	// 		obj->currFlags.physicsOngoing = true;
-
-	// 		// Bump up a bit!
-	// 		body->vy = 0.3f;
-	// 	} else if (body->vy > -1.0f) {
-	// 		// Slowdown
-	// 		body->vy -= ctx->input.frameData.frameTimeS * 4;
-	// 	}
-
-	// 	if (obj->currFlags.physicsOngoing) {
-	// 		body->subpixelY += (body->vy * SUBPIXEL_RESOLUTION * 256) / TARGET_FRAMERATE_HZ;
-	// 	}
-
-	// 	break;
-	// }
 	default:
 		break;
 	}
@@ -427,31 +396,6 @@ void PHYSICS_FGObject_Velocity_CalcMapPos(ForegroundObject_t* obj)
 
 		break;
 	}
-	// case FG_BRICKS_OBJECT_ID:
-	// case FG_BLOCK_QMARK_OBJECT_ID:
-	// {
-	// 	///////////////////
-	// 	// Y AXIS
-	// 	///////////////////
-	// 	if (obj->currFlags.physicsOngoing) {
-	// 		pixelsToMove = (int)obj->physics.engine.body.subpixelY / SUBPIXEL_RESOLUTION;
-	// 		if (pixelsToMove != 0) {
-	// 			obj->physics.engine.body.subpixelY -= pixelsToMove * SUBPIXEL_RESOLUTION;
-
-	// 			int movedPosY = obj->currMapPos.y + pixelsToMove;
-	// 			if (movedPosY >= obj->origMapPos.y) {
-	// 				obj->currMapPos.y += pixelsToMove;
-	// 			} else {
-	// 				obj->currFlags.physicsOngoing = false; // finish animation
-	// 				obj->currMapPos.y = obj->origMapPos.y; // make sure object is back in original position 
-	// 				obj->physics.engine.body.subpixelY = 0.0f;
-	// 				obj->physics.engine.body.vy = 0.0f;
-	// 			}
-	// 		}
-	// 	}
-
-	// 	break;
-	// }
 	default:
 		break;
 	}
