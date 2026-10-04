@@ -268,9 +268,8 @@ void COLLISION_Resolve(GameContext_t* ctx)
 			const GameObjectRef_t* actor = (bump->actor1.id == ctx->player.id) ? &bump->actor2 : &bump->actor1;
 			ForegroundObject_t* obj = &ctx->fgObjects[actor->index];
 
-			int ret = COLLISION_Player_FGObject(&ctx->player, obj, bump);
-			if (ret > 0) { // call action after collision, collision side set as return value
-				BumpSideEnum bumpSide = ret;
+			BumpSideEnum bumpSide = COLLISION_Player_FGObject(&ctx->player, obj, bump);
+			if (bumpSide != BUMP_SIDE_NONE) { // call action after collision
 				COLLISION_FGObject_Player_Action(obj, &ctx->player, bumpSide, &ctx->objectsManager);
 			}
 			break;
@@ -298,13 +297,13 @@ void COLLISION_Resolve(GameContext_t* ctx)
 
 BumpSideEnum COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t* obj, const Bump_t* bump)
 {
+	BumpSideEnum bumpSide = BUMP_SIDE_NONE;
+
 	const int bumpLenX = CalcRectXLen(&bump->bumpRect);
 	const int bumpLenY = CalcRectYLen(&bump->bumpRect);
 
 	const int COLLISION_THRESHOLD_VERTICAL = 3;
 	const int COLLISION_THRESHOLD_HORIZONTAL = 1;
-
-	BumpSideEnum bumpSide = BUMP_SIDE_NONE;
 
 	// 1. VERTICAL COLLISION (UP/DOWN)
 	if (bumpLenX >= bumpLenY) {
