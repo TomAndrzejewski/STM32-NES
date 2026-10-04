@@ -206,7 +206,8 @@ typedef enum
 
 typedef enum 
 {
-	BUMP_SIDE_TOP = 1,
+	BUMP_SIDE_NONE = 0,
+	BUMP_SIDE_TOP,
 	BUMP_SIDE_BOTTOM,
 	BUMP_SIDE_LEFT,
 	BUMP_SIDE_RIGHT,

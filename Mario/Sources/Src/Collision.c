@@ -18,21 +18,16 @@
 int	COLLISION_Update(GameContext_t* ctx)
 {
 	if (ctx == NULL) { return -1; }
-	int ret = 0;
 
-	ret = COLLISION_Calculate(&ctx->collision, ctx);
-	if (ret < 0) { return -5; }
+	COLLISION_Calculate(&ctx->collision, ctx);
 
-	ret = COLLISION_Resolve(ctx);
-	if (ret < 0) { return -10; }
+	COLLISION_Resolve(ctx);
 
 	return 0;
 }
 
-int	COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx)
+void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx)
 {
-	if (coll == NULL || ctx == NULL) { return -1; }
-
 	coll->size = 0;
 	fast_memset(&coll->bumps, 0, sizeof(coll->bumps));
 
@@ -47,7 +42,7 @@ int	COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx)
 	//-------------------------
 	const Rect_t* levelBounds = NULL;
 	int ret = LEVEL_GetLevelBoundaries(&levelBounds);
-	if (ret < 0 || levelBounds == NULL) { return -5; }
+	if (ret < 0 || levelBounds == NULL) { return; }
 
 	Rect_t floorRect;
 	floorRect.p1.x = 0;
@@ -179,7 +174,7 @@ int	COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx)
 		//-------------------------
 		const Rect_t* levelBounds = NULL;
 		int ret = LEVEL_GetLevelBoundaries(&levelBounds);
-		if (ret < 0 || levelBounds == NULL) { return -5; }
+		if (ret < 0 || levelBounds == NULL) { return; }
 
 		Rect_t floorRect;
 		floorRect.p1.x = 0;
@@ -246,15 +241,10 @@ int	COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx)
 			}
 		}
 	}
-
-	return 0;
 }
 
-int COLLISION_Resolve(GameContext_t* ctx)
+void COLLISION_Resolve(GameContext_t* ctx)
 {
-	if (ctx == NULL) { return -1; }
-	int ret = 0;
-
 	for (int i = 0; i < ctx->collision.size; i++)
 	{
 		Bump_t* bump = &ctx->collision.bumps[i];
@@ -262,7 +252,7 @@ int COLLISION_Resolve(GameContext_t* ctx)
 		{
 		case PLAYER_BUMP_FLOOR:
 		{
-			COLLISION_Player_Floor(&ctx->player, bump, ctx);
+			COLLISION_Player_Floor(&ctx->player, ctx);
 			break;
 		}
 		case PLAYER_BUMP_ENEMY:
@@ -270,7 +260,7 @@ int COLLISION_Resolve(GameContext_t* ctx)
 			const GameObjectRef_t* actor = (bump->actor1.id == ctx->player.id) ? &bump->actor2 : &bump->actor1;
 			EnemyState_t* enemy = &ctx->enemies.pool[actor->index];
 
-			ret = COLLISION_Player_Enemy(&ctx->player, enemy, bump, ctx);
+			COLLISION_Player_Enemy(&ctx->player, enemy, bump, ctx);
 			break;
 		}
 		case PLAYER_BUMP_FG_OBJECT:
@@ -278,10 +268,10 @@ int COLLISION_Resolve(GameContext_t* ctx)
 			const GameObjectRef_t* actor = (bump->actor1.id == ctx->player.id) ? &bump->actor2 : &bump->actor1;
 			ForegroundObject_t* obj = &ctx->fgObjects[actor->index];
 
-			ret = COLLISION_Player_FGObject(&ctx->player, obj, bump);
+			int ret = COLLISION_Player_FGObject(&ctx->player, obj, bump);
 			if (ret > 0) { // call action after collision, collision side set as return value
 				BumpSideEnum bumpSide = ret;
-				COLLISION_FGObject_Player_Action(obj, &ctx->player, bumpSide, &ctx->objectsManager, ctx);
+				COLLISION_FGObject_Player_Action(obj, &ctx->player, bumpSide, &ctx->objectsManager);
 			}
 			break;
 		}
@@ -290,7 +280,7 @@ int COLLISION_Resolve(GameContext_t* ctx)
 			ForegroundObject_t* obj1 = &ctx->fgObjects[bump->actor1.index];
 			ForegroundObject_t* obj2 = &ctx->fgObjects[bump->actor2.index];
 
-			ret = COLLISION_FGObject_FGObject(obj1, obj2, bump);
+			COLLISION_FGObject_FGObject(obj1, obj2, bump);
 			break;
 		}
 		case FG_OBJECT_BUMP_FLOOR:
@@ -303,27 +293,23 @@ int COLLISION_Resolve(GameContext_t* ctx)
 			break;
 		}
 	}
-
-	return 0;
 }
 
-// return code: < 0 error, 0 ok, > 0 BumpSideEnum returned
-int COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t* obj, const Bump_t* bump)
-{
-	if (player == NULL || obj == NULL || bump == NULL) { return -1; }
 
+BumpSideEnum COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t* obj, const Bump_t* bump)
+{
 	const int bumpLenX = CalcRectXLen(&bump->bumpRect);
 	const int bumpLenY = CalcRectYLen(&bump->bumpRect);
 
 	const int COLLISION_THRESHOLD_VERTICAL = 3;
 	const int COLLISION_THRESHOLD_HORIZONTAL = 1;
 
-	int retCode = 0;
+	BumpSideEnum bumpSide = BUMP_SIDE_NONE;
 
 	// 1. VERTICAL COLLISION (UP/DOWN)
 	if (bumpLenX >= bumpLenY) {
-		if (!(obj->assetFlags & COLL_TOP_ENABLED) && !(obj->assetFlags & COLL_DOWN_ENABLED)) return 0;
-		if (bumpLenX <= COLLISION_THRESHOLD_VERTICAL) return 0;
+		if (!(obj->assetFlags & COLL_TOP_ENABLED) && !(obj->assetFlags & COLL_DOWN_ENABLED)) return BUMP_SIDE_NONE;
+		if (bumpLenX <= COLLISION_THRESHOLD_VERTICAL) return BUMP_SIDE_NONE;
 
 		int bumpCenterY = (bump->bumpRect.p1.y + bump->bumpRect.p2.y) / 2;
 
@@ -341,14 +327,14 @@ int COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t* obj, co
 			if ((obj->assetFlags & COLL_DOWN_ENABLED)) {
 				player->body.vy = -0.5f;
 				player->currMapPos.y = obj->currMapPos.y - player->asset.BBox.p2.y;
-				retCode = BUMP_SIDE_BOTTOM;
+				bumpSide = BUMP_SIDE_BOTTOM;
 			}
 		}
 	}
 	// 2. HORIZONTAL COLLISION (LEFT/RIGHT)
 	else {
-		if (!(obj->assetFlags & COLL_LEFT_ENABLED) && !(obj->assetFlags & COLL_RIGHT_ENABLED)) return 0;
-		if (bumpLenY <= COLLISION_THRESHOLD_HORIZONTAL) return 0;
+		if (!(obj->assetFlags & COLL_LEFT_ENABLED) && !(obj->assetFlags & COLL_RIGHT_ENABLED)) return BUMP_SIDE_NONE;
+		if (bumpLenY <= COLLISION_THRESHOLD_HORIZONTAL) return BUMP_SIDE_NONE;
 
 		int centerBumpX = (bump->bumpRect.p1.x + bump->bumpRect.p2.x) / 2;
 
@@ -370,39 +356,30 @@ int COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t* obj, co
 		}
 	}
 
-	return retCode;
+	return bumpSide;
 }
 
-int COLLISION_Player_Floor(PlayerState_t* player, const Bump_t* bump, const GameContext_t* ctx)
+void COLLISION_Player_Floor(PlayerState_t* player, const GameContext_t* ctx)
 {
-	if (player == NULL || bump == NULL || ctx == NULL) { return -1; }
-
 	if (!player->IsGrounded) {
 		player->IsGrounded = true;
 		player->currMapPos.y = ctx->map.floorYLevel;
 		player->body.subpixelY = 0.0f;
 		player->body.vy = 0.0f;
 	}
-
-	return 0;
 }
 
-int COLLISION_Player_Enemy(PlayerState_t* player, EnemyState_t* enemy, const Bump_t* bump, const GameContext_t* ctx)
+void COLLISION_Player_Enemy(PlayerState_t* player, EnemyState_t* enemy, const Bump_t* bump, const GameContext_t* ctx)
 {
-	if (player == NULL || enemy == NULL || bump == NULL || ctx == NULL) { return -1; }
-
-	return 0;
+	if (player == NULL || enemy == NULL || bump == NULL || ctx == NULL) { return; }
 }
 
-int COLLISION_FGObject_Player_Action(
+void COLLISION_FGObject_Player_Action(
 	ForegroundObject_t* obj, 
 	PlayerState_t* player, 
 	BumpSideEnum bumpSide, 
-	ObjectsManager_t* mgr, 
-	const GameContext_t* ctx)
+	ObjectsManager_t* mgr)
 {
-	if (obj == NULL || player == NULL || ctx == NULL) { return -1; }
-
 	bool prevPlayerHitFGObjectFromBottom = player->JustHitFGObjectFromBottom;
 
 	if (bumpSide == BUMP_SIDE_BOTTOM && !player->JustHitFGObjectFromBottom) {
@@ -493,13 +470,11 @@ int COLLISION_FGObject_Player_Action(
 			}
 		}
 	}
-
-	return 0;
 }
 
-int COLLISION_FGObject_FGObject(ForegroundObject_t* actor, ForegroundObject_t* obj, const Bump_t* bump)
+BumpSideEnum COLLISION_FGObject_FGObject(ForegroundObject_t* actor, ForegroundObject_t* obj, const Bump_t* bump)
 {	
-	int retCode = 0;
+	BumpSideEnum bumpSide = BUMP_SIDE_NONE;
 	
 	const int bumpLenX = CalcRectXLen(&bump->bumpRect);
 	const int bumpLenY = CalcRectYLen(&bump->bumpRect);
@@ -511,14 +486,14 @@ int COLLISION_FGObject_FGObject(ForegroundObject_t* actor, ForegroundObject_t* o
 	
 	// 1. VERTICAL COLLISION (UP/DOWN)
 	if (bumpLenX >= bumpLenY) {
-		if (!(obj->assetFlags & COLL_TOP_ENABLED) && !(obj->assetFlags & COLL_DOWN_ENABLED)) return 0;
-		if (bumpLenX <= COLLISION_THRESHOLD_VERTICAL) return 0;
+		if (!(obj->assetFlags & COLL_TOP_ENABLED) && !(obj->assetFlags & COLL_DOWN_ENABLED)) return BUMP_SIDE_NONE;
+		if (bumpLenX <= COLLISION_THRESHOLD_VERTICAL) return BUMP_SIDE_NONE;
 
 		int bumpCenterY = (bump->bumpRect.p1.y + bump->bumpRect.p2.y) / 2;
 
 		// LANDING ON OBJECT (TOP OF THE OBJECT)
 		if (bumpCenterY > obj->BBoxCenter.y) {
-			if (!(obj->assetFlags & COLL_TOP_ENABLED)) return 0;
+			if (!(obj->assetFlags & COLL_TOP_ENABLED)) return BUMP_SIDE_NONE;
 			if (obj->currMapPos.y > obj->prevMapPos.y) {
 				actor->currFlags.IsGrounded = false;
 				actor->currMapPos.y = obj->currMapPos.y + obj->asset.BBox.p2.y + 1; // Bump one pixel above collision
@@ -541,14 +516,14 @@ int COLLISION_FGObject_FGObject(ForegroundObject_t* actor, ForegroundObject_t* o
 			if ((obj->assetFlags & COLL_DOWN_ENABLED)) {
 				actorBody->vy = -0.7f;
 				actor->currMapPos.y = obj->currMapPos.y - actor->asset.BBox.p2.y;
-				retCode = BUMP_SIDE_BOTTOM;
+				bumpSide = BUMP_SIDE_BOTTOM;
 			}
 		}
 	}
 	// 2. HORIZONTAL COLLISION (LEFT/RIGHT)
 	else {
-		if (!(obj->assetFlags & COLL_LEFT_ENABLED) && !(obj->assetFlags & COLL_RIGHT_ENABLED)) return 0;
-		if (bumpLenY <= COLLISION_THRESHOLD_HORIZONTAL) return 0;
+		if (!(obj->assetFlags & COLL_LEFT_ENABLED) && !(obj->assetFlags & COLL_RIGHT_ENABLED)) return BUMP_SIDE_NONE;
+		if (bumpLenY <= COLLISION_THRESHOLD_HORIZONTAL) return BUMP_SIDE_NONE;
 
 		int centerBumpX = (bump->bumpRect.p1.x + bump->bumpRect.p2.x) / 2;
 
@@ -570,7 +545,7 @@ int COLLISION_FGObject_FGObject(ForegroundObject_t* actor, ForegroundObject_t* o
 		}
 	}
 
-	return retCode;
+	return bumpSide;
 }
 
 void COLLISION_FGObject_Floor(ForegroundObject_t* actor, const GameContext_t* ctx)
