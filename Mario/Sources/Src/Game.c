@@ -70,9 +70,8 @@ int GAME_Update(GameContext_t* ctx)
 	timeStamps++;
 
 	s->startTime[timeStamps] = GetTimestamp();
-	ret = OBJECTS_MANAGER_Update(ctx);
+	OBJECTS_MANAGER_Update(ctx);
 	s->finishTime[timeStamps] = GetTimestamp();
-	if (ret < 0)	{ delay(1); return -20; }
 	timeStamps++;
 
 	s->startTime[timeStamps] = GetTimestamp();
@@ -163,6 +162,10 @@ int GAME_Update(GameContext_t* ctx)
 				printf_c('\t');
 			}
 			printf_c('\n');
+
+			const ObjectsManager_t* mgr = &ctx->objectsManager;
+			printf_v("Dropped FG: %d, enemies: %d, BG: %d, spawn orders: %d\n",
+				(int)mgr->droppedFGObjects, (int)mgr->droppedEnemies, (int)mgr->droppedBGObjects, (int)mgr->droppedSpawnOrders);
 		}
 	}
 

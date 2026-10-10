@@ -12,10 +12,20 @@
 #include "Game_Types.h"
 #include "GraphicsAssets.h"
 #include "NES_Functions.h"
+#include "NES_Assert.h"
 #include "printf_logger.h"
 
 
-bool OBJECTS_MANAGER_IsThisEnemyID(const GameObjectID id)
+static void OBJECTS_MANAGER_CalcActiveRegion(ObjectsManager_t* mgr, const GameContext_t* ctx);
+static void OBJECTS_MANAGER_LoadObjects(GameContext_t* ctx);
+static void OBJECTS_MANAGER_SpawnObject(GameContext_t* ctx, const ObjectLevelInstance_t* objectDef);
+static void OBJECTS_MANAGER_DeleteObjects(GameContext_t* ctx);
+static void OBJECTS_MANAGER_Enemy_Load(EnemyState_t* enemy, const ObjectLevelInstance_t* objectDef);
+static void OBJECTS_MANAGER_FGObject_Load(ForegroundObject_t* obj, const ObjectLevelInstance_t* objectDef);
+static void OBJECTS_MANAGER_BGObject_Load(BackgroundObject_t* obj, const ObjectLevelInstance_t* objectDef);
+
+
+static bool OBJECTS_MANAGER_IsThisEnemyID(const GameObjectID id)
 {
 	if (id >= ENEMY_ID_START && id <= ENEMY_ID_END) {
 		return true;
@@ -23,7 +33,7 @@ bool OBJECTS_MANAGER_IsThisEnemyID(const GameObjectID id)
 	return false;
 }
 
-bool OBJECTS_MANAGER_IsThisFGID(const GameObjectID id)
+static bool OBJECTS_MANAGER_IsThisFGID(const GameObjectID id)
 {
 	if (id >= FOREGROUND_OBJECT_ID_START && id <= FOREGROUND_OBJECT_ID_END) {
 		return true;
@@ -31,7 +41,7 @@ bool OBJECTS_MANAGER_IsThisFGID(const GameObjectID id)
 	return false;
 }
 
-bool OBJECTS_MANAGER_IsThisBGID(const GameObjectID id)
+static bool OBJECTS_MANAGER_IsThisBGID(const GameObjectID id)
 {
 	if (id >= BACKGROUND_OBJECT_ID_START && id <= BACKGROUND_OBJECT_ID_END) {
 		return true;
@@ -39,23 +49,20 @@ bool OBJECTS_MANAGER_IsThisBGID(const GameObjectID id)
 	return false;
 }
 
-int OBJECTS_MANAGER_Update(GameContext_t* ctx)
+// Module boundary: arguments are validated only here and in OBJECTS_MANAGER_OrderSpawn.
+void OBJECTS_MANAGER_Update(GameContext_t* ctx)
 {
-	if (ctx == NULL) { return -1; }
-	int ret = 0;
+	NES_ASSERT(ctx != NULL);
+	NES_ASSERT(ctx->objectsManager.objectPool != NULL);
 
 	OBJECTS_MANAGER_CalcActiveRegion(&ctx->objectsManager, ctx);
 
-	ret = OBJECTS_MANAGER_DeleteObjects(ctx);
-	if (ret < 0) { return -5; }
+	OBJECTS_MANAGER_DeleteObjects(ctx);
 
-	ret = OBJECTS_MANAGER_LoadObjects(ctx);
-	if (ret < 0) { return -10; }
-
-	return 0;
+	OBJECTS_MANAGER_LoadObjects(ctx);
 }
 
-void OBJECTS_MANAGER_CalcActiveRegion(ObjectsManager_t* mgr, const GameContext_t* ctx)
+static void OBJECTS_MANAGER_CalcActiveRegion(ObjectsManager_t* mgr, const GameContext_t* ctx)
 {
 	mgr->activeWorldRect.p1.x = ctx->camera.screenRect.p1.x - OBJECTS_MANAGER_LEFT_DESPAWN_OFFSET;
 	if (mgr->activeWorldRect.p1.x < 0) {
@@ -66,15 +73,13 @@ void OBJECTS_MANAGER_CalcActiveRegion(ObjectsManager_t* mgr, const GameContext_t
 	mgr->activeWorldRect.p2.y = ctx->camera.screenRect.p2.y;
 }
 
-int OBJECTS_MANAGER_LoadObjects(GameContext_t* ctx)
+static void OBJECTS_MANAGER_LoadObjects(GameContext_t* ctx)
 {
 	ObjectsManager_t* mgr = &ctx->objectsManager;
 
 	//----------------
 	// OBJECTS FROM LEVEL POOL
 	//----------------
-	if (mgr->objectPool == NULL) { return -1; }
-
 	int loadedObjects = 0;
 	while (loadedObjects < 100) // could be while(1) but safety first
 	{
@@ -108,18 +113,18 @@ int OBJECTS_MANAGER_LoadObjects(GameContext_t* ctx)
 		OBJECTS_MANAGER_SpawnObject(ctx, objectDef);
 	}
 	mgr->spawnBufferSize = 0; // assume every object has been spawned
-
-	return 0;
 }
 
-int OBJECTS_MANAGER_SpawnObject(GameContext_t* ctx, const ObjectLevelInstance_t* objectDef)
+// A full pool is not a bug: the object is skipped, counted and the game goes on.
+static void OBJECTS_MANAGER_SpawnObject(GameContext_t* ctx, const ObjectLevelInstance_t* objectDef)
 {
 	// load object
 	if (OBJECTS_MANAGER_IsThisFGID(objectDef->id)) 
 	{
 		if (ctx->activefgObjects >= FOREGROUND_OBJECTS_MAX_SIZE) {
 			printf_str("\n### ERROR, max FGObjects reached ###\n");
-			return -5;
+			ctx->objectsManager.droppedFGObjects++;
+			return;
 		}
 
 		// find free slot
@@ -132,10 +137,7 @@ int OBJECTS_MANAGER_SpawnObject(GameContext_t* ctx, const ObjectLevelInstance_t*
 			}
 		}
 
-		if (index < 0) {
-			printf_str("\n### ERROR, no free FGObject found ###\n");
-			return -10;
-		}
+		NES_ASSERT(index >= 0); // active counter below MAX guarantees a free slot
 
 		// fill free slot with new object
 		ctx->IsFGObjectActive[index] = true;
@@ -150,7 +152,8 @@ int OBJECTS_MANAGER_SpawnObject(GameContext_t* ctx, const ObjectLevelInstance_t*
 	{
 		if (ctx->enemies.activeEnemies >= ENEMIES_MAX_SIZE) {
 			printf_str("\n### ERROR, max enemies reached ###\n");
-			return -15;
+			ctx->objectsManager.droppedEnemies++;
+			return;
 		}
 
 		// find free slot
@@ -163,10 +166,7 @@ int OBJECTS_MANAGER_SpawnObject(GameContext_t* ctx, const ObjectLevelInstance_t*
 			}
 		}
 
-		if (index < 0) {
-			printf_str("\n### ERROR, no free enemies found ###\n");
-			return -20;
-		}
+		NES_ASSERT(index >= 0); // active counter below MAX guarantees a free slot
 
 		// fill free slot with new object
 		ctx->enemies.IsEnemyActive[index] = true;
@@ -180,7 +180,8 @@ int OBJECTS_MANAGER_SpawnObject(GameContext_t* ctx, const ObjectLevelInstance_t*
 	{
 		if (ctx->activebgObjects >= BACKGROUND_OBJECTS_MAX_SIZE) {
 			printf_str("\n### ERROR, max BGObjects reached ###\n");
-			return -25;
+			ctx->objectsManager.droppedBGObjects++;
+			return;
 		}
 
 		// find free slot
@@ -193,10 +194,7 @@ int OBJECTS_MANAGER_SpawnObject(GameContext_t* ctx, const ObjectLevelInstance_t*
 			}
 		}
 
-		if (index < 0) {
-			printf_str("\n### ERROR, no free BGObject found ###\n");
-			return -30;
-		}
+		NES_ASSERT(index >= 0); // active counter below MAX guarantees a free slot
 
 		ctx->IsBGObjectActive[index] = true;
 		BackgroundObject_t* bgObject = &ctx->bgObjects[index];
@@ -206,11 +204,13 @@ int OBJECTS_MANAGER_SpawnObject(GameContext_t* ctx, const ObjectLevelInstance_t*
 		ctx->bgObjectsLUT[ctx->activebgObjects] = index;
 		ctx->activebgObjects++;
 	}
-
-	return 0;
+	else
+	{
+		NES_ASSERT(false); // ID outside of FG/enemy/BG ranges, level definition is broken
+	}
 }
 
-int OBJECTS_MANAGER_DeleteObjects(GameContext_t* ctx)
+static void OBJECTS_MANAGER_DeleteObjects(GameContext_t* ctx)
 {
 	ObjectsManager_t* mgr = &ctx->objectsManager;
 
@@ -291,14 +291,10 @@ int OBJECTS_MANAGER_DeleteObjects(GameContext_t* ctx)
 			}
 		}
 	}
-
-	return 0;
 }
 
-int OBJECTS_MANAGER_Enemy_Load(EnemyState_t* enemy, const ObjectLevelInstance_t* objectDef)
+static void OBJECTS_MANAGER_Enemy_Load(EnemyState_t* enemy, const ObjectLevelInstance_t* objectDef)
 {
-	if (enemy == NULL || objectDef == NULL) { return -1; }
-
 	fast_memset(enemy, 0, sizeof(EnemyState_t));
 
 	enemy->id = objectDef->id;
@@ -318,6 +314,7 @@ int OBJECTS_MANAGER_Enemy_Load(EnemyState_t* enemy, const ObjectLevelInstance_t*
 		break;
 	}
 	default:
+		NES_ASSERT(false); // ID without an asset, add a case above
 		break;
 	}
 
@@ -327,14 +324,10 @@ int OBJECTS_MANAGER_Enemy_Load(EnemyState_t* enemy, const ObjectLevelInstance_t*
 	enemy->currMapPos.y = objectDef->y;
 	enemy->prevMapPos = enemy->currMapPos;
 	enemy->prevSpriteSize = enemy->asset.baseAsset.sprite.size;
-
-	return 0;
 }
 
-int OBJECTS_MANAGER_FGObject_Load(ForegroundObject_t* obj, const ObjectLevelInstance_t* objectDef)
+static void OBJECTS_MANAGER_FGObject_Load(ForegroundObject_t* obj, const ObjectLevelInstance_t* objectDef)
 {
-	if (obj == NULL || objectDef == NULL) { return -1;}
-
 	fast_memset(obj, 0, sizeof(ForegroundObject_t));
 	
 	obj->animableAsset = NULL;
@@ -423,6 +416,7 @@ int OBJECTS_MANAGER_FGObject_Load(ForegroundObject_t* obj, const ObjectLevelInst
 		break;
 	}
 	default:
+		NES_ASSERT(false); // ID without an asset, add a case above
 		break;
 	}
 
@@ -442,14 +436,10 @@ int OBJECTS_MANAGER_FGObject_Load(ForegroundObject_t* obj, const ObjectLevelInst
 	obj->prevFlags = obj->currFlags;
 	obj->bumpCounter = 0;
 	obj->rewardCounter = 0;
-	
-	return 0;
 }
 
-int OBJECTS_MANAGER_BGObject_Load(BackgroundObject_t* obj, const ObjectLevelInstance_t* objectDef)
+static void OBJECTS_MANAGER_BGObject_Load(BackgroundObject_t* obj, const ObjectLevelInstance_t* objectDef)
 {
-	if (obj == NULL || objectDef == NULL) { return -1;}
-
 	fast_memset(obj, 0, sizeof(BackgroundObject_t));
 
 	obj->id = objectDef->id;
@@ -496,18 +486,20 @@ int OBJECTS_MANAGER_BGObject_Load(BackgroundObject_t* obj, const ObjectLevelInst
 		break;
 	}
 	default:
+		NES_ASSERT(false); // ID without an asset, add a case above
 		break;
 	}
-	
-	return 0;
 }
 
+// Returns 0 when the order was queued, -1 when the buffer was full and the order was dropped.
 int	OBJECTS_MANAGER_OrderSpawn(ObjectsManager_t* mgr, const ObjectLevelInstance_t* objectToSpawn)
 {
-	if (mgr == NULL || objectToSpawn == NULL) { return -1;}
+	NES_ASSERT(mgr != NULL);
+	NES_ASSERT(objectToSpawn != NULL);
 
 	if (mgr->spawnBufferSize > OBJECTS_MANAGER_SPAWN_BUFFER_MAX_SIZE - 1) {
-		return -5;
+		mgr->droppedSpawnOrders++;
+		return -1;
 	}
 
 	mgr->spawnBuffer[mgr->spawnBufferSize] = *objectToSpawn;

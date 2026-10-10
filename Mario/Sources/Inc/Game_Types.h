@@ -424,6 +424,12 @@ typedef struct
 	int spawnBufferSize;
 	ObjectLevelInstance_t spawnBuffer[OBJECTS_MANAGER_SPAWN_BUFFER_MAX_SIZE];
 
+	// Degradation counters: objects skipped because a fixed-size buffer was full
+	uint32_t droppedFGObjects;
+	uint32_t droppedEnemies;
+	uint32_t droppedBGObjects;
+	uint32_t droppedSpawnOrders;
+
 }ObjectsManager_t;
 
 typedef struct
