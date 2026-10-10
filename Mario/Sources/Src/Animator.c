@@ -61,19 +61,36 @@ int ANIMATOR_Player_Update(PlayerState_t* player, const GameContext_t* ctx)
 	if (player == NULL || ctx == NULL) { return -1; }
 	int ret = 0;
 
-	ret = ANIMATOR_Player_Decide(player, ctx);
-	if (ret < 0) { return -5; }
-
+	ANIMATOR_Player_Decide(player, ctx);
+	
 	ret = ANIMATOR_Player_SetAsset(player);
 	if (ret < 0) { return -5; }
 
 	return 0;
 }
 
-int ANIMATOR_Player_Decide(PlayerState_t* player, const GameContext_t* ctx)
+void ANIMATOR_Player_Decide(PlayerState_t* player, const GameContext_t* ctx)
 {
-	if (player == NULL || ctx == NULL) { return -1; }
+	// if (player->triggerLevelUp && !player->levelUpOngoing) {
+	// 	player->triggerLevelUp = false;
+	// 	player->levelUpOngoing = true;
+	// }
 
+	// if (player->levelUpOngoing) {
+	// 	ANIMATOR_Player_Decide_LevelUp(player, ctx);
+	// }
+	// else {
+		ANIMATOR_Player_Decide_Normal(player, ctx);	
+	// }
+}
+
+// void ANIMATOR_Player_Decide_LevelUp(PlayerState_t* player, const GameContext_t* ctx)
+// {
+
+// }
+
+void ANIMATOR_Player_Decide_Normal(PlayerState_t* player, const GameContext_t* ctx)
+{
 	const float vxThreshold = 0.0f;
 	const float vyThreshold = 0.0f;
 
@@ -126,13 +143,6 @@ int ANIMATOR_Player_Decide(PlayerState_t* player, const GameContext_t* ctx)
 			}
 		}
 	}
-
-		
-// 	} else if (isPlayerDead) {
-// //		player->animator.currAnimation = MARIO_DEAD_ANIMATION_ID;
-// 	}
-
-	return 0;
 }
 
 int ANIMATOR_Player_SetAsset(PlayerState_t* player)

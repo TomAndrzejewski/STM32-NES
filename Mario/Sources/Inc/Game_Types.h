@@ -220,22 +220,21 @@ typedef struct
 	GameObjectRef_t actor1;
 	GameObjectRef_t actor2;
 	Rect_t bumpRect;
-
+	BumpSideEnum bumpSide;
 }Bump_t;
 
 typedef struct
 {
 	int size;
-	Bump_t bumps[COLLISIONS_SIZE] __attribute__((aligned(4)));
+	Bump_t bumps[COLLISIONS_SIZE];
 
 }CollisionState_t;
 
-typedef enum
-{
-	PLAYER_LITTLE,
-	PLAYER_BIG,
-	PLAYER_SHOOTING,
-}PlayerLevel;
+typedef enum {
+	PLAYER_SMALL_MARIO,
+	PLAYER_SUPER_MARIO,
+	PLAYER_FIRE_MARIO,
+} PlayerLevel;
 
 typedef enum
 {
@@ -284,6 +283,8 @@ typedef struct
 	bool damageTaken;
 	bool IsGrounded;
 	bool JustHitFGObjectFromBottom;
+	bool triggerLevelUp;
+	bool levelUpOngoing;
 
 }PlayerState_t;
 
@@ -526,8 +527,9 @@ typedef struct
 	GameStats_t stats;
 
 	bool firstGameLoop;
+	bool simulationPause;
 
-}GameContext_t;
+} GameContext_t;
 
 typedef struct
 {

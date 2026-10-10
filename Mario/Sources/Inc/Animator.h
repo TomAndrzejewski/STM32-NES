@@ -12,7 +12,9 @@
 
 int     ANIMATOR_Update(GameContext_t* ctx);
 int     ANIMATOR_Player_Update(PlayerState_t* player, const GameContext_t* ctx);
-int     ANIMATOR_Player_Decide(PlayerState_t* player, const GameContext_t* ctx);
+void    ANIMATOR_Player_Decide(PlayerState_t* player, const GameContext_t* ctx);
+void    ANIMATOR_Player_Decide_Normal(PlayerState_t* player, const GameContext_t* ctx);
+// void    ANIMATOR_Player_Decide_LevelUp(PlayerState_t* player, const GameContext_t* ctx);
 int     ANIMATOR_Player_SetAsset(PlayerState_t* player);
 int     ANIMATOR_FGObject_Update(ForegroundObject_t* obj, const GameContext_t* ctx);
 int     ANIMATOR_FGObject_Decide(ForegroundObject_t* obj, const GameContext_t* ctx);

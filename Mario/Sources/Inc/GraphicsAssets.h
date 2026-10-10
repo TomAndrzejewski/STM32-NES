@@ -13,7 +13,7 @@
 ///////////////////
 // PLAYER
 ///////////////////
-extern const AnimableAsset_t MARIO_ANIMABLE_ASSET;
+extern const AnimableAsset_t MARIO_SMALL_ANIMABLE_ASSET;
 
 ///////////////////
 // FOREGROUND

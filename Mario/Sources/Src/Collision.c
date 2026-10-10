@@ -95,6 +95,7 @@ void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx)
 				coll->bumps[coll->size].actor1 = (GameObjectRef_t){ ctx->player.id, 0 };
 				coll->bumps[coll->size].actor2 = (GameObjectRef_t){ fgObject->id, indexLUT };
 				coll->bumps[coll->size].bumpRect = bumpRect;
+				coll->bumps[coll->size].bumpSide = COLLISION_Player_FGObject_DetectBumpSide(fgObject, &bumpRect);
 				coll->size++;
 			}
 		}
@@ -268,10 +269,25 @@ void COLLISION_Resolve(GameContext_t* ctx)
 			const GameObjectRef_t* actor = (bump->actor1.id == ctx->player.id) ? &bump->actor2 : &bump->actor1;
 			ForegroundObject_t* obj = &ctx->fgObjects[actor->index];
 
-			BumpSideEnum bumpSide = COLLISION_Player_FGObject(&ctx->player, obj, bump);
-			if (bumpSide != BUMP_SIDE_NONE) { // call action after collision
-				COLLISION_FGObject_Player_Action(obj, &ctx->player, bumpSide, &ctx->objectsManager);
-			}
+			// switch (obj->id)
+			// {
+			// case FG_REWARD_LEVEL_UP_MUSHROOM_OBJECT_ID:
+			// {
+			// 	COLLISION_Player_RewardFGObject_Handle(&ctx->player, obj);
+			// 	break;
+			// }
+			// All solid blocks
+			// default:
+			// {
+				COLLISION_Player_SolidFGObject_Handle(&ctx->player, obj, bump->bumpSide);
+				if (bump->bumpSide != BUMP_SIDE_NONE) { // call action after collision
+					COLLISION_Player_SolidFGObject_SideEffect(obj, &ctx->player, bump->bumpSide, &ctx->objectsManager);
+				}
+
+			// 	break;
+			// }
+			// }
+
 			break;
 		}
 		case FG_OBJECT_BUMP_FG_OBJECT:
@@ -294,13 +310,11 @@ void COLLISION_Resolve(GameContext_t* ctx)
 	}
 }
 
-
-BumpSideEnum COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t* obj, const Bump_t* bump)
+// Returns bump side seen from bumped object perspective (i.e. player jumps on top of object then BUMP_SIDE_TOP is returned)
+BumpSideEnum COLLISION_Player_FGObject_DetectBumpSide(const ForegroundObject_t* obj, const Rect_t* bumpRect)
 {
-	BumpSideEnum bumpSide = BUMP_SIDE_NONE;
-
-	const int bumpLenX = CalcRectXLen(&bump->bumpRect);
-	const int bumpLenY = CalcRectYLen(&bump->bumpRect);
+	const int bumpLenX = CalcRectXLen(bumpRect);
+	const int bumpLenY = CalcRectYLen(bumpRect);
 
 	const int COLLISION_THRESHOLD_VERTICAL = 3;
 	const int COLLISION_THRESHOLD_HORIZONTAL = 1;
@@ -310,23 +324,18 @@ BumpSideEnum COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t
 		if (!(obj->assetFlags & COLL_TOP_ENABLED) && !(obj->assetFlags & COLL_DOWN_ENABLED)) return BUMP_SIDE_NONE;
 		if (bumpLenX <= COLLISION_THRESHOLD_VERTICAL) return BUMP_SIDE_NONE;
 
-		int bumpCenterY = (bump->bumpRect.p1.y + bump->bumpRect.p2.y) / 2;
+		int bumpCenterY = (bumpRect->p1.y + bumpRect->p2.y) / 2;
 
 		// LANDING ON OBJECT (TOP OF THE OBJECT)
 		if (bumpCenterY > obj->BBoxCenter.y) {
-			if ((obj->assetFlags & COLL_TOP_ENABLED) && !player->IsGrounded) {
-				player->IsGrounded = true;
-				player->currMapPos.y = obj->currMapPos.y + obj->asset.BBox.p2.y;
-				player->body.subpixelY = 0.0f;
-				player->body.vy = 0.0f;
+			if (obj->assetFlags & COLL_TOP_ENABLED) {
+				return BUMP_SIDE_TOP;
 			}
 		}
 		// BUMPING FROM THE BOTTOM
 		else {
-			if ((obj->assetFlags & COLL_DOWN_ENABLED)) {
-				player->body.vy = -0.5f;
-				player->currMapPos.y = obj->currMapPos.y - player->asset.BBox.p2.y;
-				bumpSide = BUMP_SIDE_BOTTOM;
+			if (obj->assetFlags & COLL_DOWN_ENABLED) {
+				return BUMP_SIDE_BOTTOM;
 			}
 		}
 	}
@@ -335,27 +344,81 @@ BumpSideEnum COLLISION_Player_FGObject(PlayerState_t* player, ForegroundObject_t
 		if (!(obj->assetFlags & COLL_LEFT_ENABLED) && !(obj->assetFlags & COLL_RIGHT_ENABLED)) return BUMP_SIDE_NONE;
 		if (bumpLenY <= COLLISION_THRESHOLD_HORIZONTAL) return BUMP_SIDE_NONE;
 
-		int centerBumpX = (bump->bumpRect.p1.x + bump->bumpRect.p2.x) / 2;
+		int centerBumpX = (bumpRect->p1.x + bumpRect->p2.x) / 2;
 
 		// BUMPING FROM RIGHT
 		if (centerBumpX > obj->BBoxCenter.x) {
-			if ((obj->assetFlags & COLL_RIGHT_ENABLED)) {
-				player->body.vx = 0.0f;
-				player->body.subpixelX = 0.0f;
-				player->currMapPos.x = obj->currMapPos.x + obj->asset.BBox.p2.x + 1; // +1 in order to not "glue" to the object
+			if (obj->assetFlags & COLL_RIGHT_ENABLED) {
+				return BUMP_SIDE_RIGHT;
 			}
 		}
 		// BUMPING FROM LEFT
 		else {
-			if ((obj->assetFlags & COLL_LEFT_ENABLED)) {
-				player->body.vx = 0.0f;
-				player->body.subpixelX = 0.0f;
-				player->currMapPos.x = obj->currMapPos.x - player->asset.BBox.p2.x - 1; // - 1 in order to not "glue" to the object
+			if (obj->assetFlags & COLL_LEFT_ENABLED) {
+				return BUMP_SIDE_LEFT;
 			}
 		}
 	}
 
-	return bumpSide;
+	return BUMP_SIDE_NONE;
+}
+
+void COLLISION_Player_RewardFGObject_Handle(PlayerState_t* player, ForegroundObject_t* obj)
+{
+	switch (obj->id)
+	{
+	case FG_REWARD_LEVEL_UP_MUSHROOM_OBJECT_ID:
+	{
+		player->triggerLevelUp = true;
+		obj->currFlags.IsAlive = false;
+		break;
+	}
+	default:
+		break;
+	}
+}
+
+void COLLISION_Player_SolidFGObject_Handle(PlayerState_t* player, const ForegroundObject_t* obj, BumpSideEnum bumpSide)
+{
+	switch (bumpSide)
+	{
+	case BUMP_SIDE_TOP:
+	{
+		if (!player->IsGrounded) {
+			player->IsGrounded = true;
+			player->currMapPos.y = obj->currMapPos.y + obj->asset.BBox.p2.y;
+			player->body.subpixelY = 0.0f;
+			player->body.vy = 0.0f;
+		}
+
+		break;
+	}
+	case BUMP_SIDE_BOTTOM:
+	{
+		player->body.vy = -0.5f;
+		player->currMapPos.y = obj->currMapPos.y - player->asset.BBox.p2.y;
+		
+		break;
+	}
+	case BUMP_SIDE_LEFT:
+	{
+		player->body.vx = 0.0f;
+		player->body.subpixelX = 0.0f;
+		player->currMapPos.x = obj->currMapPos.x - player->asset.BBox.p2.x - 1; // - 1 in order to not "glue" to the object
+		
+		break;
+	}
+	case BUMP_SIDE_RIGHT:
+	{
+		player->body.vx = 0.0f;
+		player->body.subpixelX = 0.0f;
+		player->currMapPos.x = obj->currMapPos.x + obj->asset.BBox.p2.x + 1; // +1 in order to not "glue" to the object
+		
+		break;
+	}
+	default:
+		break;
+	}
 }
 
 void COLLISION_Player_Floor(PlayerState_t* player, const GameContext_t* ctx)
@@ -373,7 +436,7 @@ void COLLISION_Player_Enemy(PlayerState_t* player, EnemyState_t* enemy, const Bu
 	if (player == NULL || enemy == NULL || bump == NULL || ctx == NULL) { return; }
 }
 
-void COLLISION_FGObject_Player_Action(
+void COLLISION_Player_SolidFGObject_SideEffect(
 	ForegroundObject_t* obj, 
 	PlayerState_t* player, 
 	BumpSideEnum bumpSide, 
@@ -408,7 +471,7 @@ void COLLISION_FGObject_Player_Action(
 	if (obj->assetFlags & DESTROYABLE) 
 	{
 		if (bumpSide == BUMP_SIDE_BOTTOM && !prevPlayerHitFGObjectFromBottom) {
-			bool isPlayerBig = (player->playerLevel == PLAYER_BIG || player->playerLevel == PLAYER_SHOOTING) ? true : false;
+			bool isPlayerBig = (player->playerLevel == PLAYER_SUPER_MARIO || player->playerLevel == PLAYER_FIRE_MARIO) ? true : false;
 			if (isPlayerBig) {
 				// General Info to every system: I'm dead!
 				obj->currFlags.IsAlive = false;

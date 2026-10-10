@@ -38,6 +38,9 @@ int GAME_Update(GameContext_t* ctx)
 
 	GameStats_t* s = &ctx->stats;
 
+	// Big event, later use state machine
+	GAME_HandlePlayerLevelUp(ctx);
+
 
 	s->startTime[timeStamps] = GetTimestamp();
 	ret = INPUT_Update(&ctx->input, ctx, targetFrameTimeUS);
@@ -51,7 +54,9 @@ int GAME_Update(GameContext_t* ctx)
 	// timeStamps++;
 
 	s->startTime[timeStamps] = GetTimestamp();
-	ret = PHYSICS_Player_Update(&ctx->player, ctx);
+	if (!ctx->simulationPause) {
+		ret = PHYSICS_Player_Update(&ctx->player, ctx);
+	}
 	s->finishTime[timeStamps] = GetTimestamp();
 	if (ret < 0)	{ delay(1); return -10; }
 	timeStamps++;
@@ -75,7 +80,9 @@ int GAME_Update(GameContext_t* ctx)
 	timeStamps++;
 
 	s->startTime[timeStamps] = GetTimestamp();
-	ret = PHYSICS_Update(ctx);
+	if (!ctx->simulationPause) {
+		ret = PHYSICS_Update(ctx);
+	}
 	s->finishTime[timeStamps] = GetTimestamp();
 	if (ret < 0)	{ delay(1); return -30; }
 	timeStamps++;
@@ -87,7 +94,9 @@ int GAME_Update(GameContext_t* ctx)
 	timeStamps++;
 
 	s->startTime[timeStamps] = GetTimestamp();
-	ret = COLLISION_Update(ctx);
+	if (!ctx->simulationPause) {
+		ret = COLLISION_Update(ctx);
+	}
 	s->finishTime[timeStamps] = GetTimestamp();
 	if (ret < 0)	{ delay(1); return -40; }
 	timeStamps++;
@@ -172,6 +181,7 @@ int GAME_InitContext(GameContext_t* ctx)
 	memset(ctx, 0, sizeof(GameContext_t));
 
 	ctx->firstGameLoop = true;
+	ctx->simulationPause = false;
 
 	///////////////////
 	// STATISTICS
@@ -310,7 +320,7 @@ int GAME_InitContext(GameContext_t* ctx)
 	///////////////////
 	// PLAYER
 	///////////////////
-	ctx->player.animableAsset = &MARIO_ANIMABLE_ASSET;
+	ctx->player.animableAsset = &MARIO_SMALL_ANIMABLE_ASSET;
 	if (ctx->player.animableAsset->baseAssetsCount <= 0 || ctx->player.animableAsset->baseAssets[0].baseAsset == NULL) {
 		return -30; //sanity check
 	}
@@ -336,7 +346,9 @@ int GAME_InitContext(GameContext_t* ctx)
 	ctx->player.damageTaken = false;
 	ctx->player.IsGrounded = true;
 	ctx->player.JustHitFGObjectFromBottom = false;
-	ctx->player.playerLevel = PLAYER_LITTLE;
+	ctx->player.triggerLevelUp = false;
+	ctx->player.levelUpOngoing = false;
+	ctx->player.playerLevel = PLAYER_SMALL_MARIO;
 
 	///////////////////
 	// RENDERER
@@ -351,6 +363,16 @@ int GAME_InitContext(GameContext_t* ctx)
 	fast_memset(ctx->collision.bumps, 0, sizeof(ctx->collision.bumps));
 
 	return 0;
+}
+
+void GAME_HandlePlayerLevelUp(GameContext_t* ctx)
+{
+	if (ctx->player.triggerLevelUp && ctx->player.levelUpOngoing) {
+		ctx->simulationPause = true;
+	}
+	else {
+		ctx->simulationPause = false;
+	}
 }
 
 bool MISC_IsThisPlayerID(const GameObjectID id)
@@ -402,6 +424,30 @@ int PLAYER_GetDirtyRect(const PlayerState_t* player, Rect_t* dirtyRect)
 	}
 
 	return 0;
+}
+
+void PLAYER_LevelUp(PlayerState_t* player)
+{
+	switch (player->playerLevel)
+	{
+	case PLAYER_SMALL_MARIO:
+	{
+		player->playerLevel = PLAYER_SUPER_MARIO;
+		break;
+	}
+	case PLAYER_SUPER_MARIO:
+	{
+		player->playerLevel = PLAYER_FIRE_MARIO;
+		break;
+	}
+	case PLAYER_FIRE_MARIO:
+	{
+		// Add points here and with every levelup
+		break;
+	}
+	default:
+		break;
+	}
 }
 
 int	ENEMIES_UpdateFlags(Enemies_t* enemies, const GameContext_t* ctx)
