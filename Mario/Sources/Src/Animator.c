@@ -7,12 +7,30 @@
 
 #include "Animator.h"
 
-#include <string.h>
 #include <math.h>
 
 #include "Game_Types.h"
 
 
+//----------------
+// PRIVATE FUNCTION PROTOTYPES
+//----------------
+static int  ANIMATOR_Player_Update(PlayerState_t* player, const GameContext_t* ctx);
+static void ANIMATOR_Player_Decide(PlayerState_t* player, const GameContext_t* ctx);
+// static void ANIMATOR_Player_Decide_LevelUp(PlayerState_t* player, const GameContext_t* ctx);
+static void ANIMATOR_Player_Decide_Normal(PlayerState_t* player, const GameContext_t* ctx);
+static int  ANIMATOR_Player_SetAsset(PlayerState_t* player);
+static int  ANIMATOR_FGObject_Update(ForegroundObject_t* obj, const GameContext_t* ctx);
+static int  ANIMATOR_FGObject_Decide(ForegroundObject_t* obj, const GameContext_t* ctx);
+static int  ANIMATOR_FGObject_SetAsset(ForegroundObject_t* obj);
+static int  ANIMATOR_Enemy_Update(EnemyState_t* enemy, const GameContext_t* ctx);
+static int  ANIMATOR_Enemy_Decide(EnemyState_t* enemy, const GameContext_t* ctx);
+static int  ANIMATOR_Enemy_SetAsset(EnemyState_t* enemy);
+
+
+//----------------
+// PUBLIC FUNCTIONS
+//----------------
 int ANIMATOR_Update(GameContext_t* ctx)
 {
 	if (ctx == NULL) { return -1; }
@@ -55,7 +73,11 @@ int ANIMATOR_Update(GameContext_t* ctx)
 	return 0;
 }
 
-int ANIMATOR_Player_Update(PlayerState_t* player, const GameContext_t* ctx)
+
+//----------------
+// PRIVATE FUNCTIONS
+//----------------
+static int ANIMATOR_Player_Update(PlayerState_t* player, const GameContext_t* ctx)
 {
 	if (player == NULL || ctx == NULL) { return -1; }
 	int ret = 0;
@@ -68,7 +90,7 @@ int ANIMATOR_Player_Update(PlayerState_t* player, const GameContext_t* ctx)
 	return 0;
 }
 
-void ANIMATOR_Player_Decide(PlayerState_t* player, const GameContext_t* ctx)
+static void ANIMATOR_Player_Decide(PlayerState_t* player, const GameContext_t* ctx)
 {
 	// if (player->triggerLevelUp && !player->levelUpOngoing) {
 	// 	player->triggerLevelUp = false;
@@ -83,12 +105,12 @@ void ANIMATOR_Player_Decide(PlayerState_t* player, const GameContext_t* ctx)
 	// }
 }
 
-// void ANIMATOR_Player_Decide_LevelUp(PlayerState_t* player, const GameContext_t* ctx)
+// static void ANIMATOR_Player_Decide_LevelUp(PlayerState_t* player, const GameContext_t* ctx)
 // {
 
 // }
 
-void ANIMATOR_Player_Decide_Normal(PlayerState_t* player, const GameContext_t* ctx)
+static void ANIMATOR_Player_Decide_Normal(PlayerState_t* player, const GameContext_t* ctx)
 {
 	const float vxThreshold = 0.0f;
 	const float vyThreshold = 0.0f;
@@ -144,7 +166,7 @@ void ANIMATOR_Player_Decide_Normal(PlayerState_t* player, const GameContext_t* c
 	}
 }
 
-int ANIMATOR_Player_SetAsset(PlayerState_t* player)
+static int ANIMATOR_Player_SetAsset(PlayerState_t* player)
 {
 	if (player->animableAsset == NULL) { return -5; }
 	if (player->animableAsset->baseAssetsCount <= 0) { return -10; }
@@ -168,7 +190,7 @@ int ANIMATOR_Player_SetAsset(PlayerState_t* player)
 	return 0;
 }
 
-int ANIMATOR_FGObject_Update(ForegroundObject_t* obj, const GameContext_t* ctx)
+static int ANIMATOR_FGObject_Update(ForegroundObject_t* obj, const GameContext_t* ctx)
 {
 	if (obj == NULL || ctx == NULL) { return -1; }
 	int ret = 0;
@@ -185,7 +207,7 @@ int ANIMATOR_FGObject_Update(ForegroundObject_t* obj, const GameContext_t* ctx)
 	return 0;
 }
 
-int ANIMATOR_FGObject_Decide(ForegroundObject_t* obj, const GameContext_t* ctx)
+static int ANIMATOR_FGObject_Decide(ForegroundObject_t* obj, const GameContext_t* ctx)
 {
 	if (obj == NULL || ctx == NULL) { return -1; }
 
@@ -237,7 +259,7 @@ int ANIMATOR_FGObject_Decide(ForegroundObject_t* obj, const GameContext_t* ctx)
 	return 0;
 }
 
-int ANIMATOR_FGObject_SetAsset(ForegroundObject_t* obj)
+static int ANIMATOR_FGObject_SetAsset(ForegroundObject_t* obj)
 {
 	if (obj->animableAsset == NULL) { return -5; }
 	if (obj->animableAsset->baseAssetsCount <= 0) { return -10; }
@@ -258,7 +280,7 @@ int ANIMATOR_FGObject_SetAsset(ForegroundObject_t* obj)
 	return 0;
 }
 
-int ANIMATOR_Enemy_Update(EnemyState_t* enemy, const GameContext_t* ctx)
+static int ANIMATOR_Enemy_Update(EnemyState_t* enemy, const GameContext_t* ctx)
 {
 	if (enemy == NULL || ctx == NULL) { return -1; }
 	int ret = 0;
@@ -272,7 +294,7 @@ int ANIMATOR_Enemy_Update(EnemyState_t* enemy, const GameContext_t* ctx)
 	return 0;
 }
 
-int ANIMATOR_Enemy_Decide(EnemyState_t* enemy, const GameContext_t* ctx)
+static int ANIMATOR_Enemy_Decide(EnemyState_t* enemy, const GameContext_t* ctx)
 {
 	if (enemy == NULL || ctx == NULL) { return -1; }
 
@@ -295,7 +317,7 @@ int ANIMATOR_Enemy_Decide(EnemyState_t* enemy, const GameContext_t* ctx)
 	return 0;
 }
 
-int ANIMATOR_Enemy_SetAsset(EnemyState_t* enemy)
+static int ANIMATOR_Enemy_SetAsset(EnemyState_t* enemy)
 {
 	if (enemy->animableAsset == NULL) { return -5; }
 	if (enemy->animableAsset->baseAssetsCount <= 0) { return -10; }
