@@ -15,9 +15,6 @@ int     GAME_Update(GameContext_t* ctx);
 void    GAME_HandlePlayerLevelUp(GameContext_t* ctx);
 
 bool 	MISC_IsThisPlayerID(const GameObjectID id);
-bool 	MISC_IsThisEnemyID(const GameObjectID id);
-bool 	MISC_IsThisFGID(const GameObjectID id);
-bool 	MISC_IsThisBGID(const GameObjectID id);
 
 int 	PLAYER_ClearFlags(PlayerState_t* player);
 int 	PLAYER_GetDirtyRect(const PlayerState_t* player, Rect_t* dirtyRect);

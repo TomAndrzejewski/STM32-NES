@@ -205,12 +205,12 @@ int ANIMATOR_FGObject_Decide(ForegroundObject_t* obj, const GameContext_t* ctx)
 	case FG_REWARD_COIN_OBJECT_ID:
 	{
 		if (obj->animationFrameTimeUS == 0) {
-			obj->animationFrameTimeUS = GetTimestamp();
+			obj->animationFrameTimeUS = ctx->input.frameData.frameTimeUS;
 		}
 
 		uint32_t tdiff = CalcTimeUS(obj->animationFrameTimeUS);
 		if (tdiff > 60000) {
-			obj->animationFrameTimeUS = GetTimestamp();
+			obj->animationFrameTimeUS = ctx->input.frameData.frameTimeUS;
 			switch (obj->currAnimation)
 			{
 			case FG_REWARD_COIN_1_ANIMATION_ID: 

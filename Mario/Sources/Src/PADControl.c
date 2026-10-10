@@ -5,16 +5,17 @@
  *      Author: tomasz
  */
 
+#include "PADControl.h"
 
 #include <string.h>
 #include <stdio.h>
 
 #include "stm32f4xx_ll_gpio.h"
 
+#include "NES_Defs.h"
 #include "NES_Functions.h"
 #include "printf_logger.h"
 
-#include "PADControl.h"
 
 
 uint32_t GetButtonsState()

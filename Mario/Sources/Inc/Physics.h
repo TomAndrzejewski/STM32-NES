@@ -20,7 +20,7 @@ int     PHYSICS_FGObject_Update(ForegroundObject_t* obj, const GameContext_t* ct
 void    PHYSICS_FGObject_SaveFlags(ForegroundObject_t* obj);
 void    PHYSICS_FGObject_Velocity_Movement(ForegroundObject_t* obj, const GameContext_t* ctx);
 void    PHYSICS_FGObject_Velocity_CalcMapPos(ForegroundObject_t* obj);
-void    PHYSICS_FGObject_Time_Movement(ForegroundObject_t* obj);
+void    PHYSICS_FGObject_Time_Movement(ForegroundObject_t* obj, const GameContext_t* ctx);
 void    PHYSICS_FGObject_Time_Movement_Finish(ForegroundObject_t* obj);
 
 #endif // SOURCES_INC_PHYSICS_H_

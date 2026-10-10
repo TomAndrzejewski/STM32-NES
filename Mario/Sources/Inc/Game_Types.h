@@ -153,7 +153,7 @@ typedef struct
 	int baseAssetsCount;
 	const BaseAnimationAsset_t* baseAssets;
 
-	Rect_t BBox; // p1 - offset from (0,0) in sprite, p2 - length
+	Rect_t BBox; // p1 - offset from (0,0) in sprite
 
 }AnimableAsset_t;
 
@@ -181,7 +181,7 @@ typedef struct
 	float		subpixelX;
 	float		subpixelY;
 
-	float		vx;	// 0:1, 1 = 16 pixels in a second
+	float		vx;
 	float		vy;
 
 }Body_t;
@@ -298,7 +298,7 @@ typedef struct
 
 	SimpleAsset_t asset;
 	const AnimableAsset_t* animableAsset;
-	uint32_t flags; // treat as const! parameters set from map maker
+	uint32_t assetFlags; // parameters set from map maker
 	AnimationIDEnum currAnimation;
 
 	bool IsAlive;
@@ -313,7 +313,7 @@ typedef struct
 	Point_t mapPos;
 
 	const BackgroundAsset_t* asset;
-	uint32_t assetFlags; // treat as const! parameters set from map maker
+	uint32_t assetFlags; // parameters set from map maker
 
 }BackgroundObject_t;
 

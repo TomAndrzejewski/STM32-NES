@@ -11,6 +11,7 @@
 
 #include "Game_Types.h"
 #include "GraphicsAssets.h"
+#include "NES_Functions.h"
 #include "printf_logger.h"
 
 
@@ -77,7 +78,7 @@ int OBJECTS_MANAGER_LoadObjects(GameContext_t* ctx)
 	int loadedObjects = 0;
 	while (loadedObjects < 100) // could be while(1) but safety first
 	{
-		if (mgr->objectPoolIndex >= mgr->objectPoolSize - 1) { // no more objects available
+		if (mgr->objectPoolIndex >= mgr->objectPoolSize) { // no more objects available
 			break;
 		}
 
@@ -101,7 +102,7 @@ int OBJECTS_MANAGER_LoadObjects(GameContext_t* ctx)
 		const ObjectLevelInstance_t* objectDef = &mgr->spawnBuffer[i];
 
 		if (objectDef->x > mgr->activeWorldRect.p2.x) { // object is outside of active region
-			break;
+			continue;
 		}
 
 		OBJECTS_MANAGER_SpawnObject(ctx, objectDef);
@@ -298,6 +299,8 @@ int OBJECTS_MANAGER_Enemy_Load(EnemyState_t* enemy, const ObjectLevelInstance_t*
 {
 	if (enemy == NULL || objectDef == NULL) { return -1; }
 
+	fast_memset(enemy, 0, sizeof(EnemyState_t));
+
 	enemy->id = objectDef->id;
 	enemy->animableAsset = NULL;
 
@@ -332,6 +335,8 @@ int OBJECTS_MANAGER_FGObject_Load(ForegroundObject_t* obj, const ObjectLevelInst
 {
 	if (obj == NULL || objectDef == NULL) { return -1;}
 
+	fast_memset(obj, 0, sizeof(ForegroundObject_t));
+	
 	obj->animableAsset = NULL;
     obj->currFlags.startPhysics = false;
 	obj->currFlags.renderInBackground = false;
@@ -444,6 +449,8 @@ int OBJECTS_MANAGER_FGObject_Load(ForegroundObject_t* obj, const ObjectLevelInst
 int OBJECTS_MANAGER_BGObject_Load(BackgroundObject_t* obj, const ObjectLevelInstance_t* objectDef)
 {
 	if (obj == NULL || objectDef == NULL) { return -1;}
+
+	fast_memset(obj, 0, sizeof(BackgroundObject_t));
 
 	obj->id = objectDef->id;
 	obj->mapPos.x = objectDef->x;

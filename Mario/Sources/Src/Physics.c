@@ -5,6 +5,8 @@
  *      Author: tomasz
  */
 
+ #include "Physics.h"
+
 #include <string.h>
 
 #include "Game_Defs.h"
@@ -13,9 +15,7 @@
 #include "Game_Types.h"
 #include "Level.h"
 
-#include "PADControl.h"
-
-#include "Physics.h"
+#include "NES_Defs.h"
 
 
 int PHYSICS_Update(GameContext_t* ctx)
@@ -216,7 +216,7 @@ int PHYSICS_FGObject_Update(ForegroundObject_t* obj, const GameContext_t* ctx)
 	//todotomka slabo ze to sie tutaj robi, trzeba jakos usystematyzowac flagi
 	obj->currFlags.IsGrounded = false;
 
-	PHYSICS_FGObject_Time_Movement(obj);
+	PHYSICS_FGObject_Time_Movement(obj, ctx);
 
 	PHYSICS_FGObject_Velocity_Movement(obj, ctx);
 
@@ -232,7 +232,7 @@ void PHYSICS_FGObject_SaveFlags(ForegroundObject_t* obj)
 	obj->prevFlags = obj->currFlags;
 }
 
-void PHYSICS_FGObject_Time_Movement(ForegroundObject_t* obj)
+void PHYSICS_FGObject_Time_Movement(ForegroundObject_t* obj, const GameContext_t* ctx)
 {
 	if (obj->physics.type != PHYSICS_TIME) { // Time based physics switched off
 		return;
@@ -251,7 +251,7 @@ void PHYSICS_FGObject_Time_Movement(ForegroundObject_t* obj)
     if (obj->currFlags.startPhysics) { // start 
 		obj->currFlags.startPhysics = false;
         obj->currFlags.physicsOngoing = true;
-		mv->elapsedTimeUS = GetTimestamp();
+		mv->elapsedTimeUS = ctx->input.frameData.frameTimeUS;
 	}
 
 	if (obj->currFlags.physicsOngoing) 
@@ -270,7 +270,7 @@ void PHYSICS_FGObject_Time_Movement(ForegroundObject_t* obj)
 			uint32_t tdiffUS = CalcTimeUS(mv->elapsedTimeUS);
 			if (tdiffUS > mvFrame->durationUS) { // proceed with movement frame
 				obj->currMapPos.y += mvFrame->dy; // movement
-				mv->elapsedTimeUS = GetTimestamp(); // get ready for next tdiff
+				mv->elapsedTimeUS = ctx->input.frameData.frameTimeUS; // get ready for next tdiff
 				mv->repeatedCounter++;
 				if (mv->repeatedCounter >= mvFrame->repeatCount) { 
 					mv->currentIndex++; // next movement frame

@@ -522,16 +522,6 @@ bool ENEMIES_CalcIsOnScreen(const EnemyState_t* enemy, const Rect_t* screenRect)
 void FGOBJECTS_ClearFlags(GameContext_t* ctx)
 {
 	if (ctx == NULL) { return; }
-
-	for (int i = 0; i < ctx->activefgObjects; i++)
-	{
-		int indexLUT = ctx->fgObjectsLUT[i];
-		if (!ctx->IsFGObjectActive[indexLUT]) {
-			continue;
-		}
-
-		// ForegroundObject_t* obj = &ctx->fgObjects[indexLUT];
-	}
 }
 
 int FGOBJECTS_GetDirtyRect(const ForegroundObject_t* obj, Rect_t* dirtyRect)
