@@ -157,11 +157,11 @@ bool Rect_IsIntersection(const Rect_t* commonRect)
 	return false;
 }
 
-void NES_AssertFailed(const char* file, int line)
+void NES_AssertFailed(const char* func, int line)
 {
 	__disable_irq(); // stop DMA/sound, the game state can no longer be trusted
 
-	printf_v("\n### ASSERT %s:%d ###\n", file, line);
+	printf_v("\n### ASSERT %s:%d ###\n", func, line);
 
 	__BKPT(0);   // halt the debugger
 	while (1);

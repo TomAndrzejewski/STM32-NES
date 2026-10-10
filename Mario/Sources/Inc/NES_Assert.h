@@ -5,7 +5,7 @@
 // Active in Release builds as well.
 #define NES_ASSERT(cond) \
 	do { \
-		if (!(cond)) { NES_AssertFailed(__FILE__, __LINE__); } \
+		if (!(cond)) { NES_AssertFailed(__func__, __LINE__); } \
 	} while (0)
 
 void NES_AssertFailed(const char* file, int line) __attribute__((noreturn));
