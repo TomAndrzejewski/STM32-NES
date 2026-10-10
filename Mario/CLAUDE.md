@@ -60,23 +60,19 @@ Gdy nie jesteś pewien, w jakim trybie jesteśmy, zapytaj, zamiast zgadywać.
 
 ### Struktura repo
 
-- `Mario/`: **aktualny projekt**. Tu odbywa się praca.
-- `Tescik/`: stara, monolityczna wersja testowa. Tylko do wglądu, nie rozwijamy.
-- `PixelArty/`: grafiki sprite'ów. `python/`: konwerter map JSON → dane poziomu.
-- `Projekt STM32MX/`: plik `.ioc` (konfiguracja pinów/zegarów).
-- `TODO`: lista funkcji do zrobienia.
+- `Mario/`: **aktualny projekt**. Tu odbywa się praca. Nie interesuj się resztą repo.
 
 ### Moduły (`Mario/Sources`)
 
 `Game` (pętla i kontekst gry) · `Level` · `ObjectsManager` · `Physics` · `Collision` ·
 `Animator` · `Camera` · `Renderer` / `RenderEngine` · `LCDControl` · `Input` / `PADControl` ·
-`Sound` · `GraphicsAssets` · `NES_*` (typy, definicje, kody błędów, funkcje wspólne).
+`Sound` · `GraphicsAssets` · `NES_*` (typy, definicje, funkcje wspólne).
 
 ### Budowanie (z katalogu `Mario/`)
 
 ```bash
-./ctarget.sh D        # konfiguracja CMake (D = Debug, R = Release)
-./cbuild.sh D         # budowanie  (drugi argument: B = build, C = clean, R = rebuild)
+./ctarget.sh D R       # konfiguracja CMake (D = Debug, R = Release, drugi argument: B = build, C = clean, R = rebuild)
+./cbuild.sh D R        # budowanie  (D = Debug, R = Release, drugi argument: B = build, C = clean, R = rebuild)
 ```
 
 ---
@@ -85,7 +81,7 @@ Gdy nie jesteś pewien, w jakim trybie jesteśmy, zapytaj, zamiast zgadywać.
 
 - Funkcje z prefiksem modułu wielkimi literami: `GAME_Update`, `PLAYER_GetDirtyRect`, `ENEMIES_UpdateFlags`.
 - Typy z sufiksem `_t` (`GameContext_t`, `Rect_t`), stałe i makra `WIELKIMI_LITERAMI`, wartości w nawiasach.
-- Funkcje zwracają `int` jako kod błędu (`NES_Errno.h`). Wyniki zwracają przez wskaźnik.
+- Funkcje zwracają `int` lub `void` jako kod błędu. Wyniki zwracają przez wskaźnik.
 - Stan gry przekazywany przez `GameContext_t* ctx`. Unikaj nowych zmiennych globalnych.
 - ID obiektów w zakresach z `Game_Types.h`. **Nowe ID dopisz do `ObjRenderPriorities` w `Level.c`.**
 - **Bez dynamicznej alokacji** (`malloc`) w kodzie gry. Tablice o stałym rozmiarze z `Game_Defs.h`.
