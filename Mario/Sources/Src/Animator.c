@@ -147,7 +147,6 @@ void ANIMATOR_Player_Decide_Normal(PlayerState_t* player, const GameContext_t* c
 
 int ANIMATOR_Player_SetAsset(PlayerState_t* player)
 {
-	if (player == NULL) { return -1; }
 	if (player->animableAsset == NULL) { return -5; }
 	if (player->animableAsset->baseAssetsCount <= 0) { return -10; }
 
@@ -205,12 +204,12 @@ int ANIMATOR_FGObject_Decide(ForegroundObject_t* obj, const GameContext_t* ctx)
 	case FG_REWARD_COIN_OBJECT_ID:
 	{
 		if (obj->animationFrameTimeUS == 0) {
-			obj->animationFrameTimeUS = ctx->input.frameData.frameTimeUS;
+			obj->animationFrameTimeUS = ctx->input.frameData.simulationTimeUS;
 		}
 
-		uint32_t tdiff = CalcTimeUS(obj->animationFrameTimeUS);
+		uint32_t tdiff = ctx->input.frameData.simulationTimeUS - obj->animationFrameTimeUS;
 		if (tdiff > 60000) {
-			obj->animationFrameTimeUS = ctx->input.frameData.frameTimeUS;
+			obj->animationFrameTimeUS = ctx->input.frameData.simulationTimeUS;
 			switch (obj->currAnimation)
 			{
 			case FG_REWARD_COIN_1_ANIMATION_ID: 
@@ -241,7 +240,6 @@ int ANIMATOR_FGObject_Decide(ForegroundObject_t* obj, const GameContext_t* ctx)
 
 int ANIMATOR_FGObject_SetAsset(ForegroundObject_t* obj)
 {
-	if (obj == NULL) { return -1; }
 	if (obj->animableAsset == NULL) { return -5; }
 	if (obj->animableAsset->baseAssetsCount <= 0) { return -10; }
 
@@ -300,7 +298,6 @@ int ANIMATOR_Enemy_Decide(EnemyState_t* enemy, const GameContext_t* ctx)
 
 int ANIMATOR_Enemy_SetAsset(EnemyState_t* enemy)
 {
-	if (enemy) { return -1; }
 	if (enemy->animableAsset == NULL) { return -5; }
 	if (enemy->animableAsset->baseAssetsCount <= 0) { return -10; }
 

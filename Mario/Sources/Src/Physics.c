@@ -251,7 +251,7 @@ void PHYSICS_FGObject_Time_Movement(ForegroundObject_t* obj, const GameContext_t
     if (obj->currFlags.startPhysics) { // start 
 		obj->currFlags.startPhysics = false;
         obj->currFlags.physicsOngoing = true;
-		mv->elapsedTimeUS = ctx->input.frameData.frameTimeUS;
+		mv->elapsedTimeUS = ctx->input.frameData.simulationTimeUS;
 	}
 
 	if (obj->currFlags.physicsOngoing) 
@@ -267,10 +267,10 @@ void PHYSICS_FGObject_Time_Movement(ForegroundObject_t* obj, const GameContext_t
 		if (mv->asset->movementFramesY != NULL && obj->currFlags.physicsOngoing) {
 			const MovementFrameY_t* mvFrame = &mv->asset->movementFramesY[mv->currentIndex];
 
-			uint32_t tdiffUS = CalcTimeUS(mv->elapsedTimeUS);
+			uint32_t tdiffUS = ctx->input.frameData.simulationTimeUS - mv->elapsedTimeUS;
 			if (tdiffUS > mvFrame->durationUS) { // proceed with movement frame
 				obj->currMapPos.y += mvFrame->dy; // movement
-				mv->elapsedTimeUS = ctx->input.frameData.frameTimeUS; // get ready for next tdiff
+				mv->elapsedTimeUS = ctx->input.frameData.simulationTimeUS; // get ready for next tdiff
 				mv->repeatedCounter++;
 				if (mv->repeatedCounter >= mvFrame->repeatCount) { 
 					mv->currentIndex++; // next movement frame

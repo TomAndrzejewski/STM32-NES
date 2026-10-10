@@ -428,6 +428,7 @@ typedef struct
 
 typedef struct
 {
+	uint32_t simulationTimeUS;
 	int frameTimeUS;
 	float frameTimeS; // same as frameTimeUS only in float and in S
 

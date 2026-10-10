@@ -41,6 +41,9 @@ int GAME_Update(GameContext_t* ctx)
 	// Big event, later use state machine
 	GAME_HandlePlayerLevelUp(ctx);
 
+	if (!ctx->simulationPause) {
+		ctx->input.frameData.simulationTimeUS += targetFrameTimeUS;
+	}
 
 	s->startTime[timeStamps] = GetTimestamp();
 	ret = INPUT_Update(&ctx->input, ctx, targetFrameTimeUS);
@@ -314,6 +317,7 @@ int GAME_InitContext(GameContext_t* ctx)
 	// INPUT
 	///////////////////
 	ctx->input.buttons_state = 0;
+	ctx->input.frameData.simulationTimeUS = 0;
 	ctx->input.frameData.frameTimeUS = 0;
 	ctx->input.frameData.frameTimeS = 0;
 
