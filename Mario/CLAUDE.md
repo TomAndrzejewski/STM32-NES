@@ -98,6 +98,21 @@ Gdy nie jesteś pewien, w jakim trybie jesteśmy, zapytaj, zamiast zgadywać.
   - Analogiczne bloki kodu (np. te same kroki w kilku gałęziach) komentuj tak samo albo wcale,
     żeby różnica w komentarzach nie sugerowała różnicy w działaniu.
 
+    żeby różnica w komentarzach nie sugerowała różnicy w działaniu.
+
+### Układ pliku `.c`
+
+Sekcje w tej kolejności, każda (poza include'ami) pod banerem
+`//----------------` / `// NAZWA SEKCJI` / `//----------------`:
+
+1. Include'y: najpierw własny nagłówek modułu, potem biblioteka standardowa, potem nagłówki projektu.
+2. Prywatne makra, typy i zmienne `static` (jeśli moduł je ma).
+3. `PRIVATE FUNCTION PROTOTYPES`: prototypy **wszystkich** funkcji `static`, bez wyjątków dla małych helperów,
+   w tej samej kolejności co ich definicje.
+4. `PUBLIC FUNCTIONS`: w kolejności deklaracji w nagłówku.
+5. `PRIVATE FUNCTIONS`: w kolejności control flow, czyli tak, jak są wywoływane, idąc od funkcji publicznych
+   w dół. Małe helpery (np. predykaty) na samym końcu.
+
 ---
 
 ## Ogólne zasady
