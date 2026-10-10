@@ -169,7 +169,7 @@ static void OBJECTS_MANAGER_LoadObjects(GameContext_t* ctx)
 	// OBJECTS FROM LEVEL POOL
 	//----------------
 	int loadedObjects = 0;
-	while (loadedObjects < 100) // could be while(1) but safety first
+	while (loadedObjects < 100) // limit objects loaded in one call
 	{
 		if (mgr->objectPoolIndex >= mgr->objectPoolSize) { // no more objects available
 			break;
@@ -180,7 +180,7 @@ static void OBJECTS_MANAGER_LoadObjects(GameContext_t* ctx)
 			break;
 		}
 
-		mgr->objectPoolIndex++; // assume load went succesfully to not block next objects
+		mgr->objectPoolIndex++; // assume load went successfully to not block next objects
 
 		OBJECTS_MANAGER_SpawnObject(ctx, objectDef);
 
@@ -210,7 +210,7 @@ static void OBJECTS_MANAGER_SpawnObject(GameContext_t* ctx, const ObjectLevelIns
 	{
 		if (ctx->activefgObjects >= FOREGROUND_OBJECTS_MAX_SIZE) {
 			printf_str("\n### ERROR, max FGObjects reached ###\n");
-			// A full pool is not a bug: the object is skipped, counted and the game goes on.
+			// pool is full: skip the object and count the drop
 			ctx->objectsManager.droppedFGObjects++;
 			return;
 		}
@@ -225,7 +225,7 @@ static void OBJECTS_MANAGER_SpawnObject(GameContext_t* ctx, const ObjectLevelIns
 			}
 		}
 
-		NES_ASSERT(index >= 0); // active counter below MAX guarantees a free slot
+		NES_ASSERT(index >= 0); // no free slot: check if active counter matches active flags
 
 		// fill free slot with new object
 		ctx->IsFGObjectActive[index] = true;
@@ -240,7 +240,7 @@ static void OBJECTS_MANAGER_SpawnObject(GameContext_t* ctx, const ObjectLevelIns
 	{
 		if (ctx->enemies.activeEnemies >= ENEMIES_MAX_SIZE) {
 			printf_str("\n### ERROR, max enemies reached ###\n");
-			// A full pool is not a bug: the object is skipped, counted and the game goes on.
+			// pool is full: skip the object and count the drop
 			ctx->objectsManager.droppedEnemies++;
 			return;
 		}
@@ -255,13 +255,14 @@ static void OBJECTS_MANAGER_SpawnObject(GameContext_t* ctx, const ObjectLevelIns
 			}
 		}
 
-		NES_ASSERT(index >= 0); // active counter below MAX guarantees a free slot
+		NES_ASSERT(index >= 0); // no free slot: check if active counter matches active flags
 
 		// fill free slot with new object
 		ctx->enemies.IsEnemyActive[index] = true;
 		EnemyState_t* enemy = &ctx->enemies.pool[index];
 		OBJECTS_MANAGER_Enemy_Load(enemy, objectDef);
 
+		// update LUT
 		ctx->enemies.enemiesLUT[ctx->enemies.activeEnemies] = index;
 		ctx->enemies.activeEnemies++;
 	}
@@ -269,7 +270,7 @@ static void OBJECTS_MANAGER_SpawnObject(GameContext_t* ctx, const ObjectLevelIns
 	{
 		if (ctx->activebgObjects >= BACKGROUND_OBJECTS_MAX_SIZE) {
 			printf_str("\n### ERROR, max BGObjects reached ###\n");
-			// A full pool is not a bug: the object is skipped, counted and the game goes on.
+			// pool is full: skip the object and count the drop
 			ctx->objectsManager.droppedBGObjects++;
 			return;
 		}
@@ -284,8 +285,9 @@ static void OBJECTS_MANAGER_SpawnObject(GameContext_t* ctx, const ObjectLevelIns
 			}
 		}
 
-		NES_ASSERT(index >= 0); // active counter below MAX guarantees a free slot
+		NES_ASSERT(index >= 0); // no free slot: check if active counter matches active flags
 
+		// fill free slot with new object
 		ctx->IsBGObjectActive[index] = true;
 		BackgroundObject_t* bgObject = &ctx->bgObjects[index];
 		OBJECTS_MANAGER_BGObject_Load(bgObject, objectDef);
@@ -296,7 +298,7 @@ static void OBJECTS_MANAGER_SpawnObject(GameContext_t* ctx, const ObjectLevelIns
 	}
 	else
 	{
-		NES_ASSERT(false); // ID outside of FG/enemy/BG ranges, level definition is broken
+		NES_ASSERT(false); // unknown object ID: check level definition
 	}
 }
 

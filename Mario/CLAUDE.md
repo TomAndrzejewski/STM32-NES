@@ -92,6 +92,11 @@ Gdy nie jesteś pewien, w jakim trybie jesteśmy, zapytaj, zamiast zgadywać.
   operacje składają się na jedną funkcjonalność). Nie pisz komentarzy, które wymieniają inne funkcje z nazwy,
   wyliczają, gdzie jeszcze coś się dzieje, albo zapisują reguły projektowe modułu: takie komentarze trudno
   utrzymać ręcznie. Uwagi tego typu podawaj w podsumowaniu na czacie.
+  - Wyjątek: przy asercji lub obsłudze błędu może pojawić się krótka instrukcja dla programisty,
+    co w praktyce dany błąd sugeruje do sprawdzenia lub dodania (np. brakujący `case`, zły wpis w danych poziomu).
+  - Komentarz opisuje kod taki, jaki jest: bez historii zmian i bez wariantów, jak mógłby wyglądać.
+  - Analogiczne bloki kodu (np. te same kroki w kilku gałęziach) komentuj tak samo albo wcale,
+    żeby różnica w komentarzach nie sugerowała różnicy w działaniu.
 
 ---
 
