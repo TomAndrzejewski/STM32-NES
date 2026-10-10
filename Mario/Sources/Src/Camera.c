@@ -31,7 +31,6 @@ static void CAMERA_CalcScreenRect(CameraState_t* camera)
 	camera->screenRect.p2.y = camera->currPos.y + LCD_HEIGHT;
 }
 
-// Module boundary: the only place where arguments are validated.
 void CAMERA_Update(CameraState_t* camera, const GameContext_t* ctx)
 {
 	NES_ASSERT(camera != NULL);
