@@ -58,10 +58,9 @@ int GAME_Update(GameContext_t* ctx)
 
 	s->startTime[timeStamps] = GetTimestamp();
 	if (!ctx->simulationPause) {
-		ret = PHYSICS_Player_Update(&ctx->player, ctx);
+		PHYSICS_Player_Update(&ctx->player, ctx);
 	}
 	s->finishTime[timeStamps] = GetTimestamp();
-	if (ret < 0)	{ delay(1); return -10; }
 	timeStamps++;
 
 	s->startTime[timeStamps] = GetTimestamp();
@@ -82,10 +81,9 @@ int GAME_Update(GameContext_t* ctx)
 
 	s->startTime[timeStamps] = GetTimestamp();
 	if (!ctx->simulationPause) {
-		ret = PHYSICS_Update(ctx);
+		PHYSICS_Update(ctx);
 	}
 	s->finishTime[timeStamps] = GetTimestamp();
-	if (ret < 0)	{ delay(1); return -30; }
 	timeStamps++;
 
 	s->startTime[timeStamps] = GetTimestamp();
