@@ -81,7 +81,7 @@ Gdy nie jesteś pewien, w jakim trybie jesteśmy, zapytaj, zamiast zgadywać.
 
 - Funkcje z prefiksem modułu wielkimi literami: `GAME_Update`, `PLAYER_GetDirtyRect`, `ENEMIES_UpdateFlags`.
 - Typy z sufiksem `_t` (`GameContext_t`, `Rect_t`), stałe i makra `WIELKIMI_LITERAMI`, wartości w nawiasach.
-- Funkcje zwracają `int` lub `void` jako kod błędu. Wyniki zwracają przez wskaźnik.
+- Wyniki funkcje zwracają przez wskaźnik.
 - Stan gry przekazywany przez `GameContext_t* ctx`. Unikaj nowych zmiennych globalnych.
 - ID obiektów w zakresach z `Game_Types.h`.
 - **Bez dynamicznej alokacji** (`malloc`) w kodzie gry. Tablice o stałym rozmiarze z `Game_Defs.h`.
@@ -98,7 +98,12 @@ Gdy nie jesteś pewien, w jakim trybie jesteśmy, zapytaj, zamiast zgadywać.
   - Analogiczne bloki kodu (np. te same kroki w kilku gałęziach) komentuj tak samo albo wcale,
     żeby różnica w komentarzach nie sugerowała różnicy w działaniu.
 
-    żeby różnica w komentarzach nie sugerowała różnicy w działaniu.
+### Obsługa błędów
+
+- Błąd programisty (złamane założenie kodu) kończy się asercją, a nie kodem błędu.
+- Sytuacja możliwa w poprawnym programie (np. brak miejsca w buforze) nie jest błędem: pomiń, zlicz, działaj dalej.
+- Kod błędu zwracaj tylko wtedy, gdy wołający może zrobić coś innego.
+- Argumenty sprawdzają funkcje publiczne modułu. Funkcje prywatne ufają wołającemu.
 
 ### Układ pliku `.c`
 
