@@ -88,6 +88,10 @@ Gdy nie jesteś pewien, w jakim trybie jesteśmy, zapytaj, zamiast zgadywać.
 - Pamiętaj o ograniczeniach RAM/Flash i o tym, że kod przerwań/DMA działa równolegle z pętlą gry
   (`volatile`, sekcje krytyczne).
 - Komentarze i nazwy w kodzie po angielsku.
+- Komentarze opisują ogólnie, **co robi** jedna lub kilka linijek kodu (zwłaszcza gdy pozornie niezwiązane
+  operacje składają się na jedną funkcjonalność). Nie pisz komentarzy, które wymieniają inne funkcje z nazwy,
+  wyliczają, gdzie jeszcze coś się dzieje, albo zapisują reguły projektowe modułu: takie komentarze trudno
+  utrzymać ręcznie. Uwagi tego typu podawaj w podsumowaniu na czacie.
 
 ---
 
