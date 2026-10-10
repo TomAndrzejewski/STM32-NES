@@ -103,9 +103,8 @@ int GAME_Update(GameContext_t* ctx)
 	timeStamps++;
 
 	s->startTime[timeStamps] = GetTimestamp();
-	ret = ANIMATOR_Update(ctx);
+	ANIMATOR_Update(ctx);
 	s->finishTime[timeStamps] = GetTimestamp();
-	if (ret < 0)	{ delay(1); return -45; }
 	timeStamps++;
 
 	if (ctx->firstGameLoop) {

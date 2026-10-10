@@ -10,6 +10,6 @@
 
 #include "Game_Types.h"
 
-int     ANIMATOR_Update(GameContext_t* ctx);
+void    ANIMATOR_Update(GameContext_t* ctx);
 
 #endif // SOURCES_INC_ANIMATOR_H_

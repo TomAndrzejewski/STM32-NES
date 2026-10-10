@@ -10,34 +10,33 @@
 #include <math.h>
 
 #include "Game_Types.h"
+#include "NES_Assert.h"
 
 
 //----------------
 // PRIVATE FUNCTION PROTOTYPES
 //----------------
-static int  ANIMATOR_Player_Update(PlayerState_t* player, const GameContext_t* ctx);
+static void ANIMATOR_Player_Update(PlayerState_t* player, const GameContext_t* ctx);
 static void ANIMATOR_Player_Decide(PlayerState_t* player, const GameContext_t* ctx);
 // static void ANIMATOR_Player_Decide_LevelUp(PlayerState_t* player, const GameContext_t* ctx);
 static void ANIMATOR_Player_Decide_Normal(PlayerState_t* player, const GameContext_t* ctx);
-static int  ANIMATOR_Player_SetAsset(PlayerState_t* player);
-static int  ANIMATOR_FGObject_Update(ForegroundObject_t* obj, const GameContext_t* ctx);
-static int  ANIMATOR_FGObject_Decide(ForegroundObject_t* obj, const GameContext_t* ctx);
-static int  ANIMATOR_FGObject_SetAsset(ForegroundObject_t* obj);
-static int  ANIMATOR_Enemy_Update(EnemyState_t* enemy, const GameContext_t* ctx);
-static int  ANIMATOR_Enemy_Decide(EnemyState_t* enemy, const GameContext_t* ctx);
-static int  ANIMATOR_Enemy_SetAsset(EnemyState_t* enemy);
+static void ANIMATOR_Player_SetAsset(PlayerState_t* player);
+static void ANIMATOR_FGObject_Update(ForegroundObject_t* obj, const GameContext_t* ctx);
+static void ANIMATOR_FGObject_Decide(ForegroundObject_t* obj, const GameContext_t* ctx);
+static void ANIMATOR_FGObject_SetAsset(ForegroundObject_t* obj);
+static void ANIMATOR_Enemy_Update(EnemyState_t* enemy, const GameContext_t* ctx);
+static void ANIMATOR_Enemy_Decide(EnemyState_t* enemy, const GameContext_t* ctx);
+static void ANIMATOR_Enemy_SetAsset(EnemyState_t* enemy);
 
 
 //----------------
 // PUBLIC FUNCTIONS
 //----------------
-int ANIMATOR_Update(GameContext_t* ctx)
+void ANIMATOR_Update(GameContext_t* ctx)
 {
-	if (ctx == NULL) { return -1; }
-	int ret = 0;
+	NES_ASSERT(ctx != NULL);
 
-	ret = ANIMATOR_Player_Update(&ctx->player, ctx);
-	if (ret < 0) { return -5; }
+	ANIMATOR_Player_Update(&ctx->player, ctx);
 
 	for (int i = 0; i < ctx->activefgObjects; i++)
 	{
@@ -50,8 +49,7 @@ int ANIMATOR_Update(GameContext_t* ctx)
 			continue;
 		}
 
-		ret = ANIMATOR_FGObject_Update(&ctx->fgObjects[indexLUT], ctx);
-		if (ret < 0) { return -10; }
+		ANIMATOR_FGObject_Update(&ctx->fgObjects[indexLUT], ctx);
 	}
 
 	for (int i = 0; i < ctx->enemies.activeEnemies; i++)
@@ -66,28 +64,19 @@ int ANIMATOR_Update(GameContext_t* ctx)
 			continue;
 		}
 
-		ret = ANIMATOR_Enemy_Update(enemy, ctx);
-		if (ret < 0) { return -15; }
+		ANIMATOR_Enemy_Update(enemy, ctx);
 	}
-
-	return 0;
 }
 
 
 //----------------
 // PRIVATE FUNCTIONS
 //----------------
-static int ANIMATOR_Player_Update(PlayerState_t* player, const GameContext_t* ctx)
+static void ANIMATOR_Player_Update(PlayerState_t* player, const GameContext_t* ctx)
 {
-	if (player == NULL || ctx == NULL) { return -1; }
-	int ret = 0;
-
 	ANIMATOR_Player_Decide(player, ctx);
-	
-	ret = ANIMATOR_Player_SetAsset(player);
-	if (ret < 0) { return -5; }
 
-	return 0;
+	ANIMATOR_Player_SetAsset(player);
 }
 
 static void ANIMATOR_Player_Decide(PlayerState_t* player, const GameContext_t* ctx)
@@ -166,15 +155,14 @@ static void ANIMATOR_Player_Decide_Normal(PlayerState_t* player, const GameConte
 	}
 }
 
-static int ANIMATOR_Player_SetAsset(PlayerState_t* player)
+static void ANIMATOR_Player_SetAsset(PlayerState_t* player)
 {
-	if (player->animableAsset == NULL) { return -5; }
-	if (player->animableAsset->baseAssetsCount <= 0) { return -10; }
+	NES_ASSERT(player->animableAsset != NULL);
 
 	// save sprite size for dirty rects
 	player->prevSpriteSize = player->asset.baseAsset.sprite.size;
 
-	int assetIndex = 0;
+	int assetIndex = -1;
 	for (int i = 0; i < player->animableAsset->baseAssetsCount; i++)
 	{
 		if (player->animableAsset->baseAssets[i].animationID == player->animator.currAnimation) {
@@ -183,34 +171,24 @@ static int ANIMATOR_Player_SetAsset(PlayerState_t* player)
 		}
 	}
 
-	if (player->animableAsset->baseAssets[assetIndex].baseAsset != NULL) {
-		player->asset.baseAsset = *player->animableAsset->baseAssets[assetIndex].baseAsset;
-	}
+	// The animable asset has no usable entry for the current animation: check its base assets table.
+	NES_ASSERT(assetIndex >= 0);
+	NES_ASSERT(player->animableAsset->baseAssets[assetIndex].baseAsset != NULL);
 
-	return 0;
+	player->asset.baseAsset = *player->animableAsset->baseAssets[assetIndex].baseAsset;
 }
 
-static int ANIMATOR_FGObject_Update(ForegroundObject_t* obj, const GameContext_t* ctx)
+static void ANIMATOR_FGObject_Update(ForegroundObject_t* obj, const GameContext_t* ctx)
 {
-	if (obj == NULL || ctx == NULL) { return -1; }
-	int ret = 0;
+	ANIMATOR_FGObject_Decide(obj, ctx);
 
-	ret = ANIMATOR_FGObject_Decide(obj, ctx);
-	if (ret < 0) { return -5; }
+	ANIMATOR_FGObject_SetAsset(obj);
 
-	ret = ANIMATOR_FGObject_SetAsset(obj);
-	if (ret < 0) { return -10; }
-
-	// ret = ANIMATOR_FGObject_Movement(obj);
-	// if (ret < 0) { return -15; }
-
-	return 0;
+	// ANIMATOR_FGObject_Movement(obj);
 }
 
-static int ANIMATOR_FGObject_Decide(ForegroundObject_t* obj, const GameContext_t* ctx)
+static void ANIMATOR_FGObject_Decide(ForegroundObject_t* obj, const GameContext_t* ctx)
 {
-	if (obj == NULL || ctx == NULL) { return -1; }
-
 	switch (obj->id)
 	{
 	case FG_BLOCK_QMARK_OBJECT_ID:
@@ -255,16 +233,11 @@ static int ANIMATOR_FGObject_Decide(ForegroundObject_t* obj, const GameContext_t
 	default:
 		break;
 	}
-
-	return 0;
 }
 
-static int ANIMATOR_FGObject_SetAsset(ForegroundObject_t* obj)
+static void ANIMATOR_FGObject_SetAsset(ForegroundObject_t* obj)
 {
-	if (obj->animableAsset == NULL) { return -5; }
-	if (obj->animableAsset->baseAssetsCount <= 0) { return -10; }
-
-	int assetIndex = 0;
+	int assetIndex = -1;
 	for (int i = 0; i < obj->animableAsset->baseAssetsCount; i++)
 	{
 		if (obj->animableAsset->baseAssets[i].animationID == obj->currAnimation) {
@@ -273,30 +246,23 @@ static int ANIMATOR_FGObject_SetAsset(ForegroundObject_t* obj)
 		}
 	}
 
-	if (obj->animableAsset->baseAssets[assetIndex].baseAsset != NULL) {
-		obj->asset.baseAsset = *obj->animableAsset->baseAssets[assetIndex].baseAsset;
-	}
+	// The animable asset has no usable entry for the current animation: check its base assets table.
+	NES_ASSERT(assetIndex >= 0);
+	NES_ASSERT(obj->animableAsset->baseAssets[assetIndex].baseAsset != NULL);
 
-	return 0;
+	obj->asset.baseAsset = *obj->animableAsset->baseAssets[assetIndex].baseAsset;
 }
 
-static int ANIMATOR_Enemy_Update(EnemyState_t* enemy, const GameContext_t* ctx)
+static void ANIMATOR_Enemy_Update(EnemyState_t* enemy, const GameContext_t* ctx)
 {
-	if (enemy == NULL || ctx == NULL) { return -1; }
-	int ret = 0;
+	ANIMATOR_Enemy_Decide(enemy, ctx);
 
-	ret = ANIMATOR_Enemy_Decide(enemy, ctx);
-	if (ret < 0) { return -5; }
-
-	ret = ANIMATOR_Enemy_SetAsset(enemy);
-	if (ret < 0) { return -10; }
-
-	return 0;
+	ANIMATOR_Enemy_SetAsset(enemy);
 }
 
-static int ANIMATOR_Enemy_Decide(EnemyState_t* enemy, const GameContext_t* ctx)
+static void ANIMATOR_Enemy_Decide(EnemyState_t* enemy, const GameContext_t* ctx)
 {
-	if (enemy == NULL || ctx == NULL) { return -1; }
+	(void)ctx;
 
 	switch (enemy->id)
 	{
@@ -313,16 +279,11 @@ static int ANIMATOR_Enemy_Decide(EnemyState_t* enemy, const GameContext_t* ctx)
 	default:
 		break;
 	}
-
-	return 0;
 }
 
-static int ANIMATOR_Enemy_SetAsset(EnemyState_t* enemy)
+static void ANIMATOR_Enemy_SetAsset(EnemyState_t* enemy)
 {
-	if (enemy->animableAsset == NULL) { return -5; }
-	if (enemy->animableAsset->baseAssetsCount <= 0) { return -10; }
-
-	int assetIndex = 0;
+	int assetIndex = -1;
 	for (int i = 0; i < enemy->animableAsset->baseAssetsCount; i++)
 	{
 		if (enemy->animableAsset->baseAssets[i].animationID == enemy->currAnimation) {
@@ -331,9 +292,9 @@ static int ANIMATOR_Enemy_SetAsset(EnemyState_t* enemy)
 		}
 	}
 
-	if (enemy->animableAsset->baseAssets[assetIndex].baseAsset != NULL) {
-		enemy->asset.baseAsset = *enemy->animableAsset->baseAssets[assetIndex].baseAsset;
-	}
+	// The animable asset has no usable entry for the current animation: check its base assets table.
+	NES_ASSERT(assetIndex >= 0);
+	NES_ASSERT(enemy->animableAsset->baseAssets[assetIndex].baseAsset != NULL);
 
-	return 0;
+	enemy->asset.baseAsset = *enemy->animableAsset->baseAssets[assetIndex].baseAsset;
 }
