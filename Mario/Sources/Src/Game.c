@@ -94,10 +94,9 @@ int GAME_Update(GameContext_t* ctx)
 
 	s->startTime[timeStamps] = GetTimestamp();
 	if (!ctx->simulationPause) {
-		ret = COLLISION_Update(ctx);
+		COLLISION_Update(ctx);
 	}
 	s->finishTime[timeStamps] = GetTimestamp();
-	if (ret < 0)	{ delay(1); return -40; }
 	timeStamps++;
 
 	s->startTime[timeStamps] = GetTimestamp();

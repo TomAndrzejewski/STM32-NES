@@ -7,29 +7,62 @@
 
 #include "Collision.h"
 
-#include <string.h>
+#include <stddef.h>
 
 #include "Game_Types.h"
-#include "NES_Functions.h"
 #include "Level.h"
+#include "NES_Assert.h"
+#include "NES_Functions.h"
 #include "ObjectsManager.h"
 
 
-int	COLLISION_Update(GameContext_t* ctx)
+//----------------
+// PRIVATE MACROS
+//----------------
+// Minimal overlap length (in pixels) along the touching edge for a bump to count
+#define COLLISION_THRESHOLD_VERTICAL	(3)
+#define COLLISION_THRESHOLD_HORIZONTAL	(1)
+
+
+//----------------
+// PRIVATE FUNCTION PROTOTYPES
+//----------------
+static void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx);
+static void COLLISION_Player_FGObject_DetectBumpSide(const ForegroundObject_t* obj, const Rect_t* bumpRect, BumpSideEnum* bumpSide);
+static void COLLISION_Resolve(GameContext_t* ctx);
+static void COLLISION_Player_Floor(PlayerState_t* player, const GameContext_t* ctx);
+static void COLLISION_Player_Enemy(PlayerState_t* player, EnemyState_t* enemy, const Bump_t* bump, const GameContext_t* ctx);
+// static void COLLISION_Player_RewardFGObject_Handle(PlayerState_t* player, ForegroundObject_t* obj);
+static void COLLISION_Player_SolidFGObject_Handle(PlayerState_t* player, const ForegroundObject_t* obj, BumpSideEnum bumpSide);
+static void COLLISION_Player_SolidFGObject_SideEffect(ForegroundObject_t* obj, PlayerState_t* player, BumpSideEnum bumpSide, ObjectsManager_t* mgr);
+static void COLLISION_FGObject_FGObject(ForegroundObject_t* actor, ForegroundObject_t* obj, const Bump_t* bump);
+static void COLLISION_FGObject_Floor(ForegroundObject_t* actor, const GameContext_t* ctx);
+
+
+//----------------
+// PUBLIC FUNCTIONS
+//----------------
+void COLLISION_Update(GameContext_t* ctx)
 {
-	if (ctx == NULL) { return -1; }
+	NES_ASSERT(ctx != NULL);
 
 	COLLISION_Calculate(&ctx->collision, ctx);
 
 	COLLISION_Resolve(ctx);
-
-	return 0;
 }
 
-void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx)
+
+//----------------
+// PRIVATE FUNCTIONS
+//----------------
+static void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx)
 {
 	coll->size = 0;
 	fast_memset(&coll->bumps, 0, sizeof(coll->bumps));
+
+	const Rect_t* levelBounds = NULL;
+	int ret = LEVEL_GetLevelBoundaries(&levelBounds);
+	NES_ASSERT(ret == 0 && levelBounds != NULL);
 
 	Rect_t playerRect;
 	playerRect.p1.x = ctx->player.currMapPos.x + ctx->player.asset.BBox.p1.x;
@@ -37,19 +70,13 @@ void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx)
 	playerRect.p2.x = ctx->player.currMapPos.x + ctx->player.asset.BBox.p2.x;
 	playerRect.p2.y = ctx->player.currMapPos.y + ctx->player.asset.BBox.p2.y;
 
-	//-------------------------
-	// PLAYER BUMPS FLOOR
-	//-------------------------
-	const Rect_t* levelBounds = NULL;
-	int ret = LEVEL_GetLevelBoundaries(&levelBounds);
-	if (ret < 0 || levelBounds == NULL) { return; }
-
 	Rect_t floorRect;
 	floorRect.p1.x = 0;
 	floorRect.p1.y = 0;
 	floorRect.p2.x = levelBounds->p2.x;
 	floorRect.p2.y = ctx->map.floorYLevel;
 
+	// Player bumps floor
 	Rect_t bumpRect = {0};
 	Rect_GetIntersection(&playerRect, &floorRect, &bumpRect);
 
@@ -63,9 +90,7 @@ void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx)
 		}
 	}
 
-	//-------------------------
-	// PLAYER BUMPS FG OBJECTS
-	//-------------------------
+	// Player bumps foreground objects
 	for (int i = 0; i < ctx->activefgObjects; i++)
 	{
 		int indexLUT = ctx->fgObjectsLUT[i];
@@ -76,9 +101,13 @@ void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx)
 
 		const ForegroundObject_t* fgObject = &ctx->fgObjects[indexLUT];
 
-		if (!fgObject->currFlags.IsAlive) { continue; }
+		if (!fgObject->currFlags.IsAlive) {
+			continue;
+		}
 
-		if (!(fgObject->assetFlags & COLL_ANY_ENABLED)) { continue; }
+		if (!(fgObject->assetFlags & COLL_ANY_ENABLED)) {
+			continue;
+		}
 
 		Rect_t objRect;
 		objRect.p1.x = fgObject->currMapPos.x + fgObject->asset.BBox.p1.x;
@@ -95,15 +124,13 @@ void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx)
 				coll->bumps[coll->size].actor1 = (GameObjectRef_t){ ctx->player.id, 0 };
 				coll->bumps[coll->size].actor2 = (GameObjectRef_t){ fgObject->id, indexLUT };
 				coll->bumps[coll->size].bumpRect = bumpRect;
-				coll->bumps[coll->size].bumpSide = COLLISION_Player_FGObject_DetectBumpSide(fgObject, &bumpRect);
+				COLLISION_Player_FGObject_DetectBumpSide(fgObject, &bumpRect, &coll->bumps[coll->size].bumpSide);
 				coll->size++;
 			}
 		}
 	}
 
-	//-------------------------
-	// PLAYER BUMPS ENEMIES
-	//-------------------------
+	// Player bumps enemies
 	for (int i = 0; i < ctx->enemies.activeEnemies; i++)
 	{
 		int indexLUT = ctx->enemies.enemiesLUT[i];
@@ -111,8 +138,9 @@ void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx)
 		if (!ctx->enemies.IsEnemyActive[indexLUT]) {
 			continue;
 		}
-		
+
 		const EnemyState_t* enemy = &ctx->enemies.pool[indexLUT];
+
 		if (!enemy->IsOnScreen) {
 			continue;
 		}
@@ -137,9 +165,7 @@ void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx)
 		}
 	}
 
-	//-------------------------
-	// FG OBJECTS BUMPS FG OBJECTS OR FLOOR
-	//-------------------------
+	// Foreground objects bump floor or other foreground objects
 	for (int i = 0; i < ctx->activefgObjects; i++)
 	{
 		int indexLUT = ctx->fgObjectsLUT[i];
@@ -155,12 +181,12 @@ void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx)
 			continue;
 		}
 
-		if (!fgObject->currFlags.IsAlive) { 
-			continue; 
+		if (!fgObject->currFlags.IsAlive) {
+			continue;
 		}
 
 		if (fgObject->physics.type != PHYSICS_VELOCITY) {
-			continue; 
+			continue;
 		}
 
 		Rect_t objRect;
@@ -169,37 +195,21 @@ void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx)
 		objRect.p2.x = fgObject->currMapPos.x + fgObject->asset.BBox.p2.x;
 		objRect.p2.y = fgObject->currMapPos.y + fgObject->asset.BBox.p2.y;
 
-
-		//-------------------------
-		// FG OBJECTS BUMPS FLOOR
-		//-------------------------
-		const Rect_t* levelBounds = NULL;
-		int ret = LEVEL_GetLevelBoundaries(&levelBounds);
-		if (ret < 0 || levelBounds == NULL) { return; }
-
-		Rect_t floorRect;
-		floorRect.p1.x = 0;
-		floorRect.p1.y = 0;
-		floorRect.p2.x = levelBounds->p2.x;
-		floorRect.p2.y = ctx->map.floorYLevel;
-
+		// Foreground object bumps floor
 		Rect_t bumpRect = {0};
 		Rect_GetIntersection(&objRect, &floorRect, &bumpRect);
 
 		if (Rect_IsIntersection(&bumpRect)) {
 			if (coll->size < COLLISIONS_SIZE) {
 				coll->bumps[coll->size].bumpID = FG_OBJECT_BUMP_FLOOR;
-				coll->bumps[coll->size].actor1 = (GameObjectRef_t){ fgObject->id, indexLUT};
+				coll->bumps[coll->size].actor1 = (GameObjectRef_t){ fgObject->id, indexLUT };
 				coll->bumps[coll->size].actor2 = (GameObjectRef_t){ 0, 0 };
 				coll->bumps[coll->size].bumpRect = bumpRect;
 				coll->size++;
 			}
 		}
 
-
-		//-------------------------
-		// FG OBJECTS BUMPS FG OBJECTS
-		//-------------------------
+		// Foreground object bumps other foreground objects
 		for (int j = 0; j < ctx->activefgObjects; j++)
 		{
 			if (i == j) {
@@ -214,11 +224,11 @@ void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx)
 
 			const ForegroundObject_t* fgObject2 = &ctx->fgObjects[indexLUT2];
 
-			if (!fgObject2->currFlags.IsAlive) { 
-				continue; 
-			}	
+			if (!fgObject2->currFlags.IsAlive) {
+				continue;
+			}
 
-			if ((fgObject2->assetFlags & COLL_ANY_ENABLED) == 0) {
+			if (!(fgObject2->assetFlags & COLL_ANY_ENABLED)) {
 				continue;
 			}
 
@@ -244,7 +254,57 @@ void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx)
 	}
 }
 
-void COLLISION_Resolve(GameContext_t* ctx)
+// Finds bump side seen from bumped object perspective (i.e. player jumps on top of object then BUMP_SIDE_TOP is set)
+static void COLLISION_Player_FGObject_DetectBumpSide(const ForegroundObject_t* obj, const Rect_t* bumpRect, BumpSideEnum* bumpSide)
+{
+	*bumpSide = BUMP_SIDE_NONE;
+
+	const int bumpLenX = CalcRectXLen(bumpRect);
+	const int bumpLenY = CalcRectYLen(bumpRect);
+
+	// Vertical collision (top/bottom)
+	if (bumpLenX >= bumpLenY) {
+		if (!(obj->assetFlags & COLL_TOP_ENABLED) && !(obj->assetFlags & COLL_DOWN_ENABLED)) return;
+		if (bumpLenX <= COLLISION_THRESHOLD_VERTICAL) return;
+
+		int bumpCenterY = (bumpRect->p1.y + bumpRect->p2.y) / 2;
+
+		// Landing on top of the object
+		if (bumpCenterY > obj->BBoxCenter.y) {
+			if (obj->assetFlags & COLL_TOP_ENABLED) {
+				*bumpSide = BUMP_SIDE_TOP;
+			}
+		}
+		// Bumping from the bottom
+		else {
+			if (obj->assetFlags & COLL_DOWN_ENABLED) {
+				*bumpSide = BUMP_SIDE_BOTTOM;
+			}
+		}
+	}
+	// Horizontal collision (left/right)
+	else {
+		if (!(obj->assetFlags & COLL_LEFT_ENABLED) && !(obj->assetFlags & COLL_RIGHT_ENABLED)) return;
+		if (bumpLenY <= COLLISION_THRESHOLD_HORIZONTAL) return;
+
+		int bumpCenterX = (bumpRect->p1.x + bumpRect->p2.x) / 2;
+
+		// Bumping from the right
+		if (bumpCenterX > obj->BBoxCenter.x) {
+			if (obj->assetFlags & COLL_RIGHT_ENABLED) {
+				*bumpSide = BUMP_SIDE_RIGHT;
+			}
+		}
+		// Bumping from the left
+		else {
+			if (obj->assetFlags & COLL_LEFT_ENABLED) {
+				*bumpSide = BUMP_SIDE_LEFT;
+			}
+		}
+	}
+}
+
+static void COLLISION_Resolve(GameContext_t* ctx)
 {
 	for (int i = 0; i < ctx->collision.size; i++)
 	{
@@ -279,8 +339,9 @@ void COLLISION_Resolve(GameContext_t* ctx)
 			// All solid blocks
 			// default:
 			// {
+				// Push the player out of the object, then let the object react to the bump
 				COLLISION_Player_SolidFGObject_Handle(&ctx->player, obj, bump->bumpSide);
-				if (bump->bumpSide != BUMP_SIDE_NONE) { // call action after collision
+				if (bump->bumpSide != BUMP_SIDE_NONE) {
 					COLLISION_Player_SolidFGObject_SideEffect(obj, &ctx->player, bump->bumpSide, &ctx->objectsManager);
 				}
 
@@ -301,6 +362,7 @@ void COLLISION_Resolve(GameContext_t* ctx)
 		case FG_OBJECT_BUMP_FLOOR:
 		{
 			ForegroundObject_t* obj = &ctx->fgObjects[bump->actor1.index];
+
 			COLLISION_FGObject_Floor(obj, ctx);
 			break;
 		}
@@ -310,80 +372,47 @@ void COLLISION_Resolve(GameContext_t* ctx)
 	}
 }
 
-// Returns bump side seen from bumped object perspective (i.e. player jumps on top of object then BUMP_SIDE_TOP is returned)
-BumpSideEnum COLLISION_Player_FGObject_DetectBumpSide(const ForegroundObject_t* obj, const Rect_t* bumpRect)
+static void COLLISION_Player_Floor(PlayerState_t* player, const GameContext_t* ctx)
 {
-	const int bumpLenX = CalcRectXLen(bumpRect);
-	const int bumpLenY = CalcRectYLen(bumpRect);
-
-	const int COLLISION_THRESHOLD_VERTICAL = 3;
-	const int COLLISION_THRESHOLD_HORIZONTAL = 1;
-
-	// 1. VERTICAL COLLISION (UP/DOWN)
-	if (bumpLenX >= bumpLenY) {
-		if (!(obj->assetFlags & COLL_TOP_ENABLED) && !(obj->assetFlags & COLL_DOWN_ENABLED)) return BUMP_SIDE_NONE;
-		if (bumpLenX <= COLLISION_THRESHOLD_VERTICAL) return BUMP_SIDE_NONE;
-
-		int bumpCenterY = (bumpRect->p1.y + bumpRect->p2.y) / 2;
-
-		// LANDING ON OBJECT (TOP OF THE OBJECT)
-		if (bumpCenterY > obj->BBoxCenter.y) {
-			if (obj->assetFlags & COLL_TOP_ENABLED) {
-				return BUMP_SIDE_TOP;
-			}
-		}
-		// BUMPING FROM THE BOTTOM
-		else {
-			if (obj->assetFlags & COLL_DOWN_ENABLED) {
-				return BUMP_SIDE_BOTTOM;
-			}
-		}
-	}
-	// 2. HORIZONTAL COLLISION (LEFT/RIGHT)
-	else {
-		if (!(obj->assetFlags & COLL_LEFT_ENABLED) && !(obj->assetFlags & COLL_RIGHT_ENABLED)) return BUMP_SIDE_NONE;
-		if (bumpLenY <= COLLISION_THRESHOLD_HORIZONTAL) return BUMP_SIDE_NONE;
-
-		int centerBumpX = (bumpRect->p1.x + bumpRect->p2.x) / 2;
-
-		// BUMPING FROM RIGHT
-		if (centerBumpX > obj->BBoxCenter.x) {
-			if (obj->assetFlags & COLL_RIGHT_ENABLED) {
-				return BUMP_SIDE_RIGHT;
-			}
-		}
-		// BUMPING FROM LEFT
-		else {
-			if (obj->assetFlags & COLL_LEFT_ENABLED) {
-				return BUMP_SIDE_LEFT;
-			}
-		}
-	}
-
-	return BUMP_SIDE_NONE;
-}
-
-void COLLISION_Player_RewardFGObject_Handle(PlayerState_t* player, ForegroundObject_t* obj)
-{
-	switch (obj->id)
-	{
-	case FG_REWARD_LEVEL_UP_MUSHROOM_OBJECT_ID:
-	{
-		player->triggerLevelUp = true;
-		obj->currFlags.IsAlive = false;
-		break;
-	}
-	default:
-		break;
+	// Land on the floor
+	if (!player->IsGrounded) {
+		player->IsGrounded = true;
+		player->currMapPos.y = ctx->map.floorYLevel;
+		player->body.subpixelY = 0.0f;
+		player->body.vy = 0.0f;
 	}
 }
 
-void COLLISION_Player_SolidFGObject_Handle(PlayerState_t* player, const ForegroundObject_t* obj, BumpSideEnum bumpSide)
+static void COLLISION_Player_Enemy(PlayerState_t* player, EnemyState_t* enemy, const Bump_t* bump, const GameContext_t* ctx)
+{
+	(void)player;
+	(void)enemy;
+	(void)bump;
+	(void)ctx;
+}
+
+// static void COLLISION_Player_RewardFGObject_Handle(PlayerState_t* player, ForegroundObject_t* obj)
+// {
+// 	switch (obj->id)
+// 	{
+// 	case FG_REWARD_LEVEL_UP_MUSHROOM_OBJECT_ID:
+// 	{
+// 		player->triggerLevelUp = true;
+// 		obj->currFlags.IsAlive = false;
+// 		break;
+// 	}
+// 	default:
+// 		break;
+// 	}
+// }
+
+static void COLLISION_Player_SolidFGObject_Handle(PlayerState_t* player, const ForegroundObject_t* obj, BumpSideEnum bumpSide)
 {
 	switch (bumpSide)
 	{
 	case BUMP_SIDE_TOP:
 	{
+		// Land on top of the object
 		if (!player->IsGrounded) {
 			player->IsGrounded = true;
 			player->currMapPos.y = obj->currMapPos.y + obj->asset.BBox.p2.y;
@@ -395,25 +424,28 @@ void COLLISION_Player_SolidFGObject_Handle(PlayerState_t* player, const Foregrou
 	}
 	case BUMP_SIDE_BOTTOM:
 	{
+		// Bounce down from the bottom of the object
 		player->body.vy = -0.5f;
 		player->currMapPos.y = obj->currMapPos.y - player->asset.BBox.p2.y;
-		
+
 		break;
 	}
 	case BUMP_SIDE_LEFT:
 	{
+		// Stop one pixel away from the object in order to not "glue" to it
 		player->body.vx = 0.0f;
 		player->body.subpixelX = 0.0f;
-		player->currMapPos.x = obj->currMapPos.x - player->asset.BBox.p2.x - 1; // - 1 in order to not "glue" to the object
-		
+		player->currMapPos.x = obj->currMapPos.x - player->asset.BBox.p2.x - 1;
+
 		break;
 	}
 	case BUMP_SIDE_RIGHT:
 	{
+		// Stop one pixel away from the object in order to not "glue" to it
 		player->body.vx = 0.0f;
 		player->body.subpixelX = 0.0f;
-		player->currMapPos.x = obj->currMapPos.x + obj->asset.BBox.p2.x + 1; // +1 in order to not "glue" to the object
-		
+		player->currMapPos.x = obj->currMapPos.x + obj->asset.BBox.p2.x + 1;
+
 		break;
 	}
 	default:
@@ -421,79 +453,58 @@ void COLLISION_Player_SolidFGObject_Handle(PlayerState_t* player, const Foregrou
 	}
 }
 
-void COLLISION_Player_Floor(PlayerState_t* player, const GameContext_t* ctx)
-{
-	if (!player->IsGrounded) {
-		player->IsGrounded = true;
-		player->currMapPos.y = ctx->map.floorYLevel;
-		player->body.subpixelY = 0.0f;
-		player->body.vy = 0.0f;
-	}
-}
-
-void COLLISION_Player_Enemy(PlayerState_t* player, EnemyState_t* enemy, const Bump_t* bump, const GameContext_t* ctx)
-{
-	if (player == NULL || enemy == NULL || bump == NULL || ctx == NULL) { return; }
-}
-
-void COLLISION_Player_SolidFGObject_SideEffect(
-	ForegroundObject_t* obj, 
-	PlayerState_t* player, 
-	BumpSideEnum bumpSide, 
-	ObjectsManager_t* mgr)
+static void COLLISION_Player_SolidFGObject_SideEffect(ForegroundObject_t* obj, PlayerState_t* player, BumpSideEnum bumpSide, ObjectsManager_t* mgr)
 {
 	bool prevPlayerHitFGObjectFromBottom = player->JustHitFGObjectFromBottom;
 
+	// Only one bump from the bottom per frame
 	if (bumpSide == BUMP_SIDE_BOTTOM && !player->JustHitFGObjectFromBottom) {
-		// only one bump per frame!
 		player->JustHitFGObjectFromBottom = true;
 		// Code below is very bad, fix pls :(
 		obj->assetFlags &= ~FG_SCROLL_RENDER;
 	}
 
-	//--------------
-	if (obj->assetFlags & BUMPABLE) 
+	// Bumpable object: mark it as bumped and count the bump, a single-bump object stops being bumpable
+	if (obj->assetFlags & BUMPABLE)
 	{
-		if (bumpSide == BUMP_SIDE_BOTTOM && !prevPlayerHitFGObjectFromBottom) 
+		if (bumpSide == BUMP_SIDE_BOTTOM && !prevPlayerHitFGObjectFromBottom)
 		{
-			// General info to other systems: I've beed bumped!
 			obj->currFlags.playerBumpedFromBelow = true;
 
 			if (!(obj->assetFlags & BUMPABLE_MULTIPLE_TIMES)) {
 				//todotomka very bad, assetFlags should be const!
-				obj->assetFlags &= ~BUMPABLE; // NO MORE BUMPING FOR YOU!
+				obj->assetFlags &= ~BUMPABLE;
 			}
 			obj->bumpCounter++;
 		}
 	}
 
-	//--------------
-	if (obj->assetFlags & DESTROYABLE) 
+	// Destroyable object: a big player kills it and its rendered sprite has to be cleared
+	if (obj->assetFlags & DESTROYABLE)
 	{
-		if (bumpSide == BUMP_SIDE_BOTTOM && !prevPlayerHitFGObjectFromBottom) {
+		if (bumpSide == BUMP_SIDE_BOTTOM && !prevPlayerHitFGObjectFromBottom)
+		{
 			bool isPlayerBig = (player->playerLevel == PLAYER_SUPER_MARIO || player->playerLevel == PLAYER_FIRE_MARIO) ? true : false;
 			if (isPlayerBig) {
-				// General Info to every system: I'm dead!
 				obj->currFlags.IsAlive = false;
-				// Specific info for renderer to clear previous dirty rect 
 				obj->currFlags.clearRenderedSprite = true;
 			}
 		}
 	}
 
-	//--------------
+	// Hidden object: reveal it
 	if (obj->assetFlags & HIDDEN)
 	{
-		if (bumpSide == BUMP_SIDE_BOTTOM && !prevPlayerHitFGObjectFromBottom) 
+		if (bumpSide == BUMP_SIDE_BOTTOM && !prevPlayerHitFGObjectFromBottom)
 		{
-			obj->assetFlags &= ~HIDDEN; // IM NOT HIDDEN ANYMORE!
+			obj->assetFlags &= ~HIDDEN;
 		}
 	}
 
-	//--------------
+	// Object with a reward: spawn it once, or up to 10 times for an object bumpable multiple times
 	if (obj->assetFlags & REWARD_BIT_MASK)
 	{
-		if (bumpSide == BUMP_SIDE_BOTTOM && !prevPlayerHitFGObjectFromBottom) 
+		if (bumpSide == BUMP_SIDE_BOTTOM && !prevPlayerHitFGObjectFromBottom)
 		{
 			obj->rewardCounter++;
 			if (obj->rewardCounter == 1 ||
@@ -501,7 +512,6 @@ void COLLISION_Player_SolidFGObject_SideEffect(
 			{
 				ObjectLevelInstance_t rewardToSpawn = {0};
 
-				// Spawn reward
 				uint32_t rewardType = obj->assetFlags & REWARD_BIT_MASK;
 				switch (rewardType)
 				{
@@ -513,9 +523,10 @@ void COLLISION_Player_SolidFGObject_SideEffect(
 					break;
 				}
 				case REWARD_LEVEL_UP: {
+					// Offset so mushroom spawns aligned with bumped parent block
 					rewardToSpawn.id = FG_REWARD_LEVEL_UP_MUSHROOM_OBJECT_ID;
 					rewardToSpawn.x = obj->origMapPos.x;
-					rewardToSpawn.y = obj->origMapPos.y + 4; // Offset so mushroom spawns aligned with bumped parent block
+					rewardToSpawn.y = obj->origMapPos.y + 4;
 					rewardToSpawn.flags = 0;
 					break;
 				}
@@ -534,38 +545,35 @@ void COLLISION_Player_SolidFGObject_SideEffect(
 	}
 }
 
-BumpSideEnum COLLISION_FGObject_FGObject(ForegroundObject_t* actor, ForegroundObject_t* obj, const Bump_t* bump)
-{	
-	BumpSideEnum bumpSide = BUMP_SIDE_NONE;
-	
+static void COLLISION_FGObject_FGObject(ForegroundObject_t* actor, ForegroundObject_t* obj, const Bump_t* bump)
+{
 	const int bumpLenX = CalcRectXLen(&bump->bumpRect);
 	const int bumpLenY = CalcRectYLen(&bump->bumpRect);
 
-	const int COLLISION_THRESHOLD_VERTICAL = 3;
-	const int COLLISION_THRESHOLD_HORIZONTAL = 1;
-
 	Body_t* actorBody = &actor->physics.engine.body;
-	
-	// 1. VERTICAL COLLISION (UP/DOWN)
+
+	// Vertical collision (top/bottom)
 	if (bumpLenX >= bumpLenY) {
-		if (!(obj->assetFlags & COLL_TOP_ENABLED) && !(obj->assetFlags & COLL_DOWN_ENABLED)) return BUMP_SIDE_NONE;
-		if (bumpLenX <= COLLISION_THRESHOLD_VERTICAL) return BUMP_SIDE_NONE;
+		if (!(obj->assetFlags & COLL_TOP_ENABLED) && !(obj->assetFlags & COLL_DOWN_ENABLED)) return;
+		if (bumpLenX <= COLLISION_THRESHOLD_VERTICAL) return;
 
 		int bumpCenterY = (bump->bumpRect.p1.y + bump->bumpRect.p2.y) / 2;
 
-		// LANDING ON OBJECT (TOP OF THE OBJECT)
+		// Landing on top of the object
 		if (bumpCenterY > obj->BBoxCenter.y) {
-			if (!(obj->assetFlags & COLL_TOP_ENABLED)) return BUMP_SIDE_NONE;
+			if (!(obj->assetFlags & COLL_TOP_ENABLED)) return;
+			// The object moves up: throw the actor one pixel above it into the air and reverse its direction when it is left of the object center
 			if (obj->currMapPos.y > obj->prevMapPos.y) {
 				actor->currFlags.IsGrounded = false;
-				actor->currMapPos.y = obj->currMapPos.y + obj->asset.BBox.p2.y + 1; // Bump one pixel above collision
+				actor->currMapPos.y = obj->currMapPos.y + obj->asset.BBox.p2.y + 1;
 				actorBody->subpixelY = 0.0f;
-				actorBody->vy = 0.4f; // Make it fly!
+				actorBody->vy = 0.4f;
 				if (actor->currMapPos.x < obj->BBoxCenter.x) {
 					actorBody->subpixelX = 0.0f;
-					actorBody->vx = -actorBody->vx; // Change direction!
+					actorBody->vx = -actorBody->vx;
 				}
 			}
+			// Land on top of the object
 			else if (!actor->currFlags.IsGrounded) {
 				actor->currFlags.IsGrounded = true;
 				actor->currMapPos.y = obj->currMapPos.y + obj->asset.BBox.p2.y;
@@ -573,45 +581,46 @@ BumpSideEnum COLLISION_FGObject_FGObject(ForegroundObject_t* actor, ForegroundOb
 				actorBody->vy = 0.0f;
 			}
 		}
-		// BUMPING FROM THE BOTTOM
+		// Bumping from the bottom
 		else {
-			if ((obj->assetFlags & COLL_DOWN_ENABLED)) {
+			if (obj->assetFlags & COLL_DOWN_ENABLED) {
+				// Bounce down from the bottom of the object
 				actorBody->vy = -0.7f;
 				actor->currMapPos.y = obj->currMapPos.y - actor->asset.BBox.p2.y;
-				bumpSide = BUMP_SIDE_BOTTOM;
 			}
 		}
 	}
-	// 2. HORIZONTAL COLLISION (LEFT/RIGHT)
+	// Horizontal collision (left/right)
 	else {
-		if (!(obj->assetFlags & COLL_LEFT_ENABLED) && !(obj->assetFlags & COLL_RIGHT_ENABLED)) return BUMP_SIDE_NONE;
-		if (bumpLenY <= COLLISION_THRESHOLD_HORIZONTAL) return BUMP_SIDE_NONE;
+		if (!(obj->assetFlags & COLL_LEFT_ENABLED) && !(obj->assetFlags & COLL_RIGHT_ENABLED)) return;
+		if (bumpLenY <= COLLISION_THRESHOLD_HORIZONTAL) return;
 
-		int centerBumpX = (bump->bumpRect.p1.x + bump->bumpRect.p2.x) / 2;
+		int bumpCenterX = (bump->bumpRect.p1.x + bump->bumpRect.p2.x) / 2;
 
-		// BUMPING FROM RIGHT
-		if (centerBumpX > obj->BBoxCenter.x) {
-			if ((obj->assetFlags & COLL_RIGHT_ENABLED)) {
+		// Bumping from the right
+		if (bumpCenterX > obj->BBoxCenter.x) {
+			if (obj->assetFlags & COLL_RIGHT_ENABLED) {
+				// Turn back one pixel away from the object in order to not "glue" to it
 				actorBody->vx = 0.3f;
 				actorBody->subpixelX = 0.0f;
-				actor->currMapPos.x = obj->currMapPos.x + obj->asset.BBox.p2.x + 1; // +1 in order to not "glue" to the object
+				actor->currMapPos.x = obj->currMapPos.x + obj->asset.BBox.p2.x + 1;
 			}
 		}
-		// BUMPING FROM LEFT
+		// Bumping from the left
 		else {
-			if ((obj->assetFlags & COLL_LEFT_ENABLED)) {
+			if (obj->assetFlags & COLL_LEFT_ENABLED) {
+				// Turn back one pixel away from the object in order to not "glue" to it
 				actorBody->vx = -0.3f;
 				actorBody->subpixelX = 0.0f;
-				actor->currMapPos.x = obj->currMapPos.x - actor->asset.BBox.p2.x - 1; // - 1 in order to not "glue" to the object
+				actor->currMapPos.x = obj->currMapPos.x - actor->asset.BBox.p2.x - 1;
 			}
 		}
 	}
-
-	return bumpSide;
 }
 
-void COLLISION_FGObject_Floor(ForegroundObject_t* actor, const GameContext_t* ctx)
+static void COLLISION_FGObject_Floor(ForegroundObject_t* actor, const GameContext_t* ctx)
 {
+	// Land on the floor
 	if (!actor->currFlags.IsGrounded) {
 		actor->currFlags.IsGrounded = true;
 		actor->currMapPos.y = ctx->map.floorYLevel;
