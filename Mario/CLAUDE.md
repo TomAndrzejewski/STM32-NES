@@ -87,7 +87,7 @@ Gdy nie jesteś pewien, w jakim trybie jesteśmy, zapytaj, zamiast zgadywać.
 - **Bez dynamicznej alokacji** (`malloc`) w kodzie gry. Tablice o stałym rozmiarze z `Game_Defs.h`.
 - Pamiętaj o ograniczeniach RAM/Flash i o tym, że kod przerwań/DMA działa równolegle z pętlą gry
   (`volatile`, sekcje krytyczne).
-- Komentarze mogą być po polsku lub angielsku. Nazwy w kodzie po angielsku.
+- Komentarze i nazwy w kodzie po angielsku.
 
 ---
 

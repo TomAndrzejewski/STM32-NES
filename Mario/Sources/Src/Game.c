@@ -65,9 +65,8 @@ int GAME_Update(GameContext_t* ctx)
 	timeStamps++;
 
 	s->startTime[timeStamps] = GetTimestamp();
-	ret = CAMERA_Update(&ctx->camera, ctx);
+	CAMERA_Update(&ctx->camera, ctx);
 	s->finishTime[timeStamps] = GetTimestamp();
-	if (ret < 0)	{ delay(1); return -15; }
 	timeStamps++;
 
 	s->startTime[timeStamps] = GetTimestamp();

@@ -11,6 +11,8 @@
 
 #include "NES_Defs.h"
 #include "NES_Functions.h"
+#include "NES_Assert.h"
+#include "printf_logger.h"
 
 void delayUS(uint32_t us)
 {
@@ -153,4 +155,14 @@ bool Rect_IsIntersection(const Rect_t* commonRect)
 		return true;
 	}
 	return false;
+}
+
+void NES_AssertFailed(const char* file, int line)
+{
+	__disable_irq(); // stop DMA/sound, the game state can no longer be trusted
+
+	printf_v("\n### ASSERT %s:%d ###\n", file, line);
+
+	__BKPT(0);   // halt the debugger
+	while (1);
 }

@@ -10,8 +10,6 @@
 
 #include "Game_Types.h"
 
-int 	CAMERA_Update(CameraState_t* camera, const GameContext_t* ctx);
-int 	CAMERA_CalcPos(CameraState_t* camera, const PlayerState_t* player);
-int 	CAMERA_CalcScreenRect(CameraState_t* camera);
+void 	CAMERA_Update(CameraState_t* camera, const GameContext_t* ctx);
 
 #endif // SOURCES_INC_CAMERA_H_
