@@ -53,6 +53,9 @@ target_compile_options(${PROJECT_NAME}.elf PRIVATE
     -Wall
     -Wextra
     -Wno-switch
+    -Wdouble-promotion
+    -Wfloat-conversion
+    #-Wshadow
 
     # Debug / Release
     $<$<CONFIG:Debug>:-O0 -g3>

@@ -117,7 +117,7 @@ int OBJECTS_MANAGER_SpawnObject(GameContext_t* ctx, const ObjectLevelInstance_t*
 	// load object
 	if (OBJECTS_MANAGER_IsThisFGID(objectDef->id)) 
 	{
-		if (ctx->activefgObjects >= FOREGROUND_OBJECTS_MAX_SIZE - 1) {
+		if (ctx->activefgObjects >= FOREGROUND_OBJECTS_MAX_SIZE) {
 			printf_str("\n### ERROR, max FGObjects reached ###\n");
 			return -5;
 		}
@@ -148,7 +148,7 @@ int OBJECTS_MANAGER_SpawnObject(GameContext_t* ctx, const ObjectLevelInstance_t*
 	}
 	else if (OBJECTS_MANAGER_IsThisEnemyID(objectDef->id)) 
 	{
-		if (ctx->enemies.activeEnemies >= ENEMIES_MAX_SIZE - 1) {
+		if (ctx->enemies.activeEnemies >= ENEMIES_MAX_SIZE) {
 			printf_str("\n### ERROR, max enemies reached ###\n");
 			return -15;
 		}
@@ -178,7 +178,7 @@ int OBJECTS_MANAGER_SpawnObject(GameContext_t* ctx, const ObjectLevelInstance_t*
 	}
 	else if (OBJECTS_MANAGER_IsThisBGID(objectDef->id)) 
 	{
-		if (ctx->activebgObjects >= BACKGROUND_OBJECTS_MAX_SIZE - 1) {
+		if (ctx->activebgObjects >= BACKGROUND_OBJECTS_MAX_SIZE) {
 			printf_str("\n### ERROR, max BGObjects reached ###\n");
 			return -25;
 		}

@@ -40,6 +40,6 @@ int INPUT_SetFrameTimeUS(InputState_t* input, u32 frameTimeUS)
 {
 	if (input == NULL) { return -1; }
 	input->frameData.frameTimeUS = frameTimeUS;
-	input->frameData.frameTimeS = input->frameData.frameTimeUS/1000000.0;
+	input->frameData.frameTimeS = input->frameData.frameTimeUS/1000000.0f;
 	return 0;
 }

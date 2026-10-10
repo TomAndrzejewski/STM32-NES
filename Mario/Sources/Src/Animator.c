@@ -11,7 +11,6 @@
 #include <math.h>
 
 #include "Game_Types.h"
-#include "NES_Functions.h"
 
 
 int ANIMATOR_Update(GameContext_t* ctx)
@@ -130,7 +129,7 @@ void ANIMATOR_Player_Decide_Normal(PlayerState_t* player, const GameContext_t* c
 		} else {
 			player->animator.runAnimationFrameTimeUS += ctx->input.frameData.frameTimeUS;
 
-			uint32_t runAnimationVelTimeMultiplier = player->animator.runAnimationFrameTimeUS * fabsf(player->body.vx);
+			uint32_t runAnimationVelTimeMultiplier = player->animator.runAnimationFrameTimeUS * (uint32_t)fabsf(player->body.vx);
 			
 			if (player->animator.runAnimationFrameTimeUS < 75000) {
 				player->animator.currAnimation = MARIO_RUN_1_ANIMATION_ID;

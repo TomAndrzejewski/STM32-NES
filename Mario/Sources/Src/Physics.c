@@ -10,7 +10,6 @@
 #include <string.h>
 
 #include "Game_Defs.h"
-#include "NES_Functions.h"
 
 #include "Game_Types.h"
 #include "Level.h"

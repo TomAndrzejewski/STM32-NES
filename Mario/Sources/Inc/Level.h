@@ -18,8 +18,6 @@ int LEVEL_GetBGRepObjectsLocations(const RepObjectLevelPos_t** posTable, int* nu
 
 int LEVEL_GetLevelBoundaries(const Rect_t** levelBoundaries);
 
-int LEVEL_GetObjRenderPriorities(const GameObjectID** prioTable, int* numOfObjects);
-
 int LEVEL_GetNextSoundNote(const NoteAsset_t** note);
 
 

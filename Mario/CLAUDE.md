@@ -52,7 +52,7 @@ Gdy nie jesteś pewien, w jakim trybie jesteśmy, zapytaj, zamiast zgadywać.
 
 ## O projekcie
 
-- **MCU:** STM32F446RE (Cortex-M4F, 180 MHz, 512 KB Flash, 128 KB RAM), płytka NUCLEO-F446RE.
+- **MCU:** STM32F446RE (Cortex-M4F, 180 MHz (kod ustawia na 144MHz), 512 KB Flash, 128 KB RAM), płytka NUCLEO-F446RE.
 - **Biblioteki:** CMSIS + **STM32 LL (bez HAL)**. Nie wprowadzaj HAL-a.
 - **Wyświetlacz:** LCD po SPI1, transfery przez DMA2, rendering przez „dirty rects” i przewijanie pionowe.
 - **Sterowanie:** pad (`PADControl`, `Input`). **Dźwięk:** `Sound`.
@@ -83,7 +83,7 @@ Gdy nie jesteś pewien, w jakim trybie jesteśmy, zapytaj, zamiast zgadywać.
 - Typy z sufiksem `_t` (`GameContext_t`, `Rect_t`), stałe i makra `WIELKIMI_LITERAMI`, wartości w nawiasach.
 - Funkcje zwracają `int` lub `void` jako kod błędu. Wyniki zwracają przez wskaźnik.
 - Stan gry przekazywany przez `GameContext_t* ctx`. Unikaj nowych zmiennych globalnych.
-- ID obiektów w zakresach z `Game_Types.h`. **Nowe ID dopisz do `ObjRenderPriorities` w `Level.c`.**
+- ID obiektów w zakresach z `Game_Types.h`.
 - **Bez dynamicznej alokacji** (`malloc`) w kodzie gry. Tablice o stałym rozmiarze z `Game_Defs.h`.
 - Pamiętaj o ograniczeniach RAM/Flash i o tym, że kod przerwań/DMA działa równolegle z pętlą gry
   (`volatile`, sekcje krytyczne).

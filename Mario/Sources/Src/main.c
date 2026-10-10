@@ -632,7 +632,11 @@ int main(void)
 
 	// I2S_Start();
 
-	GAME_InitContext(pGameCtx);
+	int ret = GAME_InitContext(pGameCtx);
+	if (ret < 0) {
+		__BKPT(0);   // zatrzymaj debugger
+		while (1);
+	}
 
 	u32 timeSpentInLoopUS = 0;
 	u32 targetFrameTimeUS = 1000000/TARGET_FRAMERATE_HZ;

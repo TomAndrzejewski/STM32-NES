@@ -63,6 +63,10 @@ void DMA2_SPI1_Send_NoBlock(uint8_t* buffer, uint16_t length)
 			break;
 		}
 	}
+	if (timeout_has_expired(&timer)) { // Bail out!!!
+		return;
+	}
+	
 	dma_done = false;
     // 1. Sprawdź, czy poprzedni transfer DMA się zakończył
     // Jeśli DMA jeszcze wysyła, musimy poczekać (lub zabezpieczyć to wyżej w kodzie)
