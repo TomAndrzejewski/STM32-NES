@@ -11,17 +11,22 @@ project(Mario
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(LINKER_SCRIPT
-    ${CMAKE_SOURCE_DIR}/STM32F446RETX_FLASH.ld
+    ${CMAKE_SOURCE_DIR}/sources/platform/src/STM32F446RETX_FLASH.ld
 )
 
 # -----------------------------------------------------------------------------
 # Sources
 # -----------------------------------------------------------------------------
 
-file(GLOB MY_SOURCES "Sources/Src/*.c")
+file(GLOB MY_SOURCES    "sources/app/*.c"
+                        "sources/game/src/*.c"
+                        "sources/common/src/*.c"
+                        "sources/drivers/src/*.c"
+                        "sources/platform/src/*.c"
+                        "sources/thirdparty/src/*.c")
 
 list(APPEND MY_SOURCES
-    ${CMAKE_SOURCE_DIR}/Startup/startup_stm32f446retx.s
+    ${CMAKE_SOURCE_DIR}/sources/platform/src/startup_stm32f446retx.s
 )
 
 # -----------------------------------------------------------------------------
@@ -77,7 +82,13 @@ target_compile_definitions(${PROJECT_NAME}.elf PRIVATE
 
 # Your own headers
 target_include_directories(${PROJECT_NAME}.elf PRIVATE
-    ${CMAKE_SOURCE_DIR}/Sources/Inc
+    ${CMAKE_SOURCE_DIR}/sources/Inc
+    ${CMAKE_SOURCE_DIR}/sources/app/inc
+    ${CMAKE_SOURCE_DIR}/sources/game/inc
+    ${CMAKE_SOURCE_DIR}/sources/common/inc
+    ${CMAKE_SOURCE_DIR}/sources/drivers/inc
+    ${CMAKE_SOURCE_DIR}/sources/platform/inc
+    ${CMAKE_SOURCE_DIR}/sources/thirdparty/inc
 )
 
 # External/system headers: CMSIS, STM32 device headers, LL.

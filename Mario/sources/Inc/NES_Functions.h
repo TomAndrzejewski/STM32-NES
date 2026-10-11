@@ -8,11 +8,9 @@
 #ifndef SOURCES_INC_NES_FUNCTIONS_H_
 #define SOURCES_INC_NES_FUNCTIONS_H_
 
+#include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
-
-// #include "NES_Defs.h"
-#include "NES_Types.h"
 
 void delay(uint32_t ms);
 void delayUS(uint32_t us);
