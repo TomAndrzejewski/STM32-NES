@@ -140,7 +140,7 @@ static void ANIMATOR_Player_Decide_Normal(PlayerState_t* player, const GameConte
 		} else {
 			player->animator.runAnimationFrameTimeUS += ctx->input.frameData.frameTimeUS;
 
-			uint32_t runAnimationVelTimeMultiplier = player->animator.runAnimationFrameTimeUS * (uint32_t)fabsf(player->body.vx);
+			float runAnimationVelTimeMultiplier = player->animator.runAnimationFrameTimeUS * fabsf(player->body.vx);
 			
 			if (player->animator.runAnimationFrameTimeUS < 75000) {
 				player->animator.currAnimation = MARIO_RUN_1_ANIMATION_ID;
