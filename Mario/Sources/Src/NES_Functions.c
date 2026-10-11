@@ -7,7 +7,6 @@
 
 #include <stm32f446xx.h>
 #include "core_cm4.h"
-#include "stdlib.h"
 
 #include "NES_Defs.h"
 #include "NES_Functions.h"
@@ -92,69 +91,6 @@ void fast_memset(void *dest, uint32_t value, size_t bytes)
             *p_byte++ = (uint8_t)value;
         }
     }
-}
-
-int CalcRectArea(Rect_t rect)
-{
-	int a = abs(rect.p1.x - rect.p2.x);
-	int b = abs(rect.p1.y - rect.p2.y);
-	int area = a*b;
-	return area;
-}
-
-int CalcRectArea2(const Rect_t* rect)
-{
-	if (rect == NULL) { return 0; }
-
-	int a = abs(rect->p1.x - rect->p2.x) + 1;
-	int b = abs(rect->p1.y - rect->p2.y) + 1;
-	int area = a*b;
-	return area;
-}
-
-int CalcRectXLen(const Rect_t* rect)
-{
-	if (rect == NULL) { return 0; }
-	int a = abs(rect->p1.x - rect->p2.x);
-	return a;
-}
-
-int CalcRectYLen(const Rect_t* rect)
-{
-	if (rect == NULL) { return 0; }
-	int b = abs(rect->p1.y - rect->p2.y);
-	return b;
-}
-
-int Point_Move(Point_t* src, Point_t* moveVector)
-{
-	if (src == NULL)		{ return -1; }
-	if (moveVector == NULL)	{ return -5; }
-
-	src->x += moveVector->x;
-	src->y += moveVector->y;
-
-	return 0;
-}
-
-void Rect_GetIntersection(const Rect_t* r1, const Rect_t* r2, Rect_t* result)
-{
-	if (r1 == NULL || r2 == NULL || result == NULL) { return; }
-
-	result->p1.x = max(r1->p1.x, r2->p1.x);
-	result->p1.y = max(r1->p1.y, r2->p1.y);
-	result->p2.x = min(r1->p2.x, r2->p2.x);
-	result->p2.y = min(r1->p2.y, r2->p2.y);
-}
-
-bool Rect_IsIntersection(const Rect_t* commonRect)
-{
-	if (commonRect == NULL) { return false; }
-
-	if (commonRect->p1.x <= commonRect->p2.x && commonRect->p1.y <= commonRect->p2.y) {
-		return true;
-	}
-	return false;
 }
 
 void NES_AssertFailed(const char* func, int line)

@@ -10,6 +10,7 @@
 #include <stddef.h>
 
 #include "Game_Types.h"
+#include "Geometry.h"
 #include "Level.h"
 #include "NES_Assert.h"
 #include "NES_Functions.h"
@@ -78,9 +79,9 @@ static void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx
 
 	// Player bumps floor
 	Rect_t bumpRect = {0};
-	Rect_GetIntersection(&playerRect, &floorRect, &bumpRect);
+	RECT_GetIntersection(&playerRect, &floorRect, &bumpRect);
 
-	if (Rect_IsIntersection(&bumpRect)) {
+	if (RECT_IsIntersection(&bumpRect)) {
 		if (coll->size < COLLISIONS_SIZE) {
 			coll->bumps[coll->size].bumpID = PLAYER_BUMP_FLOOR;
 			coll->bumps[coll->size].actor1 = (GameObjectRef_t){ ctx->player.id, 0 };
@@ -116,9 +117,9 @@ static void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx
 		objRect.p2.y = fgObject->currMapPos.y + fgObject->asset.BBox.p2.y;
 
 		Rect_t bumpRect = {0};
-		Rect_GetIntersection(&playerRect, &objRect, &bumpRect);
+		RECT_GetIntersection(&playerRect, &objRect, &bumpRect);
 
-		if (Rect_IsIntersection(&bumpRect)) {
+		if (RECT_IsIntersection(&bumpRect)) {
 			if (coll->size < COLLISIONS_SIZE) {
 				coll->bumps[coll->size].bumpID = PLAYER_BUMP_FG_OBJECT;
 				coll->bumps[coll->size].actor1 = (GameObjectRef_t){ ctx->player.id, 0 };
@@ -152,9 +153,9 @@ static void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx
 		enemyRect.p2.y = enemy->currMapPos.y + enemy->asset.BBox.p2.y;
 
 		Rect_t bumpRect = {0};
-		Rect_GetIntersection(&playerRect, &enemyRect, &bumpRect);
+		RECT_GetIntersection(&playerRect, &enemyRect, &bumpRect);
 
-		if (Rect_IsIntersection(&bumpRect)) {
+		if (RECT_IsIntersection(&bumpRect)) {
 			if (coll->size < COLLISIONS_SIZE) {
 				coll->bumps[coll->size].bumpID = PLAYER_BUMP_ENEMY;
 				coll->bumps[coll->size].actor1 = (GameObjectRef_t){ ctx->player.id, 0 };
@@ -197,9 +198,9 @@ static void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx
 
 		// Foreground object bumps floor
 		Rect_t bumpRect = {0};
-		Rect_GetIntersection(&objRect, &floorRect, &bumpRect);
+		RECT_GetIntersection(&objRect, &floorRect, &bumpRect);
 
-		if (Rect_IsIntersection(&bumpRect)) {
+		if (RECT_IsIntersection(&bumpRect)) {
 			if (coll->size < COLLISIONS_SIZE) {
 				coll->bumps[coll->size].bumpID = FG_OBJECT_BUMP_FLOOR;
 				coll->bumps[coll->size].actor1 = (GameObjectRef_t){ fgObject->id, indexLUT };
@@ -239,9 +240,9 @@ static void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx
 			objRect2.p2.y = fgObject2->currMapPos.y + fgObject2->asset.BBox.p2.y;
 
 			Rect_t bumpRect = {0};
-			Rect_GetIntersection(&objRect, &objRect2, &bumpRect);
+			RECT_GetIntersection(&objRect, &objRect2, &bumpRect);
 
-			if (Rect_IsIntersection(&bumpRect)) {
+			if (RECT_IsIntersection(&bumpRect)) {
 				if (coll->size < COLLISIONS_SIZE) {
 					coll->bumps[coll->size].bumpID = FG_OBJECT_BUMP_FG_OBJECT;
 					coll->bumps[coll->size].actor1 = (GameObjectRef_t){ fgObject->id, indexLUT };
@@ -259,8 +260,8 @@ static void COLLISION_Player_FGObject_DetectBumpSide(const ForegroundObject_t* o
 {
 	*bumpSide = BUMP_SIDE_NONE;
 
-	const int bumpLenX = CalcRectXLen(bumpRect);
-	const int bumpLenY = CalcRectYLen(bumpRect);
+	const int bumpLenX = RECT_CalcXLen(bumpRect);
+	const int bumpLenY = RECT_CalcYLen(bumpRect);
 
 	// Vertical collision (top/bottom)
 	if (bumpLenX >= bumpLenY) {
@@ -547,8 +548,8 @@ static void COLLISION_Player_SolidFGObject_SideEffect(ForegroundObject_t* obj, P
 
 static void COLLISION_FGObject_FGObject(ForegroundObject_t* actor, ForegroundObject_t* obj, const Bump_t* bump)
 {
-	const int bumpLenX = CalcRectXLen(&bump->bumpRect);
-	const int bumpLenY = CalcRectYLen(&bump->bumpRect);
+	const int bumpLenX = RECT_CalcXLen(&bump->bumpRect);
+	const int bumpLenY = RECT_CalcYLen(&bump->bumpRect);
 
 	Body_t* actorBody = &actor->physics.engine.body;
 

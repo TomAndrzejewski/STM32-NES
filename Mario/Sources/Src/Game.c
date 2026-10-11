@@ -12,6 +12,7 @@
 #include "Game_Defs.h"
 #include "NES_Defs.h"
 #include "NES_Functions.h"
+#include "NES_Math.h"
 
 #include "Game_Types.h"
 #include "Level.h"
@@ -19,6 +20,7 @@
 
 #include "printf_logger.h"
 
+#include "Geometry.h"
 #include "Physics.h"
 #include "Input.h"
 #include "ObjectsManager.h"
@@ -512,9 +514,9 @@ bool ENEMIES_CalcIsOnScreen(const EnemyState_t* enemy, const Rect_t* screenRect)
 	enemyRect.p2.y = enemy->currMapPos.y + enemy->asset.baseAsset.sprite.size.y;
 
 	Rect_t commonRect = {0};
-	Rect_GetIntersection(&enemyRect, screenRect, &commonRect);
+	RECT_GetIntersection(&enemyRect, screenRect, &commonRect);
 
-	if (Rect_IsIntersection(&commonRect)) {
+	if (RECT_IsIntersection(&commonRect)) {
 		return true;
 	} else {
 		return false;

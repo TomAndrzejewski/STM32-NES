@@ -10,7 +10,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "NES_Functions.h"
+#include "Geometry.h"
 #include "LCDControl.h"
 #include "printf_logger.h"
 
@@ -188,7 +188,7 @@ int RE_SendRect(Rect_t inputRect, int LCDOffsetX)
 		Rect_t leftRect = baseRect;
 		leftRect.p2.x = LCDOffsetX - 1;
 
-		int leftRectArea = CalcRectArea2(&leftRect);
+		int leftRectArea = RECT_CalcArea2(&leftRect);
 		LCD_DrawRect(leftRect, LCDOffsetX);
 
 		int ret = RE_SendFB_withOffset(leftRectArea, 0, false);
@@ -201,7 +201,7 @@ int RE_SendRect(Rect_t inputRect, int LCDOffsetX)
 		Rect_t rightRect = baseRect;
 		rightRect.p1.x = LCDOffsetX;
 
-		int rightRectArea = CalcRectArea2(&rightRect);
+		int rightRectArea = RECT_CalcArea2(&rightRect);
 		LCD_DrawRect(rightRect, LCDOffsetX);
 
 		ret = RE_SendFB_withOffset(rightRectArea, leftRectArea, true);
@@ -214,7 +214,7 @@ int RE_SendRect(Rect_t inputRect, int LCDOffsetX)
 	else
 	{
 		// Draw one rectangle
-		int baseRectArea = CalcRectArea2(&baseRect);
+		int baseRectArea = RECT_CalcArea2(&baseRect);
 		LCD_DrawRect(baseRect, LCDOffsetX);
 
 		int ret = RE_SendFB(baseRectArea);
@@ -238,7 +238,7 @@ int RE_RenderSprite(const Sprite_t* sprite, SpriteRender_t renderContext, bool f
 	RE_ResetFB();
 
 	int ret = 0;
-	int baseRectArea = CalcRectArea(renderContext.baseRect);
+	int baseRectArea = RECT_CalcArea(&renderContext.baseRect);
 
 	if (fillBG)
 	{
@@ -305,17 +305,17 @@ int RE_FillSprite(const Sprite_t* sprite, const SpriteRender_t* renderContext)
 	spriteFBRect.p2.y = sprite->size.y;
 
 	Rect_t commonFBRect = {0};
-	Rect_GetIntersection(&spriteFBRect, &fbRect, &commonFBRect);
+	RECT_GetIntersection(&spriteFBRect, &fbRect, &commonFBRect);
 
-	if (Rect_IsIntersection(&commonFBRect))
+	if (RECT_IsIntersection(&commonFBRect))
 	{
 		int spriteStartOffsetX = (renderContext->baseToSpriteOffset.x < 0) ? -renderContext->baseToSpriteOffset.x : 0;
 		int spriteStartOffsetY = (renderContext->baseToSpriteOffset.y < 0) ? -renderContext->baseToSpriteOffset.y : 0;
 		int fbStartOffsetX = (renderContext->baseToSpriteOffset.x > 0) ? renderContext->baseToSpriteOffset.x : 0;
 		int fbStartOffsetY = (renderContext->baseToSpriteOffset.y > 0) ? renderContext->baseToSpriteOffset.y : 0;
 
-		int endY = CalcRectYLen(&renderContext->commonRect);
-		int endX = CalcRectXLen(&renderContext->commonRect);
+		int endY = RECT_CalcYLen(&renderContext->commonRect);
+		int endX = RECT_CalcXLen(&renderContext->commonRect);
 
 		for (int i = 0; i < endX; i++)
 		{

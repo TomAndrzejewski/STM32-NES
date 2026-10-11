@@ -10,7 +10,9 @@
 #include <string.h>
 
 #include "Game_Types.h"
+#include "Geometry.h"
 #include "NES_Functions.h"
+#include "NES_Math.h"
 #include "LCDControl.h"
 #include "RenderEngine.h"
 
@@ -58,7 +60,7 @@ int RENDERER_FirstRender(const GameContext_t* ctx)
 
 		Rect_t screenRect = mapRect;
 
-		int baseRectArea = CalcRectArea(screenRect);
+		int baseRectArea = RECT_CalcArea(&screenRect);
 		RE_FillBackgroud(LCD_COLOR_BLUESKY, baseRectArea);
 
 		for (int j = 0; j < ctx->activebgObjects; j++)
@@ -121,7 +123,7 @@ int RENDERER_ScrollRender(RendererState_t* renderer, const GameContext_t* ctx)
 		int baseRectArea;
 
 		// LEFT
-		baseRectArea = CalcRectArea(leftScreenRect);
+		baseRectArea = RECT_CalcArea(&leftScreenRect);
 		RE_FillBackgroud(LCD_COLOR_BLUESKY, baseRectArea);
 		RE_SendRect(leftScreenRect, prevLCDOffsetX);
 
@@ -129,7 +131,7 @@ int RENDERER_ScrollRender(RendererState_t* renderer, const GameContext_t* ctx)
 		LCD_WriteVertScrollStartAddr(renderer->LCDOffsetX);
 
 		// RIGHT
-		baseRectArea = CalcRectArea(rightScreenRect);
+		baseRectArea = RECT_CalcArea(&rightScreenRect);
 		RE_FillBackgroud(LCD_COLOR_BLUESKY, baseRectArea);
 
 		// uint32_t t1 = GetTimestamp();
@@ -221,9 +223,9 @@ int	RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_t
 		if (FGOBJECTS_GetDirtyRect(obj, &dirtyRect) < 0) { continue; }
 
 		Rect_t commonRect = {0};
-		Rect_GetIntersection(&cameraRect, &dirtyRect, &commonRect);
+		RECT_GetIntersection(&cameraRect, &dirtyRect, &commonRect);
 
-		if (Rect_IsIntersection(&commonRect))
+		if (RECT_IsIntersection(&commonRect))
 		{
 			if (renderer->activeDirtyRects >= DIRTY_RECTS_SIZE) {
 				printf_str("\n### activeDirtyRects exeeds DIRTY_RECTS_SIZE ###\n");
@@ -249,9 +251,9 @@ int	RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_t
 		if (ENEMIES_GetDirtyRect(&ctx->enemies.pool[indexLUT], &dirtyRect) < 0) { continue; }
 
 		Rect_t commonRect = {0};
-		Rect_GetIntersection(&cameraRect, &dirtyRect, &commonRect);
+		RECT_GetIntersection(&cameraRect, &dirtyRect, &commonRect);
 
-		if (Rect_IsIntersection(&commonRect))
+		if (RECT_IsIntersection(&commonRect))
 		{
 			if (renderer->activeDirtyRects >= DIRTY_RECTS_SIZE) {
 				printf_str("\n### activeDirtyRects exeeds DIRTY_RECTS_SIZE ###\n");
@@ -269,9 +271,9 @@ int	RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_t
 	if (!PLAYER_GetDirtyRect(&ctx->player, &dirtyRect))
 	{
 		Rect_t commonRect = {0};
-		Rect_GetIntersection(&cameraRect, &dirtyRect, &commonRect);
+		RECT_GetIntersection(&cameraRect, &dirtyRect, &commonRect);
 
-		if (Rect_IsIntersection(&commonRect))
+		if (RECT_IsIntersection(&commonRect))
 		{
 			if (renderer->activeDirtyRects >= DIRTY_RECTS_SIZE) {
 				printf_str("\n### activeDirtyRects exeeds DIRTY_RECTS_SIZE ###\n");
@@ -303,9 +305,9 @@ int	RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_t
 			if (dirtyRects[j].used)	{ continue; }
 
 			Rect_t commonRect = {0};
-			Rect_GetIntersection(&dirtyRects[i].rect, &dirtyRects[j].rect, &commonRect);
+			RECT_GetIntersection(&dirtyRects[i].rect, &dirtyRects[j].rect, &commonRect);
 
-			if (Rect_IsIntersection(&commonRect))
+			if (RECT_IsIntersection(&commonRect))
 			{
 				Rect_t commonORRect;
 				commonORRect.p1.x = min(dirtyRects[i].rect.p1.x, dirtyRects[j].rect.p1.x);
@@ -358,7 +360,7 @@ int	RENDERER_DirtyRects_Render(RendererState_t* renderer, const GameContext_t* c
 		//todotomka scroll_render nie powiniene dzialac przy pierwszym renderze
 
 
-		int baseRectArea = CalcRectArea(dirtyRect->rect);
+		int baseRectArea = RECT_CalcArea(&dirtyRect->rect);
 		if (baseRectArea > FRAMEBUFFER_NUMOF_PIXELS) { // validate if framebuffer is too large
 			continue;
 		}
@@ -477,9 +479,9 @@ int RENDERER_RenderBGObject(const BackgroundObject_t* obj, const Rect_t* mapRect
 	posRect.p2.y = obj->mapPos.y + obj->asset->baseAsset.sprite.size.y;
 
 	Rect_t commonRect = {0};
-	Rect_GetIntersection(mapRectToDraw, &posRect, &commonRect);
+	RECT_GetIntersection(mapRectToDraw, &posRect, &commonRect);
 
-	if (Rect_IsIntersection(&commonRect))
+	if (RECT_IsIntersection(&commonRect))
 	{
 		SpriteRender_t renderContext = {0};
 		renderContext.commonRect = commonRect;
@@ -507,9 +509,9 @@ int	RENDERER_RenderFGObject(const ForegroundObject_t* obj, const Rect_t* mapRect
 	posRect.p2.y = obj->currMapPos.y + obj->asset.baseAsset.sprite.size.y;
 
 	Rect_t commonRect = {0};
-	Rect_GetIntersection(mapRectToDraw, &posRect, &commonRect);
+	RECT_GetIntersection(mapRectToDraw, &posRect, &commonRect);
 
-	if (Rect_IsIntersection(&commonRect))
+	if (RECT_IsIntersection(&commonRect))
 	{
 		SpriteRender_t renderContext = {0};
 		renderContext.commonRect = commonRect;
@@ -537,9 +539,9 @@ int	RENDERER_RenderEnemy(const EnemyState_t* enemy, const Rect_t* mapRectToDraw,
 	posRect.p2.y = enemy->currMapPos.y + enemy->asset.baseAsset.sprite.size.y;
 
 	Rect_t commonRect = {0};
-	Rect_GetIntersection(mapRectToDraw, &posRect, &commonRect);
+	RECT_GetIntersection(mapRectToDraw, &posRect, &commonRect);
 
-	if (Rect_IsIntersection(&commonRect))
+	if (RECT_IsIntersection(&commonRect))
 	{
 		SpriteRender_t renderContext = {0};
 		renderContext.commonRect = commonRect;
@@ -567,9 +569,9 @@ int	RENDERER_RenderPlayer(const PlayerState_t* player, const Rect_t* mapRectToDr
 	posRect.p2.y = player->currMapPos.y + player->asset.baseAsset.sprite.size.y;
 
 	Rect_t commonRect = {0};
-	Rect_GetIntersection(mapRectToDraw, &posRect, &commonRect);
+	RECT_GetIntersection(mapRectToDraw, &posRect, &commonRect);
 
-	if (Rect_IsIntersection(&commonRect))
+	if (RECT_IsIntersection(&commonRect))
 	{
 		SpriteRender_t renderContext = {0};
 		renderContext.commonRect = commonRect;

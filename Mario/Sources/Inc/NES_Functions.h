@@ -24,17 +24,5 @@ uint32_t CalcDiffTimeUS(uint32_t startTime, uint32_t finishTime);
 
 void fast_memset(void *dest, uint32_t value, size_t bytes);
 
-int CalcRectArea(Rect_t rect);
-int CalcRectArea2(const Rect_t* rect);
-int CalcRectXLen(const Rect_t* rect);
-int CalcRectYLen(const Rect_t* rect);
-
-int Point_Move(Point_t* src, Point_t* moveVector);
-
-void	Rect_GetIntersection(const Rect_t *r1, const Rect_t *r2, Rect_t *result);
-bool 	Rect_IsIntersection(const Rect_t* commonRect);
-//void	Rect_GetUnion(const Rect_t *r1, const Rect_t *r2, Rect_t *result);
-//int		Rect_Intersect_AND(Rect_t* a, Rect_t* b);
-
 
 #endif /* SOURCES_INC_NES_FUNCTIONS_H_ */
