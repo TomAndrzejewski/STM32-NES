@@ -9,176 +9,41 @@
 
 #include <string.h>
 
+#include "Animator.h"
+#include "Camera.h"
+#include "Collision.h"
 #include "Game_Defs.h"
+#include "Game_Types.h"
+#include "Geometry.h"
+#include "GraphicsAssets.h"
+#include "Input.h"
+#include "Level.h"
+#include "NES_Assert.h"
 #include "NES_Defs.h"
 #include "NES_Functions.h"
 #include "NES_Math.h"
-
-#include "Game_Types.h"
-#include "Level.h"
-#include "GraphicsAssets.h"
-
-#include "printf_logger.h"
-
-#include "Geometry.h"
-#include "Physics.h"
-#include "Input.h"
 #include "ObjectsManager.h"
-#include "Collision.h"
-#include "Camera.h"
-#include "Animator.h"
+#include "Physics.h"
+#include "printf_logger.h"
 #include "Renderer.h"
 
 
-int GAME_Update(GameContext_t* ctx)
+//----------------
+// PRIVATE FUNCTION PROTOTYPES
+//----------------
+static void GAME_HandlePlayerLevelUp(GameContext_t* ctx);
+static void ENEMIES_UpdateFlags(Enemies_t* enemies, const GameContext_t* ctx);
+static void PLAYER_ClearFlags(PlayerState_t* player);
+static void GAME_CalcDirtyRect(const Point_t* prevPos, const Point_t* prevSize, const Point_t* currPos, const Point_t* currSize, Rect_t* dirtyRect);
+static bool ENEMIES_CalcIsOnScreen(const EnemyState_t* enemy, const Rect_t* screenRect);
+
+
+//----------------
+// PUBLIC FUNCTIONS
+//----------------
+void GAME_InitContext(GameContext_t* ctx)
 {
-	if (ctx == NULL) { return -1; }
-
-	int timeStamps = 0;
-	int ret = 0;
-	uint32_t targetFrameTimeUS = 1000000/TARGET_FRAMERATE_HZ;
-
-	GameStats_t* s = &ctx->stats;
-
-	// Big event, later use state machine
-	GAME_HandlePlayerLevelUp(ctx);
-
-	if (!ctx->simulationPause) {
-		ctx->input.frameData.simulationTimeUS += targetFrameTimeUS;
-	}
-
-	s->startTime[timeStamps] = GetTimestamp();
-	ret = INPUT_Update(&ctx->input, ctx, targetFrameTimeUS);
-	s->finishTime[timeStamps] = GetTimestamp();
-	if (ret < 0)	{ delay(1); return -5; }
-	timeStamps++;
-
-	// startTime[timeStamps] = GetTimestamp();
-	// FGOBJECTS_ClearFlags(pGameCtx);
-	// finishTime[timeStamps] = GetTimestamp();
-	// timeStamps++;
-
-	s->startTime[timeStamps] = GetTimestamp();
-	if (!ctx->simulationPause) {
-		PHYSICS_Player_Update(&ctx->player, ctx);
-	}
-	s->finishTime[timeStamps] = GetTimestamp();
-	timeStamps++;
-
-	s->startTime[timeStamps] = GetTimestamp();
-	CAMERA_Update(&ctx->camera, ctx);
-	s->finishTime[timeStamps] = GetTimestamp();
-	timeStamps++;
-
-	s->startTime[timeStamps] = GetTimestamp();
-	OBJECTS_MANAGER_Update(ctx);
-	s->finishTime[timeStamps] = GetTimestamp();
-	timeStamps++;
-
-	s->startTime[timeStamps] = GetTimestamp();
-	ret = ENEMIES_UpdateFlags(&ctx->enemies, ctx);
-	s->finishTime[timeStamps] = GetTimestamp();
-	if (ret < 0)	{ delay(1); return -25; }
-	timeStamps++;
-
-	s->startTime[timeStamps] = GetTimestamp();
-	if (!ctx->simulationPause) {
-		PHYSICS_Update(ctx);
-	}
-	s->finishTime[timeStamps] = GetTimestamp();
-	timeStamps++;
-
-	s->startTime[timeStamps] = GetTimestamp();
-	ret = PLAYER_ClearFlags(&ctx->player);
-	s->finishTime[timeStamps] = GetTimestamp();
-	if (ret < 0)	{ delay(1); return -35; }
-	timeStamps++;
-
-	s->startTime[timeStamps] = GetTimestamp();
-	if (!ctx->simulationPause) {
-		COLLISION_Update(ctx);
-	}
-	s->finishTime[timeStamps] = GetTimestamp();
-	timeStamps++;
-
-	s->startTime[timeStamps] = GetTimestamp();
-	ANIMATOR_Update(ctx);
-	s->finishTime[timeStamps] = GetTimestamp();
-	timeStamps++;
-
-	if (ctx->firstGameLoop) {
-		RENDERER_FirstRender(ctx);
-	}
-
-	// startTime[timeStaps] = GetTimestamp();
-	// ret = RENDERER_Update(pGameCtx);
-	// finishTime[timeStaps] = GetTimestamp();
-	// if (ret < 0)	{ delay(1); continue; }
-	// timeStaps++;
-
-	s->startTime[timeStamps] = GetTimestamp();
-	ret = RENDERER_ScrollRender(&ctx->renderer, ctx);
-	if (ret < 0)	{ delay(1); return -50; }
-	s->finishTime[timeStamps] = GetTimestamp();
-	timeStamps++;
-
-	s->startTime[timeStamps] = GetTimestamp();
-	ret = RENDERER_DirtyRects_Calculate(&ctx->renderer, ctx);
-	if (ret < 0)	{ delay(1); return -55; }
-	s->finishTime[timeStamps] = GetTimestamp();
-	timeStamps++;
-
-	s->startTime[timeStamps] = GetTimestamp();
-	ret = RENDERER_DirtyRects_Render(&ctx->renderer, ctx);
-	if (ret < 0)	{ delay(1); return -60; }
-	s->finishTime[timeStamps] = GetTimestamp();
-	timeStamps++;
-
-	// Statistics
-	if (1 && !ctx->firstGameLoop)
-	{
-		s->maxTimeSum = 0;
-		for (int i = 0; i < timeStamps; i++)
-		{
-			uint32_t tdiff = CalcDiffTimeUS(s->startTime[i], s->finishTime[i]);
-			if (tdiff > s->maxTime[i]) {
-				s->maxTime[i] = tdiff;
-			}
-			s->maxTimeSum += s->maxTime[i];
-		}
-		uint32_t tdiff = CalcDiffTimeUS(s->startTime[0], s->finishTime[timeStamps-1]);
-		if (tdiff > s->maxFrameTime) {
-			s->maxFrameTime = tdiff;
-		}
-
-		if (CalcTimeMS(s->printStatsTimer) > 1 * 1000) {
-			s->printStatsTimer = GetTimestamp();
-			printf_v("Frame %d maxFrameTime: %d us, maxTimeSum: %d us, max timestamps:\n", s->frameCounter, s->maxFrameTime, s->maxTimeSum);
-			for (int i = 0; i < timeStamps; i++)
-			{
-				printf_uint(s->maxTime[i]);
-				printf_c('\t');
-			}
-			printf_c('\n');
-
-			const ObjectsManager_t* mgr = &ctx->objectsManager;
-			printf_v("Dropped FG: %d, enemies: %d, BG: %d, spawn orders: %d\n",
-				(int)mgr->droppedFGObjects, (int)mgr->droppedEnemies, (int)mgr->droppedBGObjects, (int)mgr->droppedSpawnOrders);
-		}
-	}
-
-	if (ctx->firstGameLoop) {
-		ctx->firstGameLoop = false;
-	}
-
-	s->frameCounter++;
-
-	return 0;
-}
-
-int GAME_InitContext(GameContext_t* ctx)
-{
-	if (ctx == NULL) { return -1; }
+	NES_ASSERT(ctx != NULL);
 	int ret = 0;
 
 	memset(ctx, 0, sizeof(GameContext_t));
@@ -203,8 +68,7 @@ int GAME_InitContext(GameContext_t* ctx)
 	const ObjectLevelInstance_t* ObjectsPos = NULL;
 	int numOfObjects = 0;
 	ret = LEVEL_GetObjectsLocations(&ObjectsPos, &numOfObjects);
-	if (ret < 0) { return -5; }
-	if (ObjectsPos == NULL) { return -10; }
+	NES_ASSERT(ret >= 0 && ObjectsPos != NULL);
 
 	///////////////////
 	// OBJECTS MANAGER
@@ -261,22 +125,17 @@ int GAME_InitContext(GameContext_t* ctx)
 	const RepObjectLevelPos_t* BGRepObjectsPos = NULL;
 	int numOfBGRepObjects = 0;
 	ret = LEVEL_GetBGRepObjectsLocations(&BGRepObjectsPos, &numOfBGRepObjects);
-	if (ret < 0) { return -15; }
-	if (BGRepObjectsPos == NULL) { return -20; }
+	NES_ASSERT(ret >= 0 && BGRepObjectsPos != NULL);
 
-	if (numOfBGRepObjects > BACKGROUND_REP_OBJECTS_MAX_SIZE)
-	{
-		numOfBGRepObjects = BACKGROUND_REP_OBJECTS_MAX_SIZE;
-	}
+	// Level defines more repetition objects than the context can hold: enlarge the buffer or trim the level data
+	NES_ASSERT(numOfBGRepObjects <= BACKGROUND_REP_OBJECTS_MAX_SIZE);
 
 	ctx->floorIndex = -1;
 	ctx->activebgRepObjects = 0;
 	for (int i = 0; i < numOfBGRepObjects; i++)
 	{
-		if (BGRepObjectsPos[i].id < BACKGROUND_REP_OBJECT_ID_START || BGRepObjectsPos[i].id > BACKGROUND_REP_OBJECT_ID_END)
-		{
-			continue;
-		}
+		// Level entry has an ID outside of the repetition objects range: check the level data
+		NES_ASSERT(BGRepObjectsPos[i].id >= BACKGROUND_REP_OBJECT_ID_START && BGRepObjectsPos[i].id <= BACKGROUND_REP_OBJECT_ID_END);
 
 		ctx->bgRepObjects[i].id = BGRepObjectsPos[i].id;
 		ctx->bgRepObjects[i].mapPos.x = BGRepObjectsPos[i].x;
@@ -298,10 +157,7 @@ int GAME_InitContext(GameContext_t* ctx)
 		ctx->activebgRepObjects++;
 	}
 	// floor is very important for next components
-	if (ctx->floorIndex == -1)
-	{
-		return -25;
-	}
+	NES_ASSERT(ctx->floorIndex != -1);
 
 	///////////////////
 	// MAP
@@ -325,9 +181,7 @@ int GAME_InitContext(GameContext_t* ctx)
 	// PLAYER
 	///////////////////
 	ctx->player.animableAsset = &MARIO_SMALL_ANIMABLE_ASSET;
-	if (ctx->player.animableAsset->baseAssetsCount <= 0 || ctx->player.animableAsset->baseAssets[0].baseAsset == NULL) {
-		return -30; //sanity check
-	}
+	NES_ASSERT(ctx->player.animableAsset->baseAssetsCount > 0 && ctx->player.animableAsset->baseAssets[0].baseAsset != NULL);
 	ctx->player.asset.baseAsset = *ctx->player.animableAsset->baseAssets[0].baseAsset;
 	ctx->player.asset.id = ctx->player.animableAsset->id;
 	ctx->player.asset.BBox = ctx->player.animableAsset->BBox;
@@ -365,18 +219,143 @@ int GAME_InitContext(GameContext_t* ctx)
 	///////////////////
 	ctx->collision.size = 0;
 	fast_memset(ctx->collision.bumps, 0, sizeof(ctx->collision.bumps));
-
-	return 0;
 }
 
-void GAME_HandlePlayerLevelUp(GameContext_t* ctx)
+void GAME_Update(GameContext_t* ctx)
 {
-	if (ctx->player.triggerLevelUp && ctx->player.levelUpOngoing) {
-		ctx->simulationPause = true;
+	NES_ASSERT(ctx != NULL);
+
+	int timeStamps = 0;
+	uint32_t targetFrameTimeUS = 1000000/TARGET_FRAMERATE_HZ;
+
+	GameStats_t* s = &ctx->stats;
+
+	// Big event, later use state machine
+	GAME_HandlePlayerLevelUp(ctx);
+
+	if (!ctx->simulationPause) {
+		ctx->input.frameData.simulationTimeUS += targetFrameTimeUS;
 	}
-	else {
-		ctx->simulationPause = false;
+
+	s->startTime[timeStamps] = GetTimestamp();
+	INPUT_Update(&ctx->input, ctx, targetFrameTimeUS);
+	s->finishTime[timeStamps] = GetTimestamp();
+	timeStamps++;
+
+	// startTime[timeStamps] = GetTimestamp();
+	// FGOBJECTS_ClearFlags(pGameCtx);
+	// finishTime[timeStamps] = GetTimestamp();
+	// timeStamps++;
+
+	s->startTime[timeStamps] = GetTimestamp();
+	if (!ctx->simulationPause) {
+		PHYSICS_Player_Update(&ctx->player, ctx);
 	}
+	s->finishTime[timeStamps] = GetTimestamp();
+	timeStamps++;
+
+	s->startTime[timeStamps] = GetTimestamp();
+	CAMERA_Update(&ctx->camera, ctx);
+	s->finishTime[timeStamps] = GetTimestamp();
+	timeStamps++;
+
+	s->startTime[timeStamps] = GetTimestamp();
+	OBJECTS_MANAGER_Update(ctx);
+	s->finishTime[timeStamps] = GetTimestamp();
+	timeStamps++;
+
+	s->startTime[timeStamps] = GetTimestamp();
+	ENEMIES_UpdateFlags(&ctx->enemies, ctx);
+	s->finishTime[timeStamps] = GetTimestamp();
+	timeStamps++;
+
+	s->startTime[timeStamps] = GetTimestamp();
+	if (!ctx->simulationPause) {
+		PHYSICS_Update(ctx);
+	}
+	s->finishTime[timeStamps] = GetTimestamp();
+	timeStamps++;
+
+	s->startTime[timeStamps] = GetTimestamp();
+	PLAYER_ClearFlags(&ctx->player);
+	s->finishTime[timeStamps] = GetTimestamp();
+	timeStamps++;
+
+	s->startTime[timeStamps] = GetTimestamp();
+	if (!ctx->simulationPause) {
+		COLLISION_Update(ctx);
+	}
+	s->finishTime[timeStamps] = GetTimestamp();
+	timeStamps++;
+
+	s->startTime[timeStamps] = GetTimestamp();
+	ANIMATOR_Update(ctx);
+	s->finishTime[timeStamps] = GetTimestamp();
+	timeStamps++;
+
+	if (ctx->firstGameLoop) {
+		RENDERER_FirstRender(ctx);
+	}
+
+	// startTime[timeStaps] = GetTimestamp();
+	// ret = RENDERER_Update(pGameCtx);
+	// finishTime[timeStaps] = GetTimestamp();
+	// if (ret < 0)	{ delay(1); continue; }
+	// timeStaps++;
+
+	s->startTime[timeStamps] = GetTimestamp();
+	RENDERER_ScrollRender(&ctx->renderer, ctx);
+	s->finishTime[timeStamps] = GetTimestamp();
+	timeStamps++;
+
+	s->startTime[timeStamps] = GetTimestamp();
+	RENDERER_DirtyRects_Calculate(&ctx->renderer, ctx);
+	s->finishTime[timeStamps] = GetTimestamp();
+	timeStamps++;
+
+	s->startTime[timeStamps] = GetTimestamp();
+	RENDERER_DirtyRects_Render(&ctx->renderer, ctx);
+	s->finishTime[timeStamps] = GetTimestamp();
+	timeStamps++;
+
+	// Statistics
+	if (1 && !ctx->firstGameLoop)
+	{
+		s->maxTimeSum = 0;
+		for (int i = 0; i < timeStamps; i++)
+		{
+			uint32_t tdiff = CalcDiffTimeUS(s->startTime[i], s->finishTime[i]);
+			if (tdiff > s->maxTime[i]) {
+				s->maxTime[i] = tdiff;
+			}
+			s->maxTimeSum += s->maxTime[i];
+		}
+		uint32_t tdiff = CalcDiffTimeUS(s->startTime[0], s->finishTime[timeStamps-1]);
+		if (tdiff > s->maxFrameTime) {
+			s->maxFrameTime = tdiff;
+		}
+
+		if (CalcTimeMS(s->printStatsTimer) > 1 * 1000) {
+			s->printStatsTimer = GetTimestamp();
+			printf_v("Frame %d maxFrameTime: %d us, maxTimeSum: %d us, max timestamps:\n", s->frameCounter, s->maxFrameTime, s->maxTimeSum);
+			for (int i = 0; i < timeStamps; i++)
+			{
+				printf_uint(s->maxTime[i]);
+				printf_c('\t');
+			}
+			printf_c('\n');
+
+			const ObjectsManager_t* mgr = &ctx->objectsManager;
+			printf_v("Dropped FG: %d, enemies: %d, BG: %d, spawn orders: %d\n",
+				(int)mgr->droppedFGObjects, (int)mgr->droppedEnemies, (int)mgr->droppedBGObjects, (int)mgr->droppedSpawnOrders);
+		}
+	}
+
+	if (ctx->firstGameLoop) {
+		ctx->firstGameLoop = false;
+	}
+
+	s->frameCounter++;
 }
 
 bool MISC_IsThisPlayerID(const GameObjectID id)
@@ -387,51 +366,17 @@ bool MISC_IsThisPlayerID(const GameObjectID id)
 	return false;
 }
 
-int PLAYER_ClearFlags(PlayerState_t* player)
+void PLAYER_GetDirtyRect(const PlayerState_t* player, Rect_t* dirtyRect)
 {
-	if (player == NULL) { return -1; }
+	NES_ASSERT(player != NULL && dirtyRect != NULL);
 
-	player->IsGrounded = false;
-	player->JustHitFGObjectFromBottom = false;
-
-	return 0;
-}
-
-
-int PLAYER_GetDirtyRect(const PlayerState_t* player, Rect_t* dirtyRect)
-{
-	if (player == NULL || dirtyRect == NULL) { return -1; }
-
-	Rect_t prevDirtyRect;
-	prevDirtyRect.p1 = player->prevMapPos;
-	prevDirtyRect.p2.x = player->prevMapPos.x + player->prevSpriteSize.x;
-	prevDirtyRect.p2.y = player->prevMapPos.y + player->prevSpriteSize.y;
-
-	Rect_t currDirtyRect;
-	currDirtyRect.p1 = player->currMapPos;
-	currDirtyRect.p2.x = player->currMapPos.x + player->asset.baseAsset.sprite.size.x;
-	currDirtyRect.p2.y = player->currMapPos.y + player->asset.baseAsset.sprite.size.y;
-
-	Rect_t commonDirtyRect;
-	commonDirtyRect.p1.x = MATH_Min(prevDirtyRect.p1.x, currDirtyRect.p1.x);
-	commonDirtyRect.p1.y = MATH_Min(prevDirtyRect.p1.y, currDirtyRect.p1.y);
-	commonDirtyRect.p2.x = MATH_Max(prevDirtyRect.p2.x, currDirtyRect.p2.x);
-	commonDirtyRect.p2.y = MATH_Max(prevDirtyRect.p2.y, currDirtyRect.p2.y);
-
-	if (commonDirtyRect.p1.x <= commonDirtyRect.p2.x && commonDirtyRect.p1.y <= commonDirtyRect.p2.y)
-	{
-		*dirtyRect = commonDirtyRect;
-	}
-	else
-	{
-		return -5;
-	}
-
-	return 0;
+	GAME_CalcDirtyRect(&player->prevMapPos, &player->prevSpriteSize, &player->currMapPos, &player->asset.baseAsset.sprite.size, dirtyRect);
 }
 
 void PLAYER_LevelUp(PlayerState_t* player)
 {
+	NES_ASSERT(player != NULL);
+
 	switch (player->playerLevel)
 	{
 	case PLAYER_SMALL_MARIO:
@@ -450,14 +395,47 @@ void PLAYER_LevelUp(PlayerState_t* player)
 		break;
 	}
 	default:
+		// Unknown player level: add a missing case for it
+		NES_ASSERT(false);
 		break;
 	}
 }
 
-int	ENEMIES_UpdateFlags(Enemies_t* enemies, const GameContext_t* ctx)
+void ENEMIES_GetDirtyRect(const EnemyState_t* enemy, Rect_t* dirtyRect)
 {
-	if (enemies == NULL || ctx == NULL) { return -1; }
+	NES_ASSERT(enemy != NULL && dirtyRect != NULL);
 
+	GAME_CalcDirtyRect(&enemy->prevMapPos, &enemy->asset.baseAsset.sprite.size, &enemy->currMapPos, &enemy->asset.baseAsset.sprite.size, dirtyRect);
+}
+
+void FGOBJECTS_ClearFlags(GameContext_t* ctx)
+{
+	NES_ASSERT(ctx != NULL);
+}
+
+void FGOBJECTS_GetDirtyRect(const ForegroundObject_t* obj, Rect_t* dirtyRect)
+{
+	NES_ASSERT(obj != NULL && dirtyRect != NULL);
+
+	GAME_CalcDirtyRect(&obj->prevMapPos, &obj->asset.baseAsset.sprite.size, &obj->currMapPos, &obj->asset.baseAsset.sprite.size, dirtyRect);
+}
+
+
+//----------------
+// PRIVATE FUNCTIONS
+//----------------
+static void GAME_HandlePlayerLevelUp(GameContext_t* ctx)
+{
+	if (ctx->player.triggerLevelUp && ctx->player.levelUpOngoing) {
+		ctx->simulationPause = true;
+	}
+	else {
+		ctx->simulationPause = false;
+	}
+}
+
+static void ENEMIES_UpdateFlags(Enemies_t* enemies, const GameContext_t* ctx)
+{
 	for (int i = 0; i < enemies->activeEnemies; i++)
 	{
 		int indexLUT = enemies->enemiesLUT[i];
@@ -467,47 +445,38 @@ int	ENEMIES_UpdateFlags(Enemies_t* enemies, const GameContext_t* ctx)
 		}
 		enemies->pool[indexLUT].IsOnScreen = ENEMIES_CalcIsOnScreen(&enemies->pool[indexLUT], &ctx->camera.screenRect);
 	}
-
-	return 0;
 }
 
-int ENEMIES_GetDirtyRect(const EnemyState_t* enemy, Rect_t* dirtyRect)
+static void PLAYER_ClearFlags(PlayerState_t* player)
 {
-	if (enemy == NULL || dirtyRect == NULL) { return -1; }
+	player->IsGrounded = false;
+	player->JustHitFGObjectFromBottom = false;
+}
 
+static void GAME_CalcDirtyRect(const Point_t* prevPos, const Point_t* prevSize, const Point_t* currPos, const Point_t* currSize, Rect_t* dirtyRect)
+{
 	Rect_t prevDirtyRect;
-	prevDirtyRect.p1 = enemy->prevMapPos;
-	prevDirtyRect.p2.x = enemy->prevMapPos.x + enemy->asset.baseAsset.sprite.size.x;
-	prevDirtyRect.p2.y = enemy->prevMapPos.y + enemy->asset.baseAsset.sprite.size.y;
+	prevDirtyRect.p1 = *prevPos;
+	prevDirtyRect.p2.x = prevPos->x + prevSize->x;
+	prevDirtyRect.p2.y = prevPos->y + prevSize->y;
 
 	Rect_t currDirtyRect;
-	currDirtyRect.p1 = enemy->currMapPos;
-	currDirtyRect.p2.x = enemy->currMapPos.x + enemy->asset.baseAsset.sprite.size.x;
-	currDirtyRect.p2.y = enemy->currMapPos.y + enemy->asset.baseAsset.sprite.size.y;
+	currDirtyRect.p1 = *currPos;
+	currDirtyRect.p2.x = currPos->x + currSize->x;
+	currDirtyRect.p2.y = currPos->y + currSize->y;
 
-	Rect_t commonDirtyRect;
-	commonDirtyRect.p1.x = MATH_Min(prevDirtyRect.p1.x, currDirtyRect.p1.x);
-	commonDirtyRect.p1.y = MATH_Min(prevDirtyRect.p1.y, currDirtyRect.p1.y);
-	commonDirtyRect.p2.x = MATH_Max(prevDirtyRect.p2.x, currDirtyRect.p2.x);
-	commonDirtyRect.p2.y = MATH_Max(prevDirtyRect.p2.y, currDirtyRect.p2.y);
+	// Smallest rect covering both the previous and the current sprite area
+	dirtyRect->p1.x = MATH_Min(prevDirtyRect.p1.x, currDirtyRect.p1.x);
+	dirtyRect->p1.y = MATH_Min(prevDirtyRect.p1.y, currDirtyRect.p1.y);
+	dirtyRect->p2.x = MATH_Max(prevDirtyRect.p2.x, currDirtyRect.p2.x);
+	dirtyRect->p2.y = MATH_Max(prevDirtyRect.p2.y, currDirtyRect.p2.y);
 
-	if (commonDirtyRect.p1.x <= commonDirtyRect.p2.x && commonDirtyRect.p1.y <= commonDirtyRect.p2.y)
-	{
-		*dirtyRect = commonDirtyRect;
-	}
-	else
-	{
-		*dirtyRect = (Rect_t){0};
-		return -5;
-	}
-
-	return 0;
+	// Inverted rect means a negative sprite size: check the asset definition
+	NES_ASSERT(dirtyRect->p1.x <= dirtyRect->p2.x && dirtyRect->p1.y <= dirtyRect->p2.y);
 }
 
-bool ENEMIES_CalcIsOnScreen(const EnemyState_t* enemy, const Rect_t* screenRect)
+static bool ENEMIES_CalcIsOnScreen(const EnemyState_t* enemy, const Rect_t* screenRect)
 {
-	if (enemy == NULL || screenRect == NULL)	{ return false; }
-
 	Rect_t enemyRect;
 	enemyRect.p1 = enemy->currMapPos;
 	enemyRect.p2.x = enemy->currMapPos.x + enemy->asset.baseAsset.sprite.size.x;
@@ -522,41 +491,3 @@ bool ENEMIES_CalcIsOnScreen(const EnemyState_t* enemy, const Rect_t* screenRect)
 		return false;
 	}
 }
-
-void FGOBJECTS_ClearFlags(GameContext_t* ctx)
-{
-	if (ctx == NULL) { return; }
-}
-
-int FGOBJECTS_GetDirtyRect(const ForegroundObject_t* obj, Rect_t* dirtyRect)
-{
-	Rect_t prevDirtyRect;
-	prevDirtyRect.p1 = obj->prevMapPos;
-	prevDirtyRect.p2.x = obj->prevMapPos.x + obj->asset.baseAsset.sprite.size.x;
-	prevDirtyRect.p2.y = obj->prevMapPos.y + obj->asset.baseAsset.sprite.size.y;
-
-	Rect_t currDirtyRect;
-	currDirtyRect.p1 = obj->currMapPos;
-	currDirtyRect.p2.x = obj->currMapPos.x + obj->asset.baseAsset.sprite.size.x;
-	currDirtyRect.p2.y = obj->currMapPos.y + obj->asset.baseAsset.sprite.size.y;
-
-	Rect_t commonDirtyRect;
-	commonDirtyRect.p1.x = MATH_Min(prevDirtyRect.p1.x, currDirtyRect.p1.x);
-	commonDirtyRect.p1.y = MATH_Min(prevDirtyRect.p1.y, currDirtyRect.p1.y);
-	commonDirtyRect.p2.x = MATH_Max(prevDirtyRect.p2.x, currDirtyRect.p2.x);
-	commonDirtyRect.p2.y = MATH_Max(prevDirtyRect.p2.y, currDirtyRect.p2.y);
-
-	if (commonDirtyRect.p1.x <= commonDirtyRect.p2.x && commonDirtyRect.p1.y <= commonDirtyRect.p2.y)
-	{
-		*dirtyRect = commonDirtyRect;
-		return 0;
-	}
-	else
-	{
-		*dirtyRect = (Rect_t){0};
-		return -5;
-	}
-}
-
-
-

@@ -7,46 +7,52 @@
 
 #include "Renderer.h"
 
-#include <string.h>
-
-#include "Game_Types.h"
-#include "Geometry.h"
-#include "NES_Functions.h"
-#include "NES_Math.h"
-#include "LCDControl.h"
-#include "RenderEngine.h"
+#include <stddef.h>
 
 #include "Game.h"
-
+#include "Game_Types.h"
+#include "Geometry.h"
+#include "LCDControl.h"
+#include "NES_Assert.h"
+#include "NES_Functions.h"
+#include "NES_Math.h"
 #include "printf_logger.h"
+#include "RenderEngine.h"
 
 
-int RENDERER_Update(GameContext_t* ctx)
+//----------------
+// PRIVATE FUNCTION PROTOTYPES
+//----------------
+static void RENDERER_RenderFloor(const BackgroundRepObject_t* floor);
+static void RENDERER_RenderBGObject(const BackgroundObject_t* obj, const Rect_t* mapRectToDraw, const Rect_t* screenRect, const int LCDOffsetX);
+static void RENDERER_RenderFGObject(const ForegroundObject_t* obj, const Rect_t* mapRectToDraw, const Rect_t* screenRect, const int LCDOffsetX);
+static void RENDERER_RenderEnemy(const EnemyState_t* enemy, const Rect_t* mapRectToDraw, const Rect_t* screenRect, const int LCDOffsetX);
+static void RENDERER_RenderPlayer(const PlayerState_t* player, const Rect_t* mapRectToDraw, const Rect_t* screenRect, const int LCDOffsetX);
+
+
+//----------------
+// PUBLIC FUNCTIONS
+//----------------
+void RENDERER_Update(GameContext_t* ctx)
 {
-	if (ctx == NULL) { return -1; }
-	int ret = 0;
+	NES_ASSERT(ctx != NULL);
 
-	ret = RENDERER_ScrollRender(&ctx->renderer, ctx);
-	if (ret < 0) { return -1; }
+	RENDERER_ScrollRender(&ctx->renderer, ctx);
 
-	ret = RENDERER_DirtyRects_Calculate(&ctx->renderer, ctx);
-	if (ret < 0) { return -1; }
+	RENDERER_DirtyRects_Calculate(&ctx->renderer, ctx);
 
-	ret = RENDERER_DirtyRects_Render(&ctx->renderer, ctx);
-	if (ret < 0) { return -1; }
-
-	return 0;
+	RENDERER_DirtyRects_Render(&ctx->renderer, ctx);
 }
 
-int RENDERER_FirstRender(const GameContext_t* ctx)
+void RENDERER_FirstRender(const GameContext_t* ctx)
 {
-	if (ctx == NULL)	{ return -1; }
-	if (ctx->floorIndex < 0) { return -5; }
+	NES_ASSERT(ctx != NULL);
+	NES_ASSERT(ctx->floorIndex >= 0);
 
 	LCD_WriteVertScrollStartAddr(ctx->renderer.LCDOffsetX);
 
 	//sanity check
-	if (ctx->map.floorYLevel < 0 || ctx->map.floorYLevel > 200) { return -10; }
+	NES_ASSERT(ctx->map.floorYLevel >= 0 && ctx->map.floorYLevel <= 200);
 
 	RENDERER_RenderFloor(&ctx->bgRepObjects[ctx->floorIndex]);
 
@@ -74,13 +80,11 @@ int RENDERER_FirstRender(const GameContext_t* ctx)
 
 		RE_SendRect(screenRect, ctx->renderer.LCDOffsetX);
 	}
-
-	return 0;
 }
 
-int RENDERER_ScrollRender(RendererState_t* renderer, const GameContext_t* ctx)
+void RENDERER_ScrollRender(RendererState_t* renderer, const GameContext_t* ctx)
 {
-	if (renderer == NULL || ctx == NULL) { return -1; }
+	NES_ASSERT(renderer != NULL && ctx != NULL);
 
 	Point_t cameraDiff = {0};
 	cameraDiff.x = ctx->camera.currPos.x - ctx->camera.prevPos.x;
@@ -167,13 +171,11 @@ int RENDERER_ScrollRender(RendererState_t* renderer, const GameContext_t* ctx)
 
 		RE_SendRect(rightScreenRect, renderer->LCDOffsetX);
 	}
-
-	return 0;
 }
 
-int	RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_t* ctx)
+void RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_t* ctx)
 {
-	if (renderer == NULL || ctx == NULL) { return -1; }
+	NES_ASSERT(renderer != NULL && ctx != NULL);
 
 	renderer->activeDirtyRects = 0;
 	DirtyRect_t* dirtyRects = renderer->dirtyRects;
@@ -220,7 +222,7 @@ int	RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_t
 		// }
 
 		Rect_t dirtyRect;
-		if (FGOBJECTS_GetDirtyRect(obj, &dirtyRect) < 0) { continue; }
+		FGOBJECTS_GetDirtyRect(obj, &dirtyRect);
 
 		Rect_t commonRect = {0};
 		RECT_GetIntersection(&cameraRect, &dirtyRect, &commonRect);
@@ -248,7 +250,7 @@ int	RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_t
 		}
 
 		Rect_t dirtyRect;
-		if (ENEMIES_GetDirtyRect(&ctx->enemies.pool[indexLUT], &dirtyRect) < 0) { continue; }
+		ENEMIES_GetDirtyRect(&ctx->enemies.pool[indexLUT], &dirtyRect);
 
 		Rect_t commonRect = {0};
 		RECT_GetIntersection(&cameraRect, &dirtyRect, &commonRect);
@@ -268,19 +270,18 @@ int	RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_t
 	// PLAYER DIRTY RECT
 	//////////////////////////
 	Rect_t dirtyRect;
-	if (!PLAYER_GetDirtyRect(&ctx->player, &dirtyRect))
-	{
-		Rect_t commonRect = {0};
-		RECT_GetIntersection(&cameraRect, &dirtyRect, &commonRect);
+	PLAYER_GetDirtyRect(&ctx->player, &dirtyRect);
 
-		if (RECT_IsIntersection(&commonRect))
-		{
-			if (renderer->activeDirtyRects >= DIRTY_RECTS_SIZE) {
-				printf_str("\n### activeDirtyRects exeeds DIRTY_RECTS_SIZE ###\n");
-			} else {
-				dirtyRects[renderer->activeDirtyRects].rect = commonRect;
-				renderer->activeDirtyRects++;
-			}
+	Rect_t commonRect = {0};
+	RECT_GetIntersection(&cameraRect, &dirtyRect, &commonRect);
+
+	if (RECT_IsIntersection(&commonRect))
+	{
+		if (renderer->activeDirtyRects >= DIRTY_RECTS_SIZE) {
+			printf_str("\n### activeDirtyRects exeeds DIRTY_RECTS_SIZE ###\n");
+		} else {
+			dirtyRects[renderer->activeDirtyRects].rect = commonRect;
+			renderer->activeDirtyRects++;
 		}
 	}
 
@@ -334,13 +335,11 @@ int	RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_t
 	// 	if (dirtyRects[i].used)	{ continue; }
 	// 	printf_v("x1: %d, y1: %d, x2: %d, y2: %d\n", dirtyRects[i].rect.p1.x, dirtyRects[i].rect.p1.y, dirtyRects[i].rect.p2.x, dirtyRects[i].rect.p2.y);
 	// }
-
-	return 0;
 }
 
-int	RENDERER_DirtyRects_Render(RendererState_t* renderer, const GameContext_t* ctx)
+void RENDERER_DirtyRects_Render(RendererState_t* renderer, const GameContext_t* ctx)
 {
-	if (renderer == NULL || ctx == NULL) { return -1; }
+	NES_ASSERT(renderer != NULL && ctx != NULL);
 
 	DirtyRect_t* dirtyRects = renderer->dirtyRects;
 
@@ -433,14 +432,14 @@ int	RENDERER_DirtyRects_Render(RendererState_t* renderer, const GameContext_t* c
 		
 		RE_SendRect(screenRect, renderer->LCDOffsetX);
 	}
-
-	return 0;
 }
 
-int RENDERER_RenderFloor(const BackgroundRepObject_t* floor)
-{
-	if (floor == NULL)	{ return -1; }
 
+//----------------
+// PRIVATE FUNCTIONS
+//----------------
+static void RENDERER_RenderFloor(const BackgroundRepObject_t* floor)
+{
 	const BaseAsset_t* baseAsset = &floor->asset->baseAsset;
 	SpriteRender_t renderContext = {0};
 
@@ -464,14 +463,10 @@ int RENDERER_RenderFloor(const BackgroundRepObject_t* floor)
 			RE_RenderSprite(&baseAsset->sprite, renderContext, false);
 		}
 	}
-
-	return 0;
 }
 
-int RENDERER_RenderBGObject(const BackgroundObject_t* obj, const Rect_t* mapRectToDraw, const Rect_t* screenRect, const int LCDOffsetX)
+static void RENDERER_RenderBGObject(const BackgroundObject_t* obj, const Rect_t* mapRectToDraw, const Rect_t* screenRect, const int LCDOffsetX)
 {
-	if (obj == NULL || mapRectToDraw == NULL || screenRect == NULL)	{ return -1; }
-
 	Rect_t posRect;
 	posRect.p1.x = obj->mapPos.x;
 	posRect.p1.y = obj->mapPos.y;
@@ -494,14 +489,10 @@ int RENDERER_RenderBGObject(const BackgroundObject_t* obj, const Rect_t* mapRect
 
 		RE_FillSprite(&obj->asset->baseAsset.sprite, &renderContext);
 	}
-
-	return 0;
 }
 
-int	RENDERER_RenderFGObject(const ForegroundObject_t* obj, const Rect_t* mapRectToDraw, const Rect_t* screenRect, const int LCDOffsetX)
+static void RENDERER_RenderFGObject(const ForegroundObject_t* obj, const Rect_t* mapRectToDraw, const Rect_t* screenRect, const int LCDOffsetX)
 {
-	if (obj == NULL || mapRectToDraw == NULL || screenRect == NULL) { return -1; }
-
 	Rect_t posRect;
 	posRect.p1.x = obj->currMapPos.x;
 	posRect.p1.y = obj->currMapPos.y;
@@ -524,14 +515,10 @@ int	RENDERER_RenderFGObject(const ForegroundObject_t* obj, const Rect_t* mapRect
 
 		RE_FillSprite(&obj->asset.baseAsset.sprite, &renderContext);
 	}
-
-	return 0;
 }
 
-int	RENDERER_RenderEnemy(const EnemyState_t* enemy, const Rect_t* mapRectToDraw, const Rect_t* screenRect, const int LCDOffsetX)
+static void RENDERER_RenderEnemy(const EnemyState_t* enemy, const Rect_t* mapRectToDraw, const Rect_t* screenRect, const int LCDOffsetX)
 {
-	if (enemy == NULL || mapRectToDraw == NULL || screenRect == NULL) { return -1; }
-
 	Rect_t posRect;
 	posRect.p1.x = enemy->currMapPos.x;
 	posRect.p1.y = enemy->currMapPos.y;
@@ -554,14 +541,10 @@ int	RENDERER_RenderEnemy(const EnemyState_t* enemy, const Rect_t* mapRectToDraw,
 
 		RE_FillSprite(&enemy->asset.baseAsset.sprite, &renderContext);
 	}
-
-	return 0;
 }
 
-int	RENDERER_RenderPlayer(const PlayerState_t* player, const Rect_t* mapRectToDraw, const Rect_t* screenRect, const int LCDOffsetX)
+static void RENDERER_RenderPlayer(const PlayerState_t* player, const Rect_t* mapRectToDraw, const Rect_t* screenRect, const int LCDOffsetX)
 {
-	if (player == NULL || mapRectToDraw == NULL || screenRect == NULL) { return -1; }
-
 	Rect_t posRect;
 	posRect.p1.x = player->currMapPos.x;
 	posRect.p1.y = player->currMapPos.y;
@@ -596,6 +579,4 @@ int	RENDERER_RenderPlayer(const PlayerState_t* player, const Rect_t* mapRectToDr
 		// uint32_t tdiff = CalcTimeUS(t1);
 		// printf_int(tdiff); printf_c('\n');
 	}
-
-	return 0;
 }

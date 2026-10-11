@@ -7,39 +7,45 @@
 
 #include "Input.h"
 
-#include <string.h>
+#include <stddef.h>
 
 #include "Game_Types.h"
+#include "NES_Assert.h"
 #include "PADControl.h"
 
 
-int INPUT_Update(InputState_t* input, const GameContext_t* ctx, const u32 frameTimeUS)
+//----------------
+// PRIVATE FUNCTION PROTOTYPES
+//----------------
+static void INPUT_SetButtonsState(InputState_t* input, uint32_t buttons_state);
+static void INPUT_SetFrameTimeUS(InputState_t* input, u32 frameTimeUS);
+
+
+//----------------
+// PUBLIC FUNCTIONS
+//----------------
+void INPUT_Update(InputState_t* input, const GameContext_t* ctx, const u32 frameTimeUS)
 {
-	if (input == NULL || ctx == NULL) { return -1; }
-	int ret = 0;
+	NES_ASSERT(input != NULL && ctx != NULL);
 
 	uint32_t buttons_state = GetButtonsState();
-	ret = INPUT_SetButtonsState(input, buttons_state);
-	if (ret < 0) { return -1; }
+	INPUT_SetButtonsState(input, buttons_state);
 
-	ret = INPUT_SetFrameTimeUS(input, frameTimeUS);
-	if (ret < 0) { return -1; }
-
-	return 0;
+	INPUT_SetFrameTimeUS(input, frameTimeUS);
 }
 
-int INPUT_SetButtonsState(InputState_t* input, uint32_t buttons_state)
+
+//----------------
+// PRIVATE FUNCTIONS
+//----------------
+static void INPUT_SetButtonsState(InputState_t* input, uint32_t buttons_state)
 {
-	if (input == NULL) { return -1; }
 	input->prev_buttons_state = input->buttons_state;
 	input->buttons_state = buttons_state;
-	return 0;
 }
 
-int INPUT_SetFrameTimeUS(InputState_t* input, u32 frameTimeUS)
+static void INPUT_SetFrameTimeUS(InputState_t* input, u32 frameTimeUS)
 {
-	if (input == NULL) { return -1; }
 	input->frameData.frameTimeUS = frameTimeUS;
 	input->frameData.frameTimeS = input->frameData.frameTimeUS/1000000.0f;
-	return 0;
 }
