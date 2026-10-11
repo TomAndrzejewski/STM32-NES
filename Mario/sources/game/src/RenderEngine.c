@@ -7,17 +7,24 @@
 
 #include "RenderEngine.h"
 
-#include <string.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "Geometry.h"
 #include "LCDControl.h"
-#include "printf_logger.h"
+#include "NES_Assert.h"
 
 
+//----------------
+// PRIVATE MACROS
+//----------------
 #define FB_0	(0)
 #define FB_1	(1)
 
+
+//----------------
+// PRIVATE VARIABLES
+//----------------
 static uint8_t _Framebuffer0[FRAMEBUFFER_SIZE];
 static uint8_t _Framebuffer1[FRAMEBUFFER_SIZE];
 
@@ -27,6 +34,19 @@ static uint8_t* _FB = NULL;
 static uint8_t	_CurrFB = FB_0;
 
 
+//----------------
+// PRIVATE FUNCTION PROTOTYPES
+//----------------
+static void RE_SendFB_withOffset(int pixelsToSend, int pixelsOffset, bool exchangeFramebuffers);
+static void RE_SendFB(int pixelsToSend);
+static void RE_FillPixel(uint16_t pixel);
+static void RE_ResetFB();
+static uint8_t* RE_GetFB();
+
+
+//----------------
+// PUBLIC FUNCTIONS
+//----------------
 void RE_Init()
 {
 	memset(_Framebuffer0, 0, sizeof(_Framebuffer0));
@@ -37,129 +57,7 @@ void RE_Init()
 	_FB = _Framebuffer0;
 }
 
-int RE_SendFB(int pixelsToSend)
-{
-	if (pixelsToSend <= 0)
-	{
-		return -1;
-	}
-
-	DMA2_SPI1_Send_NoBlock(_FB, pixelsToSend*BYTES_PER_PIXEL);
-
-	if (_CurrFB == FB_0)
-	{
-		_FB = _Framebuffer1;
-		_CurrFB = FB_1;
-	}
-	else
-	{
-		_FB = _Framebuffer0;
-		_CurrFB = FB_0;
-	}
-
-	return 0;
-}
-
-int RE_SendFB_withOffset(int pixelsToSend, int pixelsOffset, bool exchangeFramebuffers)
-{
-	if (pixelsToSend <= 0 || pixelsOffset > FRAMEBUFFER_NUMOF_PIXELS)
-	{
-		return -1;
-	}
-
-	DMA2_SPI1_Send_NoBlock(_FB + pixelsOffset*BYTES_PER_PIXEL, pixelsToSend*BYTES_PER_PIXEL);
-
-	if (exchangeFramebuffers)
-	{
-		if (_CurrFB == FB_0)
-		{
-			_FB = _Framebuffer1;
-			_CurrFB = FB_1;
-		}
-		else
-		{
-			_FB = _Framebuffer0;
-			_CurrFB = FB_0;
-		}
-	}
-
-
-	return 0;
-}
-
-uint8_t* RE_GetFB()
-{
-	return _FB;
-}
-
-void RE_ResetFB()
-{
-	_WritePos = 0;
-}
-
-OPTIMIZE_FOR_DEBUG
-int RE_FillPixel(uint16_t pixel)
-{
-	if (_WritePos + BYTES_PER_PIXEL > FRAMEBUFFER_SIZE)
-	{
-		return -1;
-	}
-
-	*(uint16_t*)(_FB + _WritePos) = pixel;
-	_WritePos += BYTES_PER_PIXEL;
-
-	return 0;
-}
-
-int RE_OmmitPixel()
-{
-	if (_WritePos + BYTES_PER_PIXEL > FRAMEBUFFER_SIZE)
-	{
-		return -1;
-	}
-
-	_WritePos += BYTES_PER_PIXEL;
-
-	return 0;
-}
-
-int RE_RenderFullBackgroud(uint16_t pixel)
-{
-	for (int i = 0; i < FRAMEBUFFERS_PER_LCD; i++)
-	{
-		int ret = RE_FillBackgroud(pixel, FRAMEBUFFER_NUMOF_PIXELS);
-		if (ret < 0)
-		{
-			return -1;
-		}
-		RE_SendFB(FRAMEBUFFER_NUMOF_PIXELS);
-		RE_ResetFB();
-	}
-
-	return 0;
-}
-
-OPTIMIZE_FOR_DEBUG
-int RE_FillBackgroud(uint16_t pixel, int numOfPixels)
-{
-	if (numOfPixels <= 0)
-	{
-		return -5;
-	}
-	if (numOfPixels > FRAMEBUFFER_NUMOF_PIXELS)
-	{
-		return -10;
-	}
-
-	for (int i = 0; i < numOfPixels; i++)
-	{
-		RE_FillPixel(pixel);
-	}
-
-	return 0;
-}
-
-int RE_SendRect(Rect_t inputRect, int LCDOffsetX)
+void RE_SendRect(Rect_t inputRect, int LCDOffsetX)
 {
 	Rect_t baseRect = inputRect;
 	// Translate to LCD coordinates
@@ -191,11 +89,7 @@ int RE_SendRect(Rect_t inputRect, int LCDOffsetX)
 		int leftRectArea = RECT_CalcArea2(&leftRect);
 		LCD_DrawRect(leftRect, LCDOffsetX);
 
-		int ret = RE_SendFB_withOffset(leftRectArea, 0, false);
-		if (ret < 0)
-		{
-			printf_v("\nRE_SendRect leftRect error: %d", ret);
-		}
+		RE_SendFB_withOffset(leftRectArea, 0, false);
 
 		// right rectangle
 		Rect_t rightRect = baseRect;
@@ -204,12 +98,8 @@ int RE_SendRect(Rect_t inputRect, int LCDOffsetX)
 		int rightRectArea = RECT_CalcArea2(&rightRect);
 		LCD_DrawRect(rightRect, LCDOffsetX);
 
-		ret = RE_SendFB_withOffset(rightRectArea, leftRectArea, true);
+		RE_SendFB_withOffset(rightRectArea, leftRectArea, true);
 		RE_ResetFB();
-		if (ret < 0)
-		{
-			printf_v("\nRE_SendRect rightRect error: %d", ret);
-		}
 	}
 	else
 	{
@@ -217,76 +107,49 @@ int RE_SendRect(Rect_t inputRect, int LCDOffsetX)
 		int baseRectArea = RECT_CalcArea2(&baseRect);
 		LCD_DrawRect(baseRect, LCDOffsetX);
 
-		int ret = RE_SendFB(baseRectArea);
+		RE_SendFB(baseRectArea);
 		RE_ResetFB();
-		if (ret < 0)
-		{
-			return -15;
-		}
 	}
-
-	return 0;
 }
 
-int RE_RenderSprite(const Sprite_t* sprite, SpriteRender_t renderContext, bool fillBG)
+void RE_OmmitPixel()
 {
-	if (sprite == NULL)
+	if (_WritePos + BYTES_PER_PIXEL > FRAMEBUFFER_SIZE)
 	{
-		return -1;
+		return;
 	}
 
-	RE_ResetFB();
+	_WritePos += BYTES_PER_PIXEL;
+}
 
-	int ret = 0;
-	int baseRectArea = RECT_CalcArea(&renderContext.baseRect);
-
-	if (fillBG)
+void RE_RenderFullBackgroud(uint16_t pixel)
+{
+	for (int i = 0; i < FRAMEBUFFERS_PER_LCD; i++)
 	{
-		int ret = RE_FillBackgroud(LCD_COLOR_BLUESKY, baseRectArea);
-		if (ret < 0)
-		{
-			return -10;
-		}
+		RE_FillBackgroud(pixel, FRAMEBUFFER_NUMOF_PIXELS);
+		RE_SendFB(FRAMEBUFFER_NUMOF_PIXELS);
+		RE_ResetFB();
 	}
-
-	RE_FillSprite(sprite, &renderContext);
-
-	// Translate to LCD coordinates
-	if (renderContext.baseRect.p1.x == LCD_WIDTH)
-	{
-		renderContext.baseRect.p1.x = LCD_WIDTH - 1;
-	}
-	if (renderContext.baseRect.p1.y == LCD_HEIGHT)
-	{
-		renderContext.baseRect.p1.y = LCD_HEIGHT - 1;
-	}
-	if (renderContext.baseRect.p2.x > 0)
-	{
-		renderContext.baseRect.p2.x--;
-	}
-	if (renderContext.baseRect.p2.y > 0)
-	{
-		renderContext.baseRect.p2.y--;
-	}
-	LCD_DrawRect(renderContext.baseRect, renderContext.LCDOffsetX);
-
-	ret = RE_SendFB(baseRectArea);
-	RE_ResetFB();
-	if (ret < 0)
-	{
-		return -15;
-	}
-
-	return 0;
 }
 
 OPTIMIZE_FOR_DEBUG
-int RE_FillSprite(const Sprite_t* sprite, const SpriteRender_t* renderContext)
+void RE_FillBackgroud(uint16_t pixel, int numOfPixels)
 {
-	if (sprite == NULL || renderContext == NULL)
+	if (numOfPixels <= 0 || numOfPixels > FRAMEBUFFER_NUMOF_PIXELS)
 	{
-		return -1;
+		return;
 	}
+
+	for (int i = 0; i < numOfPixels; i++)
+	{
+		RE_FillPixel(pixel);
+	}
+}
+
+OPTIMIZE_FOR_DEBUG
+void RE_FillSprite(const Sprite_t* sprite, const SpriteRender_t* renderContext)
+{
+	NES_ASSERT(sprite != NULL && renderContext != NULL);
 
 	Rect_t fbRect;
 	fbRect.p1.x = 0;
@@ -363,8 +226,113 @@ int RE_FillSprite(const Sprite_t* sprite, const SpriteRender_t* renderContext)
 			
 		}
 	}
+}
 
-	return 0;
+void RE_RenderSprite(const Sprite_t* sprite, SpriteRender_t renderContext, bool fillBG)
+{
+	NES_ASSERT(sprite != NULL);
+
+	RE_ResetFB();
+
+	int baseRectArea = RECT_CalcArea(&renderContext.baseRect);
+
+	if (fillBG)
+	{
+		RE_FillBackgroud(LCD_COLOR_BLUESKY, baseRectArea);
+	}
+
+	RE_FillSprite(sprite, &renderContext);
+
+	// Translate to LCD coordinates
+	if (renderContext.baseRect.p1.x == LCD_WIDTH)
+	{
+		renderContext.baseRect.p1.x = LCD_WIDTH - 1;
+	}
+	if (renderContext.baseRect.p1.y == LCD_HEIGHT)
+	{
+		renderContext.baseRect.p1.y = LCD_HEIGHT - 1;
+	}
+	if (renderContext.baseRect.p2.x > 0)
+	{
+		renderContext.baseRect.p2.x--;
+	}
+	if (renderContext.baseRect.p2.y > 0)
+	{
+		renderContext.baseRect.p2.y--;
+	}
+	LCD_DrawRect(renderContext.baseRect, renderContext.LCDOffsetX);
+
+	RE_SendFB(baseRectArea);
+	RE_ResetFB();
 }
 
 
+//----------------
+// PRIVATE FUNCTIONS
+//----------------
+static void RE_SendFB_withOffset(int pixelsToSend, int pixelsOffset, bool exchangeFramebuffers)
+{
+	if (pixelsToSend <= 0 || pixelsOffset > FRAMEBUFFER_NUMOF_PIXELS)
+	{
+		return;
+	}
+
+	DMA2_SPI1_Send_NoBlock(_FB + pixelsOffset*BYTES_PER_PIXEL, pixelsToSend*BYTES_PER_PIXEL);
+
+	if (exchangeFramebuffers)
+	{
+		if (_CurrFB == FB_0)
+		{
+			_FB = _Framebuffer1;
+			_CurrFB = FB_1;
+		}
+		else
+		{
+			_FB = _Framebuffer0;
+			_CurrFB = FB_0;
+		}
+	}
+}
+
+static void RE_SendFB(int pixelsToSend)
+{
+	if (pixelsToSend <= 0)
+	{
+		return;
+	}
+
+	DMA2_SPI1_Send_NoBlock(_FB, pixelsToSend*BYTES_PER_PIXEL);
+
+	if (_CurrFB == FB_0)
+	{
+		_FB = _Framebuffer1;
+		_CurrFB = FB_1;
+	}
+	else
+	{
+		_FB = _Framebuffer0;
+		_CurrFB = FB_0;
+	}
+}
+
+OPTIMIZE_FOR_DEBUG
+static void RE_FillPixel(uint16_t pixel)
+{
+	if (_WritePos + BYTES_PER_PIXEL > FRAMEBUFFER_SIZE)
+	{
+		return;
+	}
+
+	*(uint16_t*)(_FB + _WritePos) = pixel;
+	_WritePos += BYTES_PER_PIXEL;
+}
+
+static void RE_ResetFB()
+{
+	_WritePos = 0;
+}
+
+static uint8_t* RE_GetFB()
+{
+	return _FB;
+}

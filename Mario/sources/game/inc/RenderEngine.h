@@ -21,20 +21,15 @@
 #define FRAMEBUFFERS_PER_LCD		(LCD_SIZE/FRAMEBUFFER_NUMOF_PIXELS)
 
 
-void 		RE_Init();
-void 		RE_ResetFB();
-uint8_t* 	RE_GetFB();
-int 		RE_SendFB(int pixelsToSend);
-int 		RE_SendFB_withOffset(int pixelsToSend, int pixelsOffset, bool exchangeFramebuffers);
-int 		RE_SendRect(Rect_t inputRect, int LCDOffsetX);
+void    RE_Init();
+void    RE_SendRect(Rect_t inputRect, int LCDOffsetX);
 
-int 		RE_FillPixel(uint16_t pixel);
-int 		RE_OmmitPixel();
+void    RE_OmmitPixel();
 
-int			RE_RenderFullBackgroud(uint16_t pixel);
-int 		RE_FillBackgroud(uint16_t pixel, int numOfPixels);
+void    RE_RenderFullBackgroud(uint16_t pixel);
+void    RE_FillBackgroud(uint16_t pixel, int numOfPixels);
 
-int 		RE_FillSprite(const Sprite_t* sprite, const SpriteRender_t* renderContext);
-int 		RE_RenderSprite(const Sprite_t* sprite, SpriteRender_t renderContext, bool fillBG);
+void    RE_FillSprite(const Sprite_t* sprite, const SpriteRender_t* renderContext);
+void    RE_RenderSprite(const Sprite_t* sprite, SpriteRender_t renderContext, bool fillBG);
 
-#endif /* SOURCES_INC_RENDERENGINE_H_ */
+#endif // SOURCES_INC_RENDERENGINE_H_
