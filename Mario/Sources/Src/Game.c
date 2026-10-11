@@ -413,10 +413,10 @@ int PLAYER_GetDirtyRect(const PlayerState_t* player, Rect_t* dirtyRect)
 	currDirtyRect.p2.y = player->currMapPos.y + player->asset.baseAsset.sprite.size.y;
 
 	Rect_t commonDirtyRect;
-	commonDirtyRect.p1.x = min(prevDirtyRect.p1.x, currDirtyRect.p1.x);
-	commonDirtyRect.p1.y = min(prevDirtyRect.p1.y, currDirtyRect.p1.y);
-	commonDirtyRect.p2.x = max(prevDirtyRect.p2.x, currDirtyRect.p2.x);
-	commonDirtyRect.p2.y = max(prevDirtyRect.p2.y, currDirtyRect.p2.y);
+	commonDirtyRect.p1.x = MATH_Min(prevDirtyRect.p1.x, currDirtyRect.p1.x);
+	commonDirtyRect.p1.y = MATH_Min(prevDirtyRect.p1.y, currDirtyRect.p1.y);
+	commonDirtyRect.p2.x = MATH_Max(prevDirtyRect.p2.x, currDirtyRect.p2.x);
+	commonDirtyRect.p2.y = MATH_Max(prevDirtyRect.p2.y, currDirtyRect.p2.y);
 
 	if (commonDirtyRect.p1.x <= commonDirtyRect.p2.x && commonDirtyRect.p1.y <= commonDirtyRect.p2.y)
 	{
@@ -486,10 +486,10 @@ int ENEMIES_GetDirtyRect(const EnemyState_t* enemy, Rect_t* dirtyRect)
 	currDirtyRect.p2.y = enemy->currMapPos.y + enemy->asset.baseAsset.sprite.size.y;
 
 	Rect_t commonDirtyRect;
-	commonDirtyRect.p1.x = min(prevDirtyRect.p1.x, currDirtyRect.p1.x);
-	commonDirtyRect.p1.y = min(prevDirtyRect.p1.y, currDirtyRect.p1.y);
-	commonDirtyRect.p2.x = max(prevDirtyRect.p2.x, currDirtyRect.p2.x);
-	commonDirtyRect.p2.y = max(prevDirtyRect.p2.y, currDirtyRect.p2.y);
+	commonDirtyRect.p1.x = MATH_Min(prevDirtyRect.p1.x, currDirtyRect.p1.x);
+	commonDirtyRect.p1.y = MATH_Min(prevDirtyRect.p1.y, currDirtyRect.p1.y);
+	commonDirtyRect.p2.x = MATH_Max(prevDirtyRect.p2.x, currDirtyRect.p2.x);
+	commonDirtyRect.p2.y = MATH_Max(prevDirtyRect.p2.y, currDirtyRect.p2.y);
 
 	if (commonDirtyRect.p1.x <= commonDirtyRect.p2.x && commonDirtyRect.p1.y <= commonDirtyRect.p2.y)
 	{
@@ -541,10 +541,10 @@ int FGOBJECTS_GetDirtyRect(const ForegroundObject_t* obj, Rect_t* dirtyRect)
 	currDirtyRect.p2.y = obj->currMapPos.y + obj->asset.baseAsset.sprite.size.y;
 
 	Rect_t commonDirtyRect;
-	commonDirtyRect.p1.x = min(prevDirtyRect.p1.x, currDirtyRect.p1.x);
-	commonDirtyRect.p1.y = min(prevDirtyRect.p1.y, currDirtyRect.p1.y);
-	commonDirtyRect.p2.x = max(prevDirtyRect.p2.x, currDirtyRect.p2.x);
-	commonDirtyRect.p2.y = max(prevDirtyRect.p2.y, currDirtyRect.p2.y);
+	commonDirtyRect.p1.x = MATH_Min(prevDirtyRect.p1.x, currDirtyRect.p1.x);
+	commonDirtyRect.p1.y = MATH_Min(prevDirtyRect.p1.y, currDirtyRect.p1.y);
+	commonDirtyRect.p2.x = MATH_Max(prevDirtyRect.p2.x, currDirtyRect.p2.x);
+	commonDirtyRect.p2.y = MATH_Max(prevDirtyRect.p2.y, currDirtyRect.p2.y);
 
 	if (commonDirtyRect.p1.x <= commonDirtyRect.p2.x && commonDirtyRect.p1.y <= commonDirtyRect.p2.y)
 	{

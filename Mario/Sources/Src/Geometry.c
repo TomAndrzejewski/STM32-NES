@@ -57,10 +57,10 @@ void RECT_GetIntersection(const Rect_t* r1, const Rect_t* r2, Rect_t* result)
 {
 	NES_ASSERT(r1 != NULL && r2 != NULL && result != NULL);
 
-	result->p1.x = max(r1->p1.x, r2->p1.x);
-	result->p1.y = max(r1->p1.y, r2->p1.y);
-	result->p2.x = min(r1->p2.x, r2->p2.x);
-	result->p2.y = min(r1->p2.y, r2->p2.y);
+	result->p1.x = MATH_Max(r1->p1.x, r2->p1.x);
+	result->p1.y = MATH_Max(r1->p1.y, r2->p1.y);
+	result->p2.x = MATH_Min(r1->p2.x, r2->p2.x);
+	result->p2.y = MATH_Min(r1->p2.y, r2->p2.y);
 }
 
 bool RECT_IsIntersection(const Rect_t* commonRect)

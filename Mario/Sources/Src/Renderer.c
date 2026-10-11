@@ -310,10 +310,10 @@ int	RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_t
 			if (RECT_IsIntersection(&commonRect))
 			{
 				Rect_t commonORRect;
-				commonORRect.p1.x = min(dirtyRects[i].rect.p1.x, dirtyRects[j].rect.p1.x);
-				commonORRect.p1.y = min(dirtyRects[i].rect.p1.y, dirtyRects[j].rect.p1.y);
-				commonORRect.p2.x = max(dirtyRects[i].rect.p2.x, dirtyRects[j].rect.p2.x);
-				commonORRect.p2.y = max(dirtyRects[i].rect.p2.y, dirtyRects[j].rect.p2.y);
+				commonORRect.p1.x = MATH_Min(dirtyRects[i].rect.p1.x, dirtyRects[j].rect.p1.x);
+				commonORRect.p1.y = MATH_Min(dirtyRects[i].rect.p1.y, dirtyRects[j].rect.p1.y);
+				commonORRect.p2.x = MATH_Max(dirtyRects[i].rect.p2.x, dirtyRects[j].rect.p2.x);
+				commonORRect.p2.y = MATH_Max(dirtyRects[i].rect.p2.y, dirtyRects[j].rect.p2.y);
 
 				commonRectFound = true;
 				dirtyRects[j].used = true;

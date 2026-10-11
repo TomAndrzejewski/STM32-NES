@@ -8,7 +8,14 @@
 #ifndef SOURCES_INC_NES_MATH_H_
 #define SOURCES_INC_NES_MATH_H_
 
-#define min(a, b) ((a) < (b) ? (a) : (b))
-#define max(a, b) ((a) > (b) ? (a) : (b))
+static inline int MATH_Min(int a, int b)
+{
+	return (a < b) ? a : b;
+}
+
+static inline int MATH_Max(int a, int b)
+{
+	return (a > b) ? a : b;
+}
 
 #endif /* SOURCES_INC_NES_MATH_H_ */
