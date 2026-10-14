@@ -25,8 +25,9 @@
 #include "stm32f446xx.h"
 // #include "cmsis_gcc.h"
 
-#include "NES_Defs.h"
-#include "NES_Functions.h"
+#include "Common_Defs.h"
+#include "BoardDefs.h"
+#include "BoardFunctions.h"
 #include "printf_logger.h"
 // #include "TimeoutTracker.h"
 
@@ -34,11 +35,9 @@
 // #include "PADControl.h"
 #include "RenderEngine.h"
 #include "Sound.h"
+#include "AudioControl.h"
 
 #include "Game.h"
-
-#define DEFINE_NES_ENGINE
-#include "NESEngine.h"
 
 
 
@@ -632,22 +631,22 @@ int main(void)
 
 	// I2S_Start();
 
-	GAME_InitContext(pGameCtx);
+	GAME_Init();
 
-	u32 timeSpentInLoopUS = 0;
-	u32 targetFrameTimeUS = 1000000/TARGET_FRAMERATE_HZ;
+	uint32_t timeSpentInLoopUS = 0;
+	uint32_t targetFrameTimeUS = 1000000/TARGET_FRAMERATE_HZ;
 
 	while(1)
 	{
 		if (timeSpentInLoopUS < targetFrameTimeUS)
 		{
-			u32 timeToDelayUS = targetFrameTimeUS - timeSpentInLoopUS;
+			uint32_t timeToDelayUS = targetFrameTimeUS - timeSpentInLoopUS;
 			delayUS(timeToDelayUS);
 		}
 
-		u32 startLoopTime = GetTimestamp();
+		uint32_t startLoopTime = GetTimestamp();
 		
-		GAME_Update(pGameCtx);
+		GAME_Update();
 		
 		timeSpentInLoopUS = CalcTimeUS(startLoopTime);
 	}

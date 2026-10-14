@@ -1,5 +1,5 @@
 /*
- * NES_Functions.c
+ * BoardFunctions.c
  *
  *  Created on: 19 maj 2026
  *      Author: tomasz
@@ -8,10 +8,8 @@
 #include <stm32f446xx.h>
 #include "core_cm4.h"
 
-#include "NES_Defs.h"
-#include "NES_Functions.h"
-#include "NES_Assert.h"
-#include "printf_logger.h"
+#include "BoardDefs.h"
+#include "BoardFunctions.h"
 
 void delayUS(uint32_t us)
 {
@@ -91,14 +89,4 @@ void fast_memset(void *dest, uint32_t value, size_t bytes)
             *p_byte++ = (uint8_t)value;
         }
     }
-}
-
-void NES_AssertFailed(const char* func, int line)
-{
-	__disable_irq(); // stop DMA/sound, the game state can no longer be trusted
-
-	printf_v("\n### ASSERT %s:%d ###\n", func, line);
-
-	__BKPT(0);   // halt the debugger
-	while (1);
 }

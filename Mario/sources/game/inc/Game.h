@@ -10,8 +10,8 @@
 
 #include "Game_Types.h"
 
-void    GAME_InitContext(GameContext_t* ctx);
-void    GAME_Update(GameContext_t* ctx);
+void    GAME_Init(void);
+void    GAME_Update(void);
 
 bool    MISC_IsThisPlayerID(const GameObjectID id);
 

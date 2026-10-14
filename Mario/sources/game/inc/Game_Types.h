@@ -10,7 +10,8 @@
 
 #include <stdbool.h>
 
-#include "NES_Types.h"
+#include "Geometry.h"
+#include "RenderEngine.h"
 #include "Game_Defs.h"
 
 

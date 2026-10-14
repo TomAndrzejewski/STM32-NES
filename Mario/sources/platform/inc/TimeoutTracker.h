@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "NES_Functions.h"
+#include "BoardFunctions.h"
 
 // Struktura pilnująca czasu
 typedef struct {

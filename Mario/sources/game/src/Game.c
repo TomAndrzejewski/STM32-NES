@@ -17,11 +17,11 @@
 #include "Geometry.h"
 #include "GraphicsAssets.h"
 #include "Input.h"
+#include "LCDControl.h"
 #include "Level.h"
-#include "NES_Assert.h"
-#include "NES_Defs.h"
-#include "NES_Functions.h"
-#include "NES_Math.h"
+#include "BoardAssert.h"
+#include "BoardFunctions.h"
+#include "Common_Math.h"
 #include "ObjectsManager.h"
 #include "Physics.h"
 #include "printf_logger.h"
@@ -38,12 +38,15 @@ static void GAME_CalcDirtyRect(const Point_t* prevPos, const Point_t* prevSize, 
 static bool ENEMIES_CalcIsOnScreen(const EnemyState_t* enemy, const Rect_t* screenRect);
 
 
+static GameContext_t gGameCtx = {0};
+
+
 //----------------
 // PUBLIC FUNCTIONS
 //----------------
-void GAME_InitContext(GameContext_t* ctx)
+void GAME_Init(void)
 {
-	NES_ASSERT(ctx != NULL);
+	GameContext_t* ctx = &gGameCtx;
 	int ret = 0;
 
 	memset(ctx, 0, sizeof(GameContext_t));
@@ -68,7 +71,7 @@ void GAME_InitContext(GameContext_t* ctx)
 	const ObjectLevelInstance_t* ObjectsPos = NULL;
 	int numOfObjects = 0;
 	ret = LEVEL_GetObjectsLocations(&ObjectsPos, &numOfObjects);
-	NES_ASSERT(ret >= 0 && ObjectsPos != NULL);
+	BOARD_ASSERT(ret >= 0 && ObjectsPos != NULL);
 
 	///////////////////
 	// OBJECTS MANAGER
@@ -125,17 +128,17 @@ void GAME_InitContext(GameContext_t* ctx)
 	const RepObjectLevelPos_t* BGRepObjectsPos = NULL;
 	int numOfBGRepObjects = 0;
 	ret = LEVEL_GetBGRepObjectsLocations(&BGRepObjectsPos, &numOfBGRepObjects);
-	NES_ASSERT(ret >= 0 && BGRepObjectsPos != NULL);
+	BOARD_ASSERT(ret >= 0 && BGRepObjectsPos != NULL);
 
 	// Level defines more repetition objects than the context can hold: enlarge the buffer or trim the level data
-	NES_ASSERT(numOfBGRepObjects <= BACKGROUND_REP_OBJECTS_MAX_SIZE);
+	BOARD_ASSERT(numOfBGRepObjects <= BACKGROUND_REP_OBJECTS_MAX_SIZE);
 
 	ctx->floorIndex = -1;
 	ctx->activebgRepObjects = 0;
 	for (int i = 0; i < numOfBGRepObjects; i++)
 	{
 		// Level entry has an ID outside of the repetition objects range: check the level data
-		NES_ASSERT(BGRepObjectsPos[i].id >= BACKGROUND_REP_OBJECT_ID_START && BGRepObjectsPos[i].id <= BACKGROUND_REP_OBJECT_ID_END);
+		BOARD_ASSERT(BGRepObjectsPos[i].id >= BACKGROUND_REP_OBJECT_ID_START && BGRepObjectsPos[i].id <= BACKGROUND_REP_OBJECT_ID_END);
 
 		ctx->bgRepObjects[i].id = BGRepObjectsPos[i].id;
 		ctx->bgRepObjects[i].mapPos.x = BGRepObjectsPos[i].x;
@@ -157,7 +160,7 @@ void GAME_InitContext(GameContext_t* ctx)
 		ctx->activebgRepObjects++;
 	}
 	// floor is very important for next components
-	NES_ASSERT(ctx->floorIndex != -1);
+	BOARD_ASSERT(ctx->floorIndex != -1);
 
 	///////////////////
 	// MAP
@@ -181,7 +184,7 @@ void GAME_InitContext(GameContext_t* ctx)
 	// PLAYER
 	///////////////////
 	ctx->player.animableAsset = &MARIO_SMALL_ANIMABLE_ASSET;
-	NES_ASSERT(ctx->player.animableAsset->baseAssetsCount > 0 && ctx->player.animableAsset->baseAssets[0].baseAsset != NULL);
+	BOARD_ASSERT(ctx->player.animableAsset->baseAssetsCount > 0 && ctx->player.animableAsset->baseAssets[0].baseAsset != NULL);
 	ctx->player.asset.baseAsset = *ctx->player.animableAsset->baseAssets[0].baseAsset;
 	ctx->player.asset.id = ctx->player.animableAsset->id;
 	ctx->player.asset.BBox = ctx->player.animableAsset->BBox;
@@ -221,9 +224,9 @@ void GAME_InitContext(GameContext_t* ctx)
 	fast_memset(ctx->collision.bumps, 0, sizeof(ctx->collision.bumps));
 }
 
-void GAME_Update(GameContext_t* ctx)
+void GAME_Update(void)
 {
-	NES_ASSERT(ctx != NULL);
+	GameContext_t* ctx = &gGameCtx;
 
 	int timeStamps = 0;
 	uint32_t targetFrameTimeUS = 1000000/TARGET_FRAMERATE_HZ;
@@ -368,14 +371,14 @@ bool MISC_IsThisPlayerID(const GameObjectID id)
 
 void PLAYER_GetDirtyRect(const PlayerState_t* player, Rect_t* dirtyRect)
 {
-	NES_ASSERT(player != NULL && dirtyRect != NULL);
+	BOARD_ASSERT(player != NULL && dirtyRect != NULL);
 
 	GAME_CalcDirtyRect(&player->prevMapPos, &player->prevSpriteSize, &player->currMapPos, &player->asset.baseAsset.sprite.size, dirtyRect);
 }
 
 void PLAYER_LevelUp(PlayerState_t* player)
 {
-	NES_ASSERT(player != NULL);
+	BOARD_ASSERT(player != NULL);
 
 	switch (player->playerLevel)
 	{
@@ -396,26 +399,26 @@ void PLAYER_LevelUp(PlayerState_t* player)
 	}
 	default:
 		// Unknown player level: add a missing case for it
-		NES_ASSERT(false);
+		BOARD_ASSERT(false);
 		break;
 	}
 }
 
 void ENEMIES_GetDirtyRect(const EnemyState_t* enemy, Rect_t* dirtyRect)
 {
-	NES_ASSERT(enemy != NULL && dirtyRect != NULL);
+	BOARD_ASSERT(enemy != NULL && dirtyRect != NULL);
 
 	GAME_CalcDirtyRect(&enemy->prevMapPos, &enemy->asset.baseAsset.sprite.size, &enemy->currMapPos, &enemy->asset.baseAsset.sprite.size, dirtyRect);
 }
 
 void FGOBJECTS_ClearFlags(GameContext_t* ctx)
 {
-	NES_ASSERT(ctx != NULL);
+	BOARD_ASSERT(ctx != NULL);
 }
 
 void FGOBJECTS_GetDirtyRect(const ForegroundObject_t* obj, Rect_t* dirtyRect)
 {
-	NES_ASSERT(obj != NULL && dirtyRect != NULL);
+	BOARD_ASSERT(obj != NULL && dirtyRect != NULL);
 
 	GAME_CalcDirtyRect(&obj->prevMapPos, &obj->asset.baseAsset.sprite.size, &obj->currMapPos, &obj->asset.baseAsset.sprite.size, dirtyRect);
 }
@@ -472,7 +475,7 @@ static void GAME_CalcDirtyRect(const Point_t* prevPos, const Point_t* prevSize, 
 	dirtyRect->p2.y = MATH_Max(prevDirtyRect.p2.y, currDirtyRect.p2.y);
 
 	// Inverted rect means a negative sprite size: check the asset definition
-	NES_ASSERT(dirtyRect->p1.x <= dirtyRect->p2.x && dirtyRect->p1.y <= dirtyRect->p2.y);
+	BOARD_ASSERT(dirtyRect->p1.x <= dirtyRect->p2.x && dirtyRect->p1.y <= dirtyRect->p2.y);
 }
 
 static bool ENEMIES_CalcIsOnScreen(const EnemyState_t* enemy, const Rect_t* screenRect)

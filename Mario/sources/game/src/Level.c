@@ -8,7 +8,7 @@
 #include <string.h>
 
 #include "Game_Types.h"
-#include "NES_Defs.h"
+#include "LCDControl.h"
 #include "Sound.h"
 
 #include "Level.h"

@@ -81,6 +81,8 @@ Gdy nie jesteś pewien, w jakim trybie jesteśmy, zapytaj, zamiast zgadywać.
 
 - Funkcje z prefiksem modułu wielkimi literami: `GAME_Update`, `PLAYER_GetDirtyRect`, `ENEMIES_UpdateFlags`.
 - Typy z sufiksem `_t` (`GameContext_t`, `Rect_t`), stałe i makra `WIELKIMI_LITERAMI`, wartości w nawiasach.
+- Zmienne `static` (w pliku i w funkcji) z prefiksem `s_`, globalne z `g_`, lokalne i argumenty bez prefiksu.
+  Nie zaczynaj nazw od `_` (identyfikatory zarezerwowane w C).
 - Wyniki funkcje zwracają przez wskaźnik.
 - Stan gry przekazywany przez `GameContext_t* ctx`. Unikaj nowych zmiennych globalnych.
 - ID obiektów w zakresach z `Game_Types.h`.

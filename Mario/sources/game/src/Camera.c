@@ -10,8 +10,8 @@
 #include <stddef.h>
 
 #include "Game_Types.h"
-#include "NES_Defs.h"
-#include "NES_Assert.h"
+#include "LCDControl.h"
+#include "BoardAssert.h"
 
 
 static void CAMERA_CalcPos(CameraState_t* camera, const PlayerState_t* player)
@@ -33,8 +33,8 @@ static void CAMERA_CalcScreenRect(CameraState_t* camera)
 
 void CAMERA_Update(CameraState_t* camera, const GameContext_t* ctx)
 {
-	NES_ASSERT(camera != NULL);
-	NES_ASSERT(ctx != NULL);
+	BOARD_ASSERT(camera != NULL);
+	BOARD_ASSERT(ctx != NULL);
 
 	CAMERA_CalcPos(camera, &ctx->player);
 	CAMERA_CalcScreenRect(camera);

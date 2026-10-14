@@ -10,7 +10,7 @@
 #include <math.h>
 
 #include "Game_Types.h"
-#include "NES_Assert.h"
+#include "BoardAssert.h"
 
 
 //----------------
@@ -34,7 +34,7 @@ static void ANIMATOR_Enemy_SetAsset(EnemyState_t* enemy);
 //----------------
 void ANIMATOR_Update(GameContext_t* ctx)
 {
-	NES_ASSERT(ctx != NULL);
+	BOARD_ASSERT(ctx != NULL);
 
 	ANIMATOR_Player_Update(&ctx->player, ctx);
 
@@ -157,7 +157,7 @@ static void ANIMATOR_Player_Decide_Normal(PlayerState_t* player, const GameConte
 
 static void ANIMATOR_Player_SetAsset(PlayerState_t* player)
 {
-	NES_ASSERT(player->animableAsset != NULL);
+	BOARD_ASSERT(player->animableAsset != NULL);
 
 	// save sprite size for dirty rects
 	player->prevSpriteSize = player->asset.baseAsset.sprite.size;
@@ -172,8 +172,8 @@ static void ANIMATOR_Player_SetAsset(PlayerState_t* player)
 	}
 
 	// The animable asset has no usable entry for the current animation: check its base assets table.
-	NES_ASSERT(assetIndex >= 0);
-	NES_ASSERT(player->animableAsset->baseAssets[assetIndex].baseAsset != NULL);
+	BOARD_ASSERT(assetIndex >= 0);
+	BOARD_ASSERT(player->animableAsset->baseAssets[assetIndex].baseAsset != NULL);
 
 	player->asset.baseAsset = *player->animableAsset->baseAssets[assetIndex].baseAsset;
 }
@@ -247,8 +247,8 @@ static void ANIMATOR_FGObject_SetAsset(ForegroundObject_t* obj)
 	}
 
 	// The animable asset has no usable entry for the current animation: check its base assets table.
-	NES_ASSERT(assetIndex >= 0);
-	NES_ASSERT(obj->animableAsset->baseAssets[assetIndex].baseAsset != NULL);
+	BOARD_ASSERT(assetIndex >= 0);
+	BOARD_ASSERT(obj->animableAsset->baseAssets[assetIndex].baseAsset != NULL);
 
 	obj->asset.baseAsset = *obj->animableAsset->baseAssets[assetIndex].baseAsset;
 }
@@ -293,8 +293,8 @@ static void ANIMATOR_Enemy_SetAsset(EnemyState_t* enemy)
 	}
 
 	// The animable asset has no usable entry for the current animation: check its base assets table.
-	NES_ASSERT(assetIndex >= 0);
-	NES_ASSERT(enemy->animableAsset->baseAssets[assetIndex].baseAsset != NULL);
+	BOARD_ASSERT(assetIndex >= 0);
+	BOARD_ASSERT(enemy->animableAsset->baseAssets[assetIndex].baseAsset != NULL);
 
 	enemy->asset.baseAsset = *enemy->animableAsset->baseAssets[assetIndex].baseAsset;
 }

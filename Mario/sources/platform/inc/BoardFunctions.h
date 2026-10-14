@@ -1,12 +1,12 @@
 /*
- * NES_Functions.h
+ * BoardFunctions.h
  *
  *  Created on: 19 maj 2026
  *      Author: tomasz
  */
 
-#ifndef SOURCES_INC_NES_FUNCTIONS_H_
-#define SOURCES_INC_NES_FUNCTIONS_H_
+#ifndef SOURCES_INC_BOARD_FUNCTIONS_H_
+#define SOURCES_INC_BOARD_FUNCTIONS_H_
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -23,4 +23,4 @@ uint32_t CalcDiffTimeUS(uint32_t startTime, uint32_t finishTime);
 void fast_memset(void *dest, uint32_t value, size_t bytes);
 
 
-#endif /* SOURCES_INC_NES_FUNCTIONS_H_ */
+#endif /* SOURCES_INC_BOARD_FUNCTIONS_H_ */

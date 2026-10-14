@@ -13,9 +13,9 @@
 #include "Game_Types.h"
 #include "Geometry.h"
 #include "LCDControl.h"
-#include "NES_Assert.h"
-#include "NES_Functions.h"
-#include "NES_Math.h"
+#include "BoardAssert.h"
+#include "BoardFunctions.h"
+#include "Common_Math.h"
 #include "printf_logger.h"
 #include "RenderEngine.h"
 
@@ -35,7 +35,7 @@ static void RENDERER_RenderPlayer(const PlayerState_t* player, const Rect_t* map
 //----------------
 void RENDERER_Update(GameContext_t* ctx)
 {
-	NES_ASSERT(ctx != NULL);
+	BOARD_ASSERT(ctx != NULL);
 
 	RENDERER_ScrollRender(&ctx->renderer, ctx);
 
@@ -46,13 +46,13 @@ void RENDERER_Update(GameContext_t* ctx)
 
 void RENDERER_FirstRender(const GameContext_t* ctx)
 {
-	NES_ASSERT(ctx != NULL);
-	NES_ASSERT(ctx->floorIndex >= 0);
+	BOARD_ASSERT(ctx != NULL);
+	BOARD_ASSERT(ctx->floorIndex >= 0);
 
 	LCD_WriteVertScrollStartAddr(ctx->renderer.LCDOffsetX);
 
 	//sanity check
-	NES_ASSERT(ctx->map.floorYLevel >= 0 && ctx->map.floorYLevel <= 200);
+	BOARD_ASSERT(ctx->map.floorYLevel >= 0 && ctx->map.floorYLevel <= 200);
 
 	RENDERER_RenderFloor(&ctx->bgRepObjects[ctx->floorIndex]);
 
@@ -84,7 +84,7 @@ void RENDERER_FirstRender(const GameContext_t* ctx)
 
 void RENDERER_ScrollRender(RendererState_t* renderer, const GameContext_t* ctx)
 {
-	NES_ASSERT(renderer != NULL && ctx != NULL);
+	BOARD_ASSERT(renderer != NULL && ctx != NULL);
 
 	Point_t cameraDiff = {0};
 	cameraDiff.x = ctx->camera.currPos.x - ctx->camera.prevPos.x;
@@ -175,7 +175,7 @@ void RENDERER_ScrollRender(RendererState_t* renderer, const GameContext_t* ctx)
 
 void RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_t* ctx)
 {
-	NES_ASSERT(renderer != NULL && ctx != NULL);
+	BOARD_ASSERT(renderer != NULL && ctx != NULL);
 
 	renderer->activeDirtyRects = 0;
 	DirtyRect_t* dirtyRects = renderer->dirtyRects;
@@ -339,7 +339,7 @@ void RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_
 
 void RENDERER_DirtyRects_Render(RendererState_t* renderer, const GameContext_t* ctx)
 {
-	NES_ASSERT(renderer != NULL && ctx != NULL);
+	BOARD_ASSERT(renderer != NULL && ctx != NULL);
 
 	DirtyRect_t* dirtyRects = renderer->dirtyRects;
 

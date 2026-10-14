@@ -12,8 +12,7 @@
 
 #include "stm32f4xx_ll_gpio.h"
 
-#include "NES_Defs.h"
-#include "NES_Functions.h"
+#include "BoardFunctions.h"
 #include "printf_logger.h"
 
 

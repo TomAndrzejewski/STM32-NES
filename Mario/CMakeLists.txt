@@ -82,7 +82,6 @@ target_compile_definitions(${PROJECT_NAME}.elf PRIVATE
 
 # Your own headers
 target_include_directories(${PROJECT_NAME}.elf PRIVATE
-    ${CMAKE_SOURCE_DIR}/sources/Inc
     ${CMAKE_SOURCE_DIR}/sources/app/inc
     ${CMAKE_SOURCE_DIR}/sources/game/inc
     ${CMAKE_SOURCE_DIR}/sources/common/inc

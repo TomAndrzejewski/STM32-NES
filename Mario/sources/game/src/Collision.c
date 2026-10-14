@@ -12,8 +12,8 @@
 #include "Game_Types.h"
 #include "Geometry.h"
 #include "Level.h"
-#include "NES_Assert.h"
-#include "NES_Functions.h"
+#include "BoardAssert.h"
+#include "BoardFunctions.h"
 #include "ObjectsManager.h"
 
 
@@ -45,7 +45,7 @@ static void COLLISION_FGObject_Floor(ForegroundObject_t* actor, const GameContex
 //----------------
 void COLLISION_Update(GameContext_t* ctx)
 {
-	NES_ASSERT(ctx != NULL);
+	BOARD_ASSERT(ctx != NULL);
 
 	COLLISION_Calculate(&ctx->collision, ctx);
 
@@ -63,7 +63,7 @@ static void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx
 
 	const Rect_t* levelBounds = NULL;
 	int ret = LEVEL_GetLevelBoundaries(&levelBounds);
-	NES_ASSERT(ret == 0 && levelBounds != NULL);
+	BOARD_ASSERT(ret == 0 && levelBounds != NULL);
 
 	Rect_t playerRect;
 	playerRect.p1.x = ctx->player.currMapPos.x + ctx->player.asset.BBox.p1.x;

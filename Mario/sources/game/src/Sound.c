@@ -5,22 +5,16 @@
  *      Author: tomasz
  */
 
-#include <string.h>
-
-#include "NES_Defs.h"
-// #include "NES_Functions.h"
-// #include "printf_logger.h"
-
-#include "Level.h"
-
 #include "Sound.h"
 
-#include <stm32f446xx.h>
-// #include "stm32f4xx_ll_gpio.h"
-
-
-
+#include <string.h>
 #include <stdint.h>
+
+#include <stm32f446xx.h>
+
+#include "Common_Defs.h"
+#include "Level.h"
+
 
 #define SINE_LUT_SIZE 100
 

@@ -12,8 +12,8 @@
 #include "Game_Defs.h"
 #include "Game_Types.h"
 #include "Level.h"
-#include "NES_Assert.h"
-#include "NES_Defs.h"
+#include "BoardAssert.h"
+#include "PADControl.h"
 
 
 //----------------
@@ -36,7 +36,7 @@ static void PHYSICS_Player_CalcMovementDirection(PlayerState_t* player);
 //----------------
 void PHYSICS_Update(GameContext_t* ctx)
 {
-	NES_ASSERT(ctx != NULL);
+	BOARD_ASSERT(ctx != NULL);
 
 	for (int i = 0; i < ctx->activefgObjects; i++)
 	{
@@ -56,8 +56,8 @@ void PHYSICS_Update(GameContext_t* ctx)
 
 void PHYSICS_Player_Update(PlayerState_t* player, const GameContext_t* ctx)
 {
-	NES_ASSERT(player != NULL);
-	NES_ASSERT(ctx != NULL);
+	BOARD_ASSERT(player != NULL);
+	BOARD_ASSERT(ctx != NULL);
 
 	PHYSICS_Player_RestartFlags(player);
 
@@ -214,7 +214,7 @@ static void PHYSICS_FGObject_Velocity_CalcMapPos(ForegroundObject_t* obj)
 
 	const Rect_t* levelBounds = NULL;
 	int ret = LEVEL_GetLevelBoundaries(&levelBounds);
-	NES_ASSERT(ret == 0 && levelBounds != NULL);
+	BOARD_ASSERT(ret == 0 && levelBounds != NULL);
 
 	switch (obj->id)
 	{
@@ -343,7 +343,7 @@ static void PHYSICS_Player_CalcMapPos(PlayerState_t* player, const GameContext_t
 
 	const Rect_t* levelBounds = NULL;
 	int ret = LEVEL_GetLevelBoundaries(&levelBounds);
-	NES_ASSERT(ret == 0 && levelBounds != NULL);
+	BOARD_ASSERT(ret == 0 && levelBounds != NULL);
 
 	player->prevMapPos = player->currMapPos;
 

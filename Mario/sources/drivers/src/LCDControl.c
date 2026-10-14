@@ -9,7 +9,7 @@
 
 #include "LCDControl.h"
 #include "RenderEngine.h"
-#include "NES_Functions.h"
+#include "BoardFunctions.h"
 #include "TimeoutTracker.h"
 #include "printf_logger.h"
 

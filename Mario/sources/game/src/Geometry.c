@@ -10,8 +10,8 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#include "NES_Assert.h"
-#include "NES_Math.h"
+#include "BoardAssert.h"
+#include "Common_Math.h"
 
 
 //----------------
@@ -19,7 +19,7 @@
 //----------------
 int RECT_CalcArea(const Rect_t* rect)
 {
-	NES_ASSERT(rect != NULL);
+	BOARD_ASSERT(rect != NULL);
 
 	int a = abs(rect->p1.x - rect->p2.x);
 	int b = abs(rect->p1.y - rect->p2.y);
@@ -29,7 +29,7 @@ int RECT_CalcArea(const Rect_t* rect)
 
 int RECT_CalcArea2(const Rect_t* rect)
 {
-	NES_ASSERT(rect != NULL);
+	BOARD_ASSERT(rect != NULL);
 
 	int a = abs(rect->p1.x - rect->p2.x) + 1;
 	int b = abs(rect->p1.y - rect->p2.y) + 1;
@@ -39,7 +39,7 @@ int RECT_CalcArea2(const Rect_t* rect)
 
 int RECT_CalcXLen(const Rect_t* rect)
 {
-	NES_ASSERT(rect != NULL);
+	BOARD_ASSERT(rect != NULL);
 
 	int a = abs(rect->p1.x - rect->p2.x);
 	return a;
@@ -47,7 +47,7 @@ int RECT_CalcXLen(const Rect_t* rect)
 
 int RECT_CalcYLen(const Rect_t* rect)
 {
-	NES_ASSERT(rect != NULL);
+	BOARD_ASSERT(rect != NULL);
 
 	int b = abs(rect->p1.y - rect->p2.y);
 	return b;
@@ -55,7 +55,7 @@ int RECT_CalcYLen(const Rect_t* rect)
 
 void RECT_GetIntersection(const Rect_t* r1, const Rect_t* r2, Rect_t* result)
 {
-	NES_ASSERT(r1 != NULL && r2 != NULL && result != NULL);
+	BOARD_ASSERT(r1 != NULL && r2 != NULL && result != NULL);
 
 	result->p1.x = MATH_Max(r1->p1.x, r2->p1.x);
 	result->p1.y = MATH_Max(r1->p1.y, r2->p1.y);
@@ -65,7 +65,7 @@ void RECT_GetIntersection(const Rect_t* r1, const Rect_t* r2, Rect_t* result)
 
 bool RECT_IsIntersection(const Rect_t* commonRect)
 {
-	NES_ASSERT(commonRect != NULL);
+	BOARD_ASSERT(commonRect != NULL);
 
 	if (commonRect->p1.x <= commonRect->p2.x && commonRect->p1.y <= commonRect->p2.y) {
 		return true;

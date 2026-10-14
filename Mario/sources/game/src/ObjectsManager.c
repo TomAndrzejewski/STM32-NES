@@ -11,8 +11,8 @@
 
 #include "Game_Types.h"
 #include "GraphicsAssets.h"
-#include "NES_Functions.h"
-#include "NES_Assert.h"
+#include "BoardFunctions.h"
+#include "BoardAssert.h"
 #include "printf_logger.h"
 
 
@@ -36,8 +36,8 @@ static bool OBJECTS_MANAGER_IsThisBGID(const GameObjectID id);
 //----------------
 void OBJECTS_MANAGER_Update(GameContext_t* ctx)
 {
-	NES_ASSERT(ctx != NULL);
-	NES_ASSERT(ctx->objectsManager.objectPool != NULL);
+	BOARD_ASSERT(ctx != NULL);
+	BOARD_ASSERT(ctx->objectsManager.objectPool != NULL);
 
 	OBJECTS_MANAGER_CalcActiveRegion(&ctx->objectsManager, ctx);
 
@@ -49,8 +49,8 @@ void OBJECTS_MANAGER_Update(GameContext_t* ctx)
 // Returns 0 when the order was queued, -1 when the buffer was full and the order was dropped.
 int	OBJECTS_MANAGER_OrderSpawn(ObjectsManager_t* mgr, const ObjectLevelInstance_t* objectToSpawn)
 {
-	NES_ASSERT(mgr != NULL);
-	NES_ASSERT(objectToSpawn != NULL);
+	BOARD_ASSERT(mgr != NULL);
+	BOARD_ASSERT(objectToSpawn != NULL);
 
 	if (mgr->spawnBufferSize > OBJECTS_MANAGER_SPAWN_BUFFER_MAX_SIZE - 1) {
 		mgr->droppedSpawnOrders++;
@@ -225,7 +225,7 @@ static void OBJECTS_MANAGER_SpawnObject(GameContext_t* ctx, const ObjectLevelIns
 			}
 		}
 
-		NES_ASSERT(index >= 0); // no free slot: check if active counter matches active flags
+		BOARD_ASSERT(index >= 0); // no free slot: check if active counter matches active flags
 
 		// fill free slot with new object
 		ctx->IsFGObjectActive[index] = true;
@@ -255,7 +255,7 @@ static void OBJECTS_MANAGER_SpawnObject(GameContext_t* ctx, const ObjectLevelIns
 			}
 		}
 
-		NES_ASSERT(index >= 0); // no free slot: check if active counter matches active flags
+		BOARD_ASSERT(index >= 0); // no free slot: check if active counter matches active flags
 
 		// fill free slot with new object
 		ctx->enemies.IsEnemyActive[index] = true;
@@ -285,7 +285,7 @@ static void OBJECTS_MANAGER_SpawnObject(GameContext_t* ctx, const ObjectLevelIns
 			}
 		}
 
-		NES_ASSERT(index >= 0); // no free slot: check if active counter matches active flags
+		BOARD_ASSERT(index >= 0); // no free slot: check if active counter matches active flags
 
 		// fill free slot with new object
 		ctx->IsBGObjectActive[index] = true;
@@ -298,7 +298,7 @@ static void OBJECTS_MANAGER_SpawnObject(GameContext_t* ctx, const ObjectLevelIns
 	}
 	else
 	{
-		NES_ASSERT(false); // unknown object ID: check level definition
+		BOARD_ASSERT(false); // unknown object ID: check level definition
 	}
 }
 
@@ -392,7 +392,7 @@ static void OBJECTS_MANAGER_FGObject_Load(ForegroundObject_t* obj, const ObjectL
 		break;
 	}
 	default:
-		NES_ASSERT(false); // ID without an asset, add a case above
+		BOARD_ASSERT(false); // ID without an asset, add a case above
 		break;
 	}
 
@@ -435,7 +435,7 @@ static void OBJECTS_MANAGER_Enemy_Load(EnemyState_t* enemy, const ObjectLevelIns
 		break;
 	}
 	default:
-		NES_ASSERT(false); // ID without an asset, add a case above
+		BOARD_ASSERT(false); // ID without an asset, add a case above
 		break;
 	}
 
@@ -495,7 +495,7 @@ static void OBJECTS_MANAGER_BGObject_Load(BackgroundObject_t* obj, const ObjectL
 		break;
 	}
 	default:
-		NES_ASSERT(false); // ID without an asset, add a case above
+		BOARD_ASSERT(false); // ID without an asset, add a case above
 		break;
 	}
 }

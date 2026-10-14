@@ -11,8 +11,6 @@
 
 #include "printf_logger.h"
 
-#include "NES_Defs.h"
-
 
 void printf_init(void)
 {

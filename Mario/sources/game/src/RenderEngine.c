@@ -12,7 +12,8 @@
 
 #include "Geometry.h"
 #include "LCDControl.h"
-#include "NES_Assert.h"
+#include "BoardAssert.h"
+#include "Common_Defs.h"
 
 
 //----------------
@@ -149,7 +150,7 @@ void RE_FillBackgroud(uint16_t pixel, int numOfPixels)
 OPTIMIZE_FOR_DEBUG
 void RE_FillSprite(const Sprite_t* sprite, const SpriteRender_t* renderContext)
 {
-	NES_ASSERT(sprite != NULL && renderContext != NULL);
+	BOARD_ASSERT(sprite != NULL && renderContext != NULL);
 
 	Rect_t fbRect;
 	fbRect.p1.x = 0;
@@ -230,7 +231,7 @@ void RE_FillSprite(const Sprite_t* sprite, const SpriteRender_t* renderContext)
 
 void RE_RenderSprite(const Sprite_t* sprite, SpriteRender_t renderContext, bool fillBG)
 {
-	NES_ASSERT(sprite != NULL);
+	BOARD_ASSERT(sprite != NULL);
 
 	RE_ResetFB();
 

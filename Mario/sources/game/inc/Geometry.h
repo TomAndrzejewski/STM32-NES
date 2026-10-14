@@ -8,7 +8,17 @@
 #ifndef SOURCES_INC_GEOMETRY_H_
 #define SOURCES_INC_GEOMETRY_H_
 
-#include "NES_Types.h"
+#include <stdbool.h>
+
+typedef struct {
+	int x;
+	int y;
+} Point_t;
+
+typedef struct {
+	Point_t p1; //LEFT-DOWN
+	Point_t p2; //RIGHT-UP
+} Rect_t;
 
 int RECT_CalcArea(const Rect_t* rect);
 int RECT_CalcArea2(const Rect_t* rect);

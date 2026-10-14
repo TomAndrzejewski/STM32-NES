@@ -10,16 +10,18 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-// #include <string.h>
 
 #include <stm32f446xx.h>
-// #include "stm32f4xx_ll_gpio.h"
-// #include "stm32f4xx_ll_spi.h"
 
-// #include "NES_Defs.h"
-#include "NES_Types.h"
+#include "Geometry.h"
 
-// #include "printf_logger.h"
+
+
+#define LCD_HEIGHT		(240)
+#define LCD_WIDTH		(320)
+#define LCD_SIZE		(LCD_HEIGHT * LCD_WIDTH)
+
+#define LCD_TRANSPARENT_COLOR		(0xFFFF)
 
 
 #define DMA_SPI_TIMEOUT_MS	(10)
