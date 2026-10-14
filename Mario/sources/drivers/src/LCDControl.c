@@ -21,9 +21,9 @@ uint16_t const LCD_Colors[LCD_NUMOF_COLORS] = {
 		0xE007
 };
 
-static volatile bool dma_done = true;
-static volatile uint32_t dma_startTimestamp = 0;
-static volatile uint32_t dma_transferTime = 0;
+static volatile bool s_dmaDone = true;
+static volatile uint32_t s_dmaStartTimestamp = 0;
+static volatile uint32_t s_dmaTransferTime = 0;
 
 void DMA2_Stream3_IRQHandler(void)
 {
@@ -48,17 +48,17 @@ void DMA2_Stream3_IRQHandler(void)
 
     	LCD_CS_HIGH();
 
-        dma_done = true;
+        s_dmaDone = true;
 
-        dma_transferTime = CalcTimeUS(dma_startTimestamp);
-//        printf_uint(dma_transferTime); printf_c('\t');
+        s_dmaTransferTime = CalcTimeUS(s_dmaStartTimestamp);
+//        printf_uint(s_dmaTransferTime); printf_c('\t');
     }
 }
 
 void DMA2_SPI1_Send_NoBlock(uint8_t* buffer, uint16_t length)
 {
     TimeoutTracker_t timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
-	while (!dma_done) {
+	while (!s_dmaDone) {
 		if (timeout_has_expired(&timer)) {
 			break;
 		}
@@ -67,7 +67,7 @@ void DMA2_SPI1_Send_NoBlock(uint8_t* buffer, uint16_t length)
 		return;
 	}
 	
-	dma_done = false;
+	s_dmaDone = false;
     // 1. Sprawdź, czy poprzedni transfer DMA się zakończył
     // Jeśli DMA jeszcze wysyła, musimy poczekać (lub zabezpieczyć to wyżej w kodzie)
     timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
@@ -77,7 +77,7 @@ void DMA2_SPI1_Send_NoBlock(uint8_t* buffer, uint16_t length)
 		}
 	}
 
-    dma_startTimestamp = GetTimestamp();
+    s_dmaStartTimestamp = GetTimestamp();
 
     // 2. Wyczyszczenie flag zakończenia poprzedniego transferu dla Strumienia 3 (rejestr LIFCR)
     DMA2->LIFCR = DMA_LIFCR_CTCIF3 | DMA_LIFCR_CTEIF3;
@@ -110,7 +110,7 @@ void DMA2_SPI1_Send_NoBlock(uint8_t* buffer, uint16_t length)
 uint8_t SPI1_Write(uint8_t data)
 {
     TimeoutTracker_t timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
-	while (!dma_done) {
+	while (!s_dmaDone) {
 		if (timeout_has_expired(&timer)) {
 			break;
 		}
@@ -138,7 +138,7 @@ uint8_t SPI1_Write(uint8_t data)
 void SPI1_SendCmd_U8(uint8_t data)
 {
     TimeoutTracker_t timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
-	while (!dma_done) {
+	while (!s_dmaDone) {
 		if (timeout_has_expired(&timer)) {
 			break;
 		}
@@ -161,7 +161,7 @@ void SPI1_SendCmd_U8(uint8_t data)
 void SPI1_SendData_U8(uint8_t data)
 {
     TimeoutTracker_t timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
-	while (!dma_done) {
+	while (!s_dmaDone) {
 		if (timeout_has_expired(&timer)) {
 			break;
 		}
@@ -186,7 +186,7 @@ int SPI1_SendRead_U8(uint8_t data, uint8_t* output)
 	if (output == NULL)	{ return -1; }
 
     TimeoutTracker_t timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
-	while (!dma_done) {
+	while (!s_dmaDone) {
 		if (timeout_has_expired(&timer)) {
 			break;
 		}
@@ -220,7 +220,7 @@ int SPI1_SendRead_U24(uint8_t data, uint8_t* output2, uint8_t* output1, uint8_t*
 	if ((output2 == NULL) || (output1 == NULL) || (output0 == NULL))	{ return -1; }
 
     TimeoutTracker_t timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
-	while (!dma_done) {
+	while (!s_dmaDone) {
 		if (timeout_has_expired(&timer)) {
 			break;
 		}

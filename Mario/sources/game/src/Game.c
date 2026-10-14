@@ -38,7 +38,7 @@ static void GAME_CalcDirtyRect(const Point_t* prevPos, const Point_t* prevSize, 
 static bool ENEMIES_CalcIsOnScreen(const EnemyState_t* enemy, const Rect_t* screenRect);
 
 
-static GameContext_t gGameCtx = {0};
+static GameContext_t s_gameCtx = {0};
 
 
 //----------------
@@ -46,7 +46,7 @@ static GameContext_t gGameCtx = {0};
 //----------------
 void GAME_Init(void)
 {
-	GameContext_t* ctx = &gGameCtx;
+	GameContext_t* ctx = &s_gameCtx;
 	int ret = 0;
 
 	memset(ctx, 0, sizeof(GameContext_t));
@@ -226,7 +226,7 @@ void GAME_Init(void)
 
 void GAME_Update(void)
 {
-	GameContext_t* ctx = &gGameCtx;
+	GameContext_t* ctx = &s_gameCtx;
 
 	int timeStamps = 0;
 	uint32_t targetFrameTimeUS = 1000000/TARGET_FRAMERATE_HZ;

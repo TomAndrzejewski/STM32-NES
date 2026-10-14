@@ -26,13 +26,13 @@
 //----------------
 // PRIVATE VARIABLES
 //----------------
-static uint8_t _Framebuffer0[FRAMEBUFFER_SIZE];
-static uint8_t _Framebuffer1[FRAMEBUFFER_SIZE];
+static uint8_t s_framebuffer0[FRAMEBUFFER_SIZE];
+static uint8_t s_framebuffer1[FRAMEBUFFER_SIZE];
 
-static int _WritePos = 0;
+static int s_writePos = 0;
 
-static uint8_t* _FB = NULL;
-static uint8_t	_CurrFB = FB_0;
+static uint8_t* s_fb = NULL;
+static uint8_t	s_currFb = FB_0;
 
 
 //----------------
@@ -50,12 +50,12 @@ static uint8_t* RE_GetFB();
 //----------------
 void RE_Init()
 {
-	memset(_Framebuffer0, 0, sizeof(_Framebuffer0));
-	memset(_Framebuffer1, 0, sizeof(_Framebuffer1));
-	_WritePos = 0;
+	memset(s_framebuffer0, 0, sizeof(s_framebuffer0));
+	memset(s_framebuffer1, 0, sizeof(s_framebuffer1));
+	s_writePos = 0;
 
-	_CurrFB = FB_0;
-	_FB = _Framebuffer0;
+	s_currFb = FB_0;
+	s_fb = s_framebuffer0;
 }
 
 void RE_SendRect(Rect_t inputRect, int LCDOffsetX)
@@ -115,12 +115,12 @@ void RE_SendRect(Rect_t inputRect, int LCDOffsetX)
 
 void RE_OmmitPixel()
 {
-	if (_WritePos + BYTES_PER_PIXEL > FRAMEBUFFER_SIZE)
+	if (s_writePos + BYTES_PER_PIXEL > FRAMEBUFFER_SIZE)
 	{
 		return;
 	}
 
-	_WritePos += BYTES_PER_PIXEL;
+	s_writePos += BYTES_PER_PIXEL;
 }
 
 void RE_RenderFullBackgroud(uint16_t pixel)
@@ -278,19 +278,19 @@ static void RE_SendFB_withOffset(int pixelsToSend, int pixelsOffset, bool exchan
 		return;
 	}
 
-	DMA2_SPI1_Send_NoBlock(_FB + pixelsOffset*BYTES_PER_PIXEL, pixelsToSend*BYTES_PER_PIXEL);
+	DMA2_SPI1_Send_NoBlock(s_fb + pixelsOffset*BYTES_PER_PIXEL, pixelsToSend*BYTES_PER_PIXEL);
 
 	if (exchangeFramebuffers)
 	{
-		if (_CurrFB == FB_0)
+		if (s_currFb == FB_0)
 		{
-			_FB = _Framebuffer1;
-			_CurrFB = FB_1;
+			s_fb = s_framebuffer1;
+			s_currFb = FB_1;
 		}
 		else
 		{
-			_FB = _Framebuffer0;
-			_CurrFB = FB_0;
+			s_fb = s_framebuffer0;
+			s_currFb = FB_0;
 		}
 	}
 }
@@ -302,38 +302,38 @@ static void RE_SendFB(int pixelsToSend)
 		return;
 	}
 
-	DMA2_SPI1_Send_NoBlock(_FB, pixelsToSend*BYTES_PER_PIXEL);
+	DMA2_SPI1_Send_NoBlock(s_fb, pixelsToSend*BYTES_PER_PIXEL);
 
-	if (_CurrFB == FB_0)
+	if (s_currFb == FB_0)
 	{
-		_FB = _Framebuffer1;
-		_CurrFB = FB_1;
+		s_fb = s_framebuffer1;
+		s_currFb = FB_1;
 	}
 	else
 	{
-		_FB = _Framebuffer0;
-		_CurrFB = FB_0;
+		s_fb = s_framebuffer0;
+		s_currFb = FB_0;
 	}
 }
 
 OPTIMIZE_FOR_DEBUG
 static void RE_FillPixel(uint16_t pixel)
 {
-	if (_WritePos + BYTES_PER_PIXEL > FRAMEBUFFER_SIZE)
+	if (s_writePos + BYTES_PER_PIXEL > FRAMEBUFFER_SIZE)
 	{
 		return;
 	}
 
-	*(uint16_t*)(_FB + _WritePos) = pixel;
-	_WritePos += BYTES_PER_PIXEL;
+	*(uint16_t*)(s_fb + s_writePos) = pixel;
+	s_writePos += BYTES_PER_PIXEL;
 }
 
 static void RE_ResetFB()
 {
-	_WritePos = 0;
+	s_writePos = 0;
 }
 
 static uint8_t* RE_GetFB()
 {
-	return _FB;
+	return s_fb;
 }

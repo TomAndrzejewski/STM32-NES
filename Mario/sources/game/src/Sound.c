@@ -74,12 +74,12 @@ int16_t get_sine_p360(float phase)
 
 
 
-static int16_t _SoundBuffer[SOUND_BUFFER_SIZE];
-static int _SoundBufferHalf = SOUND_BUFFER_FIRST_HALF;
+static int16_t s_soundBuffer[SOUND_BUFFER_SIZE];
+static int s_soundBufferHalf = SOUND_BUFFER_FIRST_HALF;
 
-static SoundNote_t _CurrNote = {0};
+static SoundNote_t s_currNote = {0};
 
-static SquareWaveOscillator_t _SquareOsc = {0};
+static SquareWaveOscillator_t s_squareOsc = {0};
 
 
 static void SOUND_Irq(void);
@@ -101,14 +101,14 @@ void DMA1_Stream7_IRQHandler(void)
 
 int SOUND_Init(void)
 {
-	memset(&_SoundBuffer, 0, sizeof(_SoundBuffer));
+	memset(&s_soundBuffer, 0, sizeof(s_soundBuffer));
 	int ret = SOUND_SetFirstSoundNote();
 	return ret;
 }
 
 int16_t* SOUND_GetBufferPtr(void)
 {
-	return _SoundBuffer;
+	return s_soundBuffer;
 }
 
 // static volatile uint32_t dma_prevStartTimestamp = 0;
@@ -121,8 +121,8 @@ static void SOUND_Irq(void)
 	if (DMA1->HISR & DMA_HISR_TCIF7) {
 		DMA1->HIFCR = DMA_HIFCR_CTCIF7; // clear transfer complete flag
 
-		if (_SoundBufferHalf == SOUND_BUFFER_FIRST_HALF) {
-			_SoundBufferHalf = SOUND_BUFFER_SECOND_HALF;
+		if (s_soundBufferHalf == SOUND_BUFFER_FIRST_HALF) {
+			s_soundBufferHalf = SOUND_BUFFER_SECOND_HALF;
 //			printf_uint(ts);
 //			printf_c('\t');
 //			printf_uint(0);
@@ -131,8 +131,8 @@ static void SOUND_Irq(void)
 	} else if (DMA1->HISR & DMA_HISR_HTIF7) {
 		DMA1->HIFCR = DMA_HIFCR_CHTIF7; // clear half transfer complete flag
 
-		if (_SoundBufferHalf == SOUND_BUFFER_SECOND_HALF) {
-			_SoundBufferHalf = SOUND_BUFFER_FIRST_HALF;
+		if (s_soundBufferHalf == SOUND_BUFFER_SECOND_HALF) {
+			s_soundBufferHalf = SOUND_BUFFER_FIRST_HALF;
 //			printf_uint(ts);
 //			printf_c('\t');
 //			printf_uint(1);
@@ -140,18 +140,18 @@ static void SOUND_Irq(void)
 		}
 	}
 
-	SOUND_Update(_SoundBufferHalf);	
+	SOUND_Update(s_soundBufferHalf);	
 }
 
 static int SOUND_Update(int bufferHalf)
 {
 	if (bufferHalf == SOUND_BUFFER_FIRST_HALF)
 	{
-		SOUND_SynthSamples(_SoundBuffer, HALF_SOUND_BUFFER_SAMPLES);
+		SOUND_SynthSamples(s_soundBuffer, HALF_SOUND_BUFFER_SAMPLES);
 	}
 	else if (bufferHalf == SOUND_BUFFER_SECOND_HALF)
 	{
-		SOUND_SynthSamples(_SoundBuffer + HALF_SOUND_BUFFER_SIZE, HALF_SOUND_BUFFER_SAMPLES);
+		SOUND_SynthSamples(s_soundBuffer + HALF_SOUND_BUFFER_SIZE, HALF_SOUND_BUFFER_SAMPLES);
 	}
 
 	return 0;
@@ -163,7 +163,7 @@ static int SOUND_Update(int bufferHalf)
 
 static int SOUND_SetFirstSoundNote(void)
 {
-	int ret = SOUND_SetNextSoundNote(&_CurrNote);
+	int ret = SOUND_SetNextSoundNote(&s_currNote);
 	return ret;
 }
 
@@ -180,7 +180,7 @@ static int SOUND_SetNextSoundNote(SoundNote_t* noteToSet)
 	noteToSet->samplesToPlay = SOUND_SAMPLE_RATE_KHZ * asset->time_ms;
 
 	// Configure oscillator
-	SOUND_ConfigureOscillator(&_SquareOsc, SOUND_SQUARE_WAVE_AMPLITUDE, asset->freq, SOUND_SAMPLE_RATE_HZ);
+	SOUND_ConfigureOscillator(&s_squareOsc, SOUND_SQUARE_WAVE_AMPLITUDE, asset->freq, SOUND_SAMPLE_RATE_HZ);
 
 	return 0;
 }
@@ -193,15 +193,15 @@ static int SOUND_SynthSamples(int16_t samplesBuf[], int samplesToSynth)
 	for (int i = 0; i < samplesToSynth; i++)
 	{
 		// Trigger oscillator
-		int16_t sample = SOUND_GetSample(&_SquareOsc);
+		int16_t sample = SOUND_GetSample(&s_squareOsc);
 		samplesBuf[2 * i] = sample;
 		samplesBuf[2 * i + 1] = sample;
 
 		// Increase sample and check if note has finished
-		_CurrNote.sampleNumber++;
-		if (_CurrNote.sampleNumber >= _CurrNote.samplesToPlay)
+		s_currNote.sampleNumber++;
+		if (s_currNote.sampleNumber >= s_currNote.samplesToPlay)
 		{
-			SOUND_SetNextSoundNote(&_CurrNote);
+			SOUND_SetNextSoundNote(&s_currNote);
 		}
 	}
 

@@ -376,7 +376,7 @@ const NoteAsset_t SoundNotes[] = {
 
 #define SOUND_NOTES_SIZE 	(sizeof(SoundNotes) / sizeof(SoundNotes[0]))
 
-static int _CurrNoteAsset = {0};
+static int s_currNoteAsset = {0};
 
 
 
@@ -432,14 +432,14 @@ int LEVEL_GetNextSoundNote(const NoteAsset_t** note)
 {
 	if (note == NULL) return -1;
 
-	if (_CurrNoteAsset >= 0 && _CurrNoteAsset < (int)SOUND_NOTES_SIZE)
+	if (s_currNoteAsset >= 0 && s_currNoteAsset < (int)SOUND_NOTES_SIZE)
 	{
-		*note = &SoundNotes[_CurrNoteAsset];
+		*note = &SoundNotes[s_currNoteAsset];
 	}
 
-	_CurrNoteAsset++;
-	if (_CurrNoteAsset == SOUND_NOTES_SIZE) {
-		_CurrNoteAsset = 0;
+	s_currNoteAsset++;
+	if (s_currNoteAsset == SOUND_NOTES_SIZE) {
+		s_currNoteAsset = 0;
 	}
 
 	return 0;
