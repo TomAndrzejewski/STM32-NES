@@ -11,9 +11,9 @@
 
 #include "Game_Defs.h"
 #include "Game_Types.h"
+#include "Input.h"
 #include "Level.h"
 #include "BoardAssert.h"
-#include "PADControl.h"
 
 
 //----------------
@@ -271,14 +271,14 @@ static void PHYSICS_Player_Movement(PlayerState_t* player, const GameContext_t* 
 {
 	// Y axis: start a jump on a fresh button press, otherwise fall with gravity (weaker while the button is held on the way up)
 	if (player->IsGrounded) {
-		if ((ctx->input.prev_buttons_state & PAD_BUTTON_A) == 0 && (ctx->input.buttons_state & PAD_BUTTON_A)) {
+		if (INPUT_IsPressed(INPUT_ACTION_JUMP)) {
 			player->IsGrounded = false;
 			player->body.vy = 1.0f;
 		}
 	} else {
 		if (player->body.vy > -1.0f) {
 			float multiplier = 6.0f;
-			if (player->body.vy > 0.0f && (ctx->input.prev_buttons_state & PAD_BUTTON_A) && (ctx->input.buttons_state & PAD_BUTTON_A)) {
+			if (player->body.vy > 0.0f && INPUT_IsDown(INPUT_ACTION_JUMP)) {
 				multiplier = 2.0f;
 			}
 			float dvy = ctx->input.frameData.frameTimeS * multiplier;
@@ -287,7 +287,7 @@ static void PHYSICS_Player_Movement(PlayerState_t* player, const GameContext_t* 
 	}
 
 	// X axis: accelerate towards the pressed direction up to the maximum speed, or slow down to a stop when no direction is pressed
-	if (ctx->input.buttons_state & PAD_BUTTON_RIGHT) {
+	if (INPUT_IsDown(INPUT_ACTION_RUN_RIGHT)) {
 		if (player->body.vx < 1.0f) {
 			// Calculate new velocity
 			float dvx = ctx->input.frameData.frameTimeS * 3;
@@ -299,7 +299,7 @@ static void PHYSICS_Player_Movement(PlayerState_t* player, const GameContext_t* 
 			// Update deceleration flag
 			player->currPhysicsFlags.IsDecelerating = (player->body.vx < 0.0f)? true : false;
 		}
-	} else if (ctx->input.buttons_state & PAD_BUTTON_LEFT) {
+	} else if (INPUT_IsDown(INPUT_ACTION_RUN_LEFT)) {
 		if (player->body.vx > -1.0f) {
 			// Calculate new velocity
 			float dvx = ctx->input.frameData.frameTimeS * 3;

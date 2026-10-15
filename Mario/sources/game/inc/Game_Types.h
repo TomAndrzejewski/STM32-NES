@@ -443,11 +443,7 @@ typedef struct
 
 typedef struct
 {
-	uint32_t buttons_state;
-	uint32_t prev_buttons_state;
-
 	FrameData_t frameData;
-
 }InputState_t;
 
 typedef struct

@@ -175,7 +175,6 @@ void GAME_Init(void)
 	///////////////////
 	// INPUT
 	///////////////////
-	ctx->input.buttons_state = 0;
 	ctx->input.frameData.simulationTimeUS = 0;
 	ctx->input.frameData.frameTimeUS = 0;
 	ctx->input.frameData.frameTimeS = 0;
@@ -241,7 +240,7 @@ void GAME_Update(void)
 	}
 
 	s->startTime[timeStamps] = GetTimestamp();
-	INPUT_Update(&ctx->input, ctx, targetFrameTimeUS);
+	INPUT_Update(&ctx->input, targetFrameTimeUS);
 	s->finishTime[timeStamps] = GetTimestamp();
 	timeStamps++;
 

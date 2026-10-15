@@ -60,6 +60,7 @@ target_compile_options(${PROJECT_NAME}.elf PRIVATE
     -Wno-switch
     -Wdouble-promotion
     -Wfloat-conversion
+    -Werror=override-init
     #-Wshadow
 
     # Debug / Release

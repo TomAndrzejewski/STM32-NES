@@ -9,6 +9,8 @@
 #define SOURCES_INC_COMMON_DEFS_H_
 
 
+#define ARRAY_SIZE(x)   (sizeof((x))/sizeof((x)[0]))
+
 #ifndef NDEBUG
     #define OPTIMIZE_FOR_DEBUG __attribute__((optimize("Og")))
 #else
