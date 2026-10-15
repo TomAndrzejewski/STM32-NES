@@ -19,7 +19,7 @@ typedef enum {
     INPUT_ACTIONS_SIZE
 } InputActions_t;
 
-void    INPUT_Update(InputState_t* input, const uint32_t frameTimeUS);
+void    INPUT_Update(InputState_t* input, uint32_t frameTimeUS);
 
 bool    INPUT_IsPressed(InputActions_t action); // Rising edge
 bool    INPUT_IsDown(InputActions_t action); // Pressed now
