@@ -31,10 +31,6 @@ typedef struct
 } PadSnapshot_t;
 
 
-uint32_t GetButtonsState();
-
-void PrintButtons(uint32_t buttons_state);
-
 void PAD_Init(void);
 void PAD_TakeSnapshot(PadSnapshot_t* snapshot);
 
