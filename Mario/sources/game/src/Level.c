@@ -325,421 +325,430 @@ const RepObjectLevelPos_t BGRepObjectsLevelPosition[] = {
 	    { .id = BG_REP_FLOOR_ID,		.x = 0,	.y = 0,	.mulX = LCD_WIDTH/16,	.mulY = 2 },
 };
 
+// Length of one melody slot (eighth note) and of the silence that follows every tone
+#define MUSIC_SLOT_MS		(150)
+#define MUSIC_GAP_MS		(25)
+
+// Note lengths in milliseconds: a tone plus its gap fills whole slots, three triplet tones
+// fill 4 slots, a rest absorbs the gap of the preceding tone
+#define NOTE_MS(slots)		((slots) * MUSIC_SLOT_MS - MUSIC_GAP_MS)
+#define TRIPLET_MS			((4 * MUSIC_SLOT_MS) / 3 - MUSIC_GAP_MS)
+#define REST_MS(slots)		((slots) * MUSIC_SLOT_MS + MUSIC_GAP_MS)
+#define NOTE_GAP_MS			(MUSIC_GAP_MS)
+
 const NoteAsset_t SoundNotes[] = {
-		// Durations are based on a 125 ms slot; every tone is followed by 25 ms of silence,
-		// so repeated notes stay separated. Triplets share 4 slots between 3 notes
 
 		// Intro
-		{  659, 100 }, // E5
-		{    0,  25 },
-		{  659, 225 }, // E5
-		{    0,  25 },
-		{  659, 225 }, // E5
-		{    0,  25 },
-		{  523, 100 }, // C5
-		{    0,  25 },
-		{  659, 225 }, // E5
-		{    0,  25 },
-		{  784, 475 }, // G5
-		{    0,  25 },
-		{  392, 475 }, // G4
-		{    0,  25 },
+		{  659, NOTE_MS(1) },        // E5
+		{    0, NOTE_GAP_MS },
+		{  659, NOTE_MS(2) },        // E5
+		{    0, NOTE_GAP_MS },
+		{  659, NOTE_MS(2) },        // E5
+		{    0, NOTE_GAP_MS },
+		{  523, NOTE_MS(1) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  659, NOTE_MS(2) },        // E5
+		{    0, NOTE_GAP_MS },
+		{  784, NOTE_MS(4) },        // G5
+		{    0, NOTE_GAP_MS },
+		{  392, NOTE_MS(4) },        // G4
+		{    0, NOTE_GAP_MS },
 
 		// Theme A, first time
-		{  523, 350 }, // C5
-		{    0,  25 },
-		{  392, 350 }, // G4
-		{    0,  25 },
-		{  330, 350 }, // E4
-		{    0,  25 },
-		{  440, 225 }, // A4
-		{    0,  25 },
-		{  494, 225 }, // B4
-		{    0,  25 },
-		{  466, 100 }, // Bb4
-		{    0,  25 },
-		{  440, 225 }, // A4
-		{    0,  25 },
-		{  392, 142 }, // G4
-		{    0,  25 },
-		{  659, 141 }, // E5
-		{    0,  25 },
-		{  784, 142 }, // G5
-		{    0,  25 },
-		{  880, 225 }, // A5
-		{    0,  25 },
-		{  698, 100 }, // F5
-		{    0,  25 },
-		{  784, 225 }, // G5
-		{    0,  25 },
-		{  659, 225 }, // E5
-		{    0,  25 },
-		{  523, 100 }, // C5
-		{    0,  25 },
-		{  587, 100 }, // D5
-		{    0,  25 },
-		{  494, 350 }, // B4
-		{    0,  25 },
+		{  523, NOTE_MS(3) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  392, NOTE_MS(3) },        // G4
+		{    0, NOTE_GAP_MS },
+		{  330, NOTE_MS(3) },        // E4
+		{    0, NOTE_GAP_MS },
+		{  440, NOTE_MS(2) },        // A4
+		{    0, NOTE_GAP_MS },
+		{  494, NOTE_MS(2) },        // B4
+		{    0, NOTE_GAP_MS },
+		{  466, NOTE_MS(1) },        // Bb4
+		{    0, NOTE_GAP_MS },
+		{  440, NOTE_MS(2) },        // A4
+		{    0, NOTE_GAP_MS },
+		{  392, TRIPLET_MS },        // G4
+		{    0, NOTE_GAP_MS },
+		{  659, TRIPLET_MS },        // E5
+		{    0, NOTE_GAP_MS },
+		{  784, TRIPLET_MS },        // G5
+		{    0, NOTE_GAP_MS },
+		{  880, NOTE_MS(2) },        // A5
+		{    0, NOTE_GAP_MS },
+		{  698, NOTE_MS(1) },        // F5
+		{    0, NOTE_GAP_MS },
+		{  784, NOTE_MS(2) },        // G5
+		{    0, NOTE_GAP_MS },
+		{  659, NOTE_MS(2) },        // E5
+		{    0, NOTE_GAP_MS },
+		{  523, NOTE_MS(1) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  587, NOTE_MS(1) },        // D5
+		{    0, NOTE_GAP_MS },
+		{  494, NOTE_MS(3) },        // B4
+		{    0, NOTE_GAP_MS },
 
 		// Theme A, second time
-		{  523, 350 }, // C5
-		{    0,  25 },
-		{  392, 350 }, // G4
-		{    0,  25 },
-		{  330, 350 }, // E4
-		{    0,  25 },
-		{  440, 225 }, // A4
-		{    0,  25 },
-		{  494, 225 }, // B4
-		{    0,  25 },
-		{  466, 100 }, // Bb4
-		{    0,  25 },
-		{  440, 225 }, // A4
-		{    0,  25 },
-		{  392, 142 }, // G4
-		{    0,  25 },
-		{  659, 141 }, // E5
-		{    0,  25 },
-		{  784, 142 }, // G5
-		{    0,  25 },
-		{  880, 225 }, // A5
-		{    0,  25 },
-		{  698, 100 }, // F5
-		{    0,  25 },
-		{  784, 225 }, // G5
-		{    0,  25 },
-		{  659, 225 }, // E5
-		{    0,  25 },
-		{  523, 100 }, // C5
-		{    0,  25 },
-		{  587, 100 }, // D5
-		{    0,  25 },
-		{  494, 350 }, // B4
-		{    0, 275 }, //      [rest]
+		{  523, NOTE_MS(3) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  392, NOTE_MS(3) },        // G4
+		{    0, NOTE_GAP_MS },
+		{  330, NOTE_MS(3) },        // E4
+		{    0, NOTE_GAP_MS },
+		{  440, NOTE_MS(2) },        // A4
+		{    0, NOTE_GAP_MS },
+		{  494, NOTE_MS(2) },        // B4
+		{    0, NOTE_GAP_MS },
+		{  466, NOTE_MS(1) },        // Bb4
+		{    0, NOTE_GAP_MS },
+		{  440, NOTE_MS(2) },        // A4
+		{    0, NOTE_GAP_MS },
+		{  392, TRIPLET_MS },        // G4
+		{    0, NOTE_GAP_MS },
+		{  659, TRIPLET_MS },        // E5
+		{    0, NOTE_GAP_MS },
+		{  784, TRIPLET_MS },        // G5
+		{    0, NOTE_GAP_MS },
+		{  880, NOTE_MS(2) },        // A5
+		{    0, NOTE_GAP_MS },
+		{  698, NOTE_MS(1) },        // F5
+		{    0, NOTE_GAP_MS },
+		{  784, NOTE_MS(2) },        // G5
+		{    0, NOTE_GAP_MS },
+		{  659, NOTE_MS(2) },        // E5
+		{    0, NOTE_GAP_MS },
+		{  523, NOTE_MS(1) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  587, NOTE_MS(1) },        // D5
+		{    0, NOTE_GAP_MS },
+		{  494, NOTE_MS(3) },        // B4
+		{    0, REST_MS(2) },        //      [rest]
 
 		// Theme B, line 1
-		{  784, 100 }, // G5
-		{    0,  25 },
-		{  740, 100 }, // F#5
-		{    0,  25 },
-		{  698, 100 }, // F5
-		{    0,  25 },
-		{  587, 225 }, // D5
-		{    0,  25 },
-		{  659, 225 }, // E5
-		{    0,  25 },
-		{  392, 100 }, // G4
-		{    0,  25 },
-		{  440, 100 }, // A4
-		{    0,  25 },
-		{  523, 225 }, // C5
-		{    0,  25 },
-		{  440, 100 }, // A4
-		{    0,  25 },
-		{  523, 100 }, // C5
-		{    0,  25 },
-		{  587, 100 }, // D5
-		{    0, 275 }, //      [rest]
+		{  784, NOTE_MS(1) },        // G5
+		{    0, NOTE_GAP_MS },
+		{  740, NOTE_MS(1) },        // F#5
+		{    0, NOTE_GAP_MS },
+		{  698, NOTE_MS(1) },        // F5
+		{    0, NOTE_GAP_MS },
+		{  587, NOTE_MS(2) },        // D5
+		{    0, NOTE_GAP_MS },
+		{  659, NOTE_MS(2) },        // E5
+		{    0, NOTE_GAP_MS },
+		{  392, NOTE_MS(1) },        // G4
+		{    0, NOTE_GAP_MS },
+		{  440, NOTE_MS(1) },        // A4
+		{    0, NOTE_GAP_MS },
+		{  523, NOTE_MS(2) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  440, NOTE_MS(1) },        // A4
+		{    0, NOTE_GAP_MS },
+		{  523, NOTE_MS(1) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  587, NOTE_MS(1) },        // D5
+		{    0, REST_MS(2) },        //      [rest]
 
 		// Theme B, line 2
-		{  784, 100 }, // G5
-		{    0,  25 },
-		{  740, 100 }, // F#5
-		{    0,  25 },
-		{  698, 100 }, // F5
-		{    0,  25 },
-		{  587, 225 }, // D5
-		{    0,  25 },
-		{  659, 225 }, // E5
-		{    0,  25 },
-		{ 1047, 225 }, // C6
-		{    0,  25 },
-		{ 1047, 100 }, // C6
-		{    0,  25 },
-		{ 1047, 475 }, // C6
-		{    0, 275 }, //      [rest]
+		{  784, NOTE_MS(1) },        // G5
+		{    0, NOTE_GAP_MS },
+		{  740, NOTE_MS(1) },        // F#5
+		{    0, NOTE_GAP_MS },
+		{  698, NOTE_MS(1) },        // F5
+		{    0, NOTE_GAP_MS },
+		{  587, NOTE_MS(2) },        // D5
+		{    0, NOTE_GAP_MS },
+		{  659, NOTE_MS(2) },        // E5
+		{    0, NOTE_GAP_MS },
+		{ 1047, NOTE_MS(2) },        // C6
+		{    0, NOTE_GAP_MS },
+		{ 1047, NOTE_MS(1) },        // C6
+		{    0, NOTE_GAP_MS },
+		{ 1047, NOTE_MS(4) },        // C6
+		{    0, REST_MS(2) },        //      [rest]
 
 		// Theme B, line 3
-		{  784, 100 }, // G5
-		{    0,  25 },
-		{  740, 100 }, // F#5
-		{    0,  25 },
-		{  698, 100 }, // F5
-		{    0,  25 },
-		{  587, 225 }, // D5
-		{    0,  25 },
-		{  659, 225 }, // E5
-		{    0,  25 },
-		{  392, 100 }, // G4
-		{    0,  25 },
-		{  440, 100 }, // A4
-		{    0,  25 },
-		{  523, 225 }, // C5
-		{    0,  25 },
-		{  440, 100 }, // A4
-		{    0,  25 },
-		{  523, 100 }, // C5
-		{    0,  25 },
-		{  587, 100 }, // D5
-		{    0, 275 }, //      [rest]
+		{  784, NOTE_MS(1) },        // G5
+		{    0, NOTE_GAP_MS },
+		{  740, NOTE_MS(1) },        // F#5
+		{    0, NOTE_GAP_MS },
+		{  698, NOTE_MS(1) },        // F5
+		{    0, NOTE_GAP_MS },
+		{  587, NOTE_MS(2) },        // D5
+		{    0, NOTE_GAP_MS },
+		{  659, NOTE_MS(2) },        // E5
+		{    0, NOTE_GAP_MS },
+		{  392, NOTE_MS(1) },        // G4
+		{    0, NOTE_GAP_MS },
+		{  440, NOTE_MS(1) },        // A4
+		{    0, NOTE_GAP_MS },
+		{  523, NOTE_MS(2) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  440, NOTE_MS(1) },        // A4
+		{    0, NOTE_GAP_MS },
+		{  523, NOTE_MS(1) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  587, NOTE_MS(1) },        // D5
+		{    0, REST_MS(2) },        //      [rest]
 
 		// Theme B, line 4
-		{  622, 350 }, // D#5
-		{    0,  25 },
-		{  587, 350 }, // D5
-		{    0,  25 },
-		{  523, 975 }, // C5
-		{    0,  25 },
+		{  622, NOTE_MS(3) },        // D#5
+		{    0, NOTE_GAP_MS },
+		{  587, NOTE_MS(3) },        // D5
+		{    0, NOTE_GAP_MS },
+		{  523, NOTE_MS(8) },        // C5
+		{    0, NOTE_GAP_MS },
 
 		// Theme C, line 1
-		{  523, 100 }, // C5
-		{    0,  25 },
-		{  523, 225 }, // C5
-		{    0,  25 },
-		{  523, 225 }, // C5
-		{    0,  25 },
-		{  523, 100 }, // C5
-		{    0,  25 },
-		{  587, 225 }, // D5
-		{    0,  25 },
-		{  659, 100 }, // E5
-		{    0,  25 },
-		{  523, 225 }, // C5
-		{    0,  25 },
-		{  440, 100 }, // A4
-		{    0,  25 },
-		{  392, 475 }, // G4
-		{    0,  25 },
+		{  523, NOTE_MS(1) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  523, NOTE_MS(2) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  523, NOTE_MS(2) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  523, NOTE_MS(1) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  587, NOTE_MS(2) },        // D5
+		{    0, NOTE_GAP_MS },
+		{  659, NOTE_MS(1) },        // E5
+		{    0, NOTE_GAP_MS },
+		{  523, NOTE_MS(2) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  440, NOTE_MS(1) },        // A4
+		{    0, NOTE_GAP_MS },
+		{  392, NOTE_MS(4) },        // G4
+		{    0, NOTE_GAP_MS },
 
 		// Theme C, line 2
-		{  523, 100 }, // C5
-		{    0,  25 },
-		{  523, 225 }, // C5
-		{    0,  25 },
-		{  523, 225 }, // C5
-		{    0,  25 },
-		{  523, 100 }, // C5
-		{    0,  25 },
-		{  587, 100 }, // D5
-		{    0,  25 },
-		{  659, 1100 }, // E5
-		{    0,  25 },
+		{  523, NOTE_MS(1) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  523, NOTE_MS(2) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  523, NOTE_MS(2) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  523, NOTE_MS(1) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  587, NOTE_MS(1) },        // D5
+		{    0, NOTE_GAP_MS },
+		{  659, NOTE_MS(9) },        // E5
+		{    0, NOTE_GAP_MS },
 
 		// Theme C, line 3
-		{  523, 100 }, // C5
-		{    0,  25 },
-		{  523, 225 }, // C5
-		{    0,  25 },
-		{  523, 225 }, // C5
-		{    0,  25 },
-		{  523, 100 }, // C5
-		{    0,  25 },
-		{  587, 225 }, // D5
-		{    0,  25 },
-		{  659, 100 }, // E5
-		{    0,  25 },
-		{  523, 225 }, // C5
-		{    0,  25 },
-		{  440, 100 }, // A4
-		{    0,  25 },
-		{  392, 475 }, // G4
-		{    0,  25 },
+		{  523, NOTE_MS(1) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  523, NOTE_MS(2) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  523, NOTE_MS(2) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  523, NOTE_MS(1) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  587, NOTE_MS(2) },        // D5
+		{    0, NOTE_GAP_MS },
+		{  659, NOTE_MS(1) },        // E5
+		{    0, NOTE_GAP_MS },
+		{  523, NOTE_MS(2) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  440, NOTE_MS(1) },        // A4
+		{    0, NOTE_GAP_MS },
+		{  392, NOTE_MS(4) },        // G4
+		{    0, NOTE_GAP_MS },
 
 		// Theme C, line 4
-		{  659, 100 }, // E5
-		{    0,  25 },
-		{  659, 225 }, // E5
-		{    0,  25 },
-		{  659, 225 }, // E5
-		{    0,  25 },
-		{  523, 100 }, // C5
-		{    0,  25 },
-		{  659, 225 }, // E5
-		{    0,  25 },
-		{  784, 475 }, // G5
-		{    0,  25 },
-		{  392, 475 }, // G4
-		{    0,  25 },
+		{  659, NOTE_MS(1) },        // E5
+		{    0, NOTE_GAP_MS },
+		{  659, NOTE_MS(2) },        // E5
+		{    0, NOTE_GAP_MS },
+		{  659, NOTE_MS(2) },        // E5
+		{    0, NOTE_GAP_MS },
+		{  523, NOTE_MS(1) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  659, NOTE_MS(2) },        // E5
+		{    0, NOTE_GAP_MS },
+		{  784, NOTE_MS(4) },        // G5
+		{    0, NOTE_GAP_MS },
+		{  392, NOTE_MS(4) },        // G4
+		{    0, NOTE_GAP_MS },
 
 		// Theme A, first time
-		{  523, 350 }, // C5
-		{    0,  25 },
-		{  392, 350 }, // G4
-		{    0,  25 },
-		{  330, 350 }, // E4
-		{    0,  25 },
-		{  440, 225 }, // A4
-		{    0,  25 },
-		{  494, 225 }, // B4
-		{    0,  25 },
-		{  466, 100 }, // Bb4
-		{    0,  25 },
-		{  440, 225 }, // A4
-		{    0,  25 },
-		{  392, 142 }, // G4
-		{    0,  25 },
-		{  659, 141 }, // E5
-		{    0,  25 },
-		{  784, 142 }, // G5
-		{    0,  25 },
-		{  880, 225 }, // A5
-		{    0,  25 },
-		{  698, 100 }, // F5
-		{    0,  25 },
-		{  784, 225 }, // G5
-		{    0,  25 },
-		{  659, 225 }, // E5
-		{    0,  25 },
-		{  523, 100 }, // C5
-		{    0,  25 },
-		{  587, 100 }, // D5
-		{    0,  25 },
-		{  494, 350 }, // B4
-		{    0,  25 },
+		{  523, NOTE_MS(3) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  392, NOTE_MS(3) },        // G4
+		{    0, NOTE_GAP_MS },
+		{  330, NOTE_MS(3) },        // E4
+		{    0, NOTE_GAP_MS },
+		{  440, NOTE_MS(2) },        // A4
+		{    0, NOTE_GAP_MS },
+		{  494, NOTE_MS(2) },        // B4
+		{    0, NOTE_GAP_MS },
+		{  466, NOTE_MS(1) },        // Bb4
+		{    0, NOTE_GAP_MS },
+		{  440, NOTE_MS(2) },        // A4
+		{    0, NOTE_GAP_MS },
+		{  392, TRIPLET_MS },        // G4
+		{    0, NOTE_GAP_MS },
+		{  659, TRIPLET_MS },        // E5
+		{    0, NOTE_GAP_MS },
+		{  784, TRIPLET_MS },        // G5
+		{    0, NOTE_GAP_MS },
+		{  880, NOTE_MS(2) },        // A5
+		{    0, NOTE_GAP_MS },
+		{  698, NOTE_MS(1) },        // F5
+		{    0, NOTE_GAP_MS },
+		{  784, NOTE_MS(2) },        // G5
+		{    0, NOTE_GAP_MS },
+		{  659, NOTE_MS(2) },        // E5
+		{    0, NOTE_GAP_MS },
+		{  523, NOTE_MS(1) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  587, NOTE_MS(1) },        // D5
+		{    0, NOTE_GAP_MS },
+		{  494, NOTE_MS(3) },        // B4
+		{    0, NOTE_GAP_MS },
 
 		// Theme A, second time
-		{  523, 350 }, // C5
-		{    0,  25 },
-		{  392, 350 }, // G4
-		{    0,  25 },
-		{  330, 350 }, // E4
-		{    0,  25 },
-		{  440, 225 }, // A4
-		{    0,  25 },
-		{  494, 225 }, // B4
-		{    0,  25 },
-		{  466, 100 }, // Bb4
-		{    0,  25 },
-		{  440, 225 }, // A4
-		{    0,  25 },
-		{  392, 142 }, // G4
-		{    0,  25 },
-		{  659, 141 }, // E5
-		{    0,  25 },
-		{  784, 142 }, // G5
-		{    0,  25 },
-		{  880, 225 }, // A5
-		{    0,  25 },
-		{  698, 100 }, // F5
-		{    0,  25 },
-		{  784, 225 }, // G5
-		{    0,  25 },
-		{  659, 225 }, // E5
-		{    0,  25 },
-		{  523, 100 }, // C5
-		{    0,  25 },
-		{  587, 100 }, // D5
-		{    0,  25 },
-		{  494, 350 }, // B4
-		{    0,  25 },
+		{  523, NOTE_MS(3) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  392, NOTE_MS(3) },        // G4
+		{    0, NOTE_GAP_MS },
+		{  330, NOTE_MS(3) },        // E4
+		{    0, NOTE_GAP_MS },
+		{  440, NOTE_MS(2) },        // A4
+		{    0, NOTE_GAP_MS },
+		{  494, NOTE_MS(2) },        // B4
+		{    0, NOTE_GAP_MS },
+		{  466, NOTE_MS(1) },        // Bb4
+		{    0, NOTE_GAP_MS },
+		{  440, NOTE_MS(2) },        // A4
+		{    0, NOTE_GAP_MS },
+		{  392, TRIPLET_MS },        // G4
+		{    0, NOTE_GAP_MS },
+		{  659, TRIPLET_MS },        // E5
+		{    0, NOTE_GAP_MS },
+		{  784, TRIPLET_MS },        // G5
+		{    0, NOTE_GAP_MS },
+		{  880, NOTE_MS(2) },        // A5
+		{    0, NOTE_GAP_MS },
+		{  698, NOTE_MS(1) },        // F5
+		{    0, NOTE_GAP_MS },
+		{  784, NOTE_MS(2) },        // G5
+		{    0, NOTE_GAP_MS },
+		{  659, NOTE_MS(2) },        // E5
+		{    0, NOTE_GAP_MS },
+		{  523, NOTE_MS(1) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  587, NOTE_MS(1) },        // D5
+		{    0, NOTE_GAP_MS },
+		{  494, NOTE_MS(3) },        // B4
+		{    0, NOTE_GAP_MS },
 
 		// Theme D, line 1
-		{  659, 100 }, // E5
-		{    0,  25 },
-		{  523, 225 }, // C5
-		{    0,  25 },
-		{  392, 350 }, // G4
-		{    0,  25 },
-		{  392, 225 }, // G4
-		{    0,  25 },
-		{  440, 100 }, // A4
-		{    0,  25 },
-		{  698, 225 }, // F5
-		{    0,  25 },
-		{  698, 100 }, // F5
-		{    0,  25 },
-		{  440, 475 }, // A4
-		{    0,  25 },
+		{  659, NOTE_MS(1) },        // E5
+		{    0, NOTE_GAP_MS },
+		{  523, NOTE_MS(2) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  392, NOTE_MS(3) },        // G4
+		{    0, NOTE_GAP_MS },
+		{  392, NOTE_MS(2) },        // G4
+		{    0, NOTE_GAP_MS },
+		{  440, NOTE_MS(1) },        // A4
+		{    0, NOTE_GAP_MS },
+		{  698, NOTE_MS(2) },        // F5
+		{    0, NOTE_GAP_MS },
+		{  698, NOTE_MS(1) },        // F5
+		{    0, NOTE_GAP_MS },
+		{  440, NOTE_MS(4) },        // A4
+		{    0, NOTE_GAP_MS },
 
 		// Theme D, line 2
-		{  494, 142 }, // B4
-		{    0,  25 },
-		{  880, 141 }, // A5
-		{    0,  25 },
-		{  880, 142 }, // A5
-		{    0,  25 },
-		{  880, 142 }, // A5
-		{    0,  25 },
-		{  784, 141 }, // G5
-		{    0,  25 },
-		{  698, 142 }, // F5
-		{    0,  25 },
-		{  659, 100 }, // E5
-		{    0,  25 },
-		{  523, 225 }, // C5
-		{    0,  25 },
-		{  440, 100 }, // A4
-		{    0,  25 },
-		{  392, 475 }, // G4
-		{    0,  25 },
+		{  494, TRIPLET_MS },        // B4
+		{    0, NOTE_GAP_MS },
+		{  880, TRIPLET_MS },        // A5
+		{    0, NOTE_GAP_MS },
+		{  880, TRIPLET_MS },        // A5
+		{    0, NOTE_GAP_MS },
+		{  880, TRIPLET_MS },        // A5
+		{    0, NOTE_GAP_MS },
+		{  784, TRIPLET_MS },        // G5
+		{    0, NOTE_GAP_MS },
+		{  698, TRIPLET_MS },        // F5
+		{    0, NOTE_GAP_MS },
+		{  659, NOTE_MS(1) },        // E5
+		{    0, NOTE_GAP_MS },
+		{  523, NOTE_MS(2) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  440, NOTE_MS(1) },        // A4
+		{    0, NOTE_GAP_MS },
+		{  392, NOTE_MS(4) },        // G4
+		{    0, NOTE_GAP_MS },
 
 		// Theme D, line 3
-		{  659, 100 }, // E5
-		{    0,  25 },
-		{  523, 225 }, // C5
-		{    0,  25 },
-		{  392, 350 }, // G4
-		{    0,  25 },
-		{  392, 225 }, // G4
-		{    0,  25 },
-		{  440, 100 }, // A4
-		{    0,  25 },
-		{  698, 225 }, // F5
-		{    0,  25 },
-		{  698, 100 }, // F5
-		{    0,  25 },
-		{  440, 475 }, // A4
-		{    0,  25 },
+		{  659, NOTE_MS(1) },        // E5
+		{    0, NOTE_GAP_MS },
+		{  523, NOTE_MS(2) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  392, NOTE_MS(3) },        // G4
+		{    0, NOTE_GAP_MS },
+		{  392, NOTE_MS(2) },        // G4
+		{    0, NOTE_GAP_MS },
+		{  440, NOTE_MS(1) },        // A4
+		{    0, NOTE_GAP_MS },
+		{  698, NOTE_MS(2) },        // F5
+		{    0, NOTE_GAP_MS },
+		{  698, NOTE_MS(1) },        // F5
+		{    0, NOTE_GAP_MS },
+		{  440, NOTE_MS(4) },        // A4
+		{    0, NOTE_GAP_MS },
 
 		// Theme D, line 4
-		{  494, 100 }, // B4
-		{    0,  25 },
-		{  698, 225 }, // F5
-		{    0,  25 },
-		{  698, 100 }, // F5
-		{    0,  25 },
-		{  698, 142 }, // F5
-		{    0,  25 },
-		{  659, 141 }, // E5
-		{    0,  25 },
-		{  587, 142 }, // D5
-		{    0,  25 },
-		{  523, 100 }, // C5
-		{    0,  25 },
-		{  392, 225 }, // G4
-		{    0,  25 },
-		{  330, 100 }, // E4
-		{    0,  25 },
-		{  262, 475 }, // C4
-		{    0,  25 },
+		{  494, NOTE_MS(1) },        // B4
+		{    0, NOTE_GAP_MS },
+		{  698, NOTE_MS(2) },        // F5
+		{    0, NOTE_GAP_MS },
+		{  698, NOTE_MS(1) },        // F5
+		{    0, NOTE_GAP_MS },
+		{  698, TRIPLET_MS },        // F5
+		{    0, NOTE_GAP_MS },
+		{  659, TRIPLET_MS },        // E5
+		{    0, NOTE_GAP_MS },
+		{  587, TRIPLET_MS },        // D5
+		{    0, NOTE_GAP_MS },
+		{  523, NOTE_MS(1) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  392, NOTE_MS(2) },        // G4
+		{    0, NOTE_GAP_MS },
+		{  330, NOTE_MS(1) },        // E4
+		{    0, NOTE_GAP_MS },
+		{  262, NOTE_MS(4) },        // C4
+		{    0, NOTE_GAP_MS },
 
 		// Ending, line 1
-		{  523, 350 }, // C5
-		{    0,  25 },
-		{  392, 350 }, // G4
-		{    0,  25 },
-		{  330, 225 }, // E4
-		{    0,  25 },
-		{  440, 142 }, // A4
-		{    0,  25 },
-		{  494, 141 }, // B4
-		{    0,  25 },
-		{  440, 142 }, // A4
-		{    0,  25 },
-		{  415, 142 }, // G#4
-		{    0,  25 },
-		{  466, 141 }, // Bb4
-		{    0,  25 },
-		{  415, 142 }, // G#4
-		{    0,  25 },
+		{  523, NOTE_MS(3) },        // C5
+		{    0, NOTE_GAP_MS },
+		{  392, NOTE_MS(3) },        // G4
+		{    0, NOTE_GAP_MS },
+		{  330, NOTE_MS(2) },        // E4
+		{    0, NOTE_GAP_MS },
+		{  440, TRIPLET_MS },        // A4
+		{    0, NOTE_GAP_MS },
+		{  494, TRIPLET_MS },        // B4
+		{    0, NOTE_GAP_MS },
+		{  440, TRIPLET_MS },        // A4
+		{    0, NOTE_GAP_MS },
+		{  415, TRIPLET_MS },        // G#4
+		{    0, NOTE_GAP_MS },
+		{  466, TRIPLET_MS },        // Bb4
+		{    0, NOTE_GAP_MS },
+		{  415, TRIPLET_MS },        // G#4
+		{    0, NOTE_GAP_MS },
 
 		// Ending, line 2
-		{  392, 100 }, // G4
-		{    0,  25 },
-		{  370, 100 }, // F#4
-		{    0,  25 },
-		{  392, 725 }, // G4
-		{    0, 1025 }  //      [rest]
+		{  392, NOTE_MS(1) },        // G4
+		{    0, NOTE_GAP_MS },
+		{  370, NOTE_MS(1) },        // F#4
+		{    0, NOTE_GAP_MS },
+		{  392, NOTE_MS(6) },        // G4
+		{    0, REST_MS(8) }         //      [rest]
 };
 
 #define SOUND_NOTES_SIZE 	(sizeof(SoundNotes) / sizeof(SoundNotes[0]))
