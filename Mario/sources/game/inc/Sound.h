@@ -24,7 +24,10 @@
 #define SOUND_SAMPLE_RATE_HZ			(16000)
 #define SOUND_SAMPLE_RATE_KHZ			(16)
 
-#define SOUND_SQUARE_WAVE_AMPLITUDE		(8000)
+#define SOUND_SQUARE_WAVE_AMPLITUDE		(4000)
+
+#define SOUND_VOLUME_MIN				(0)
+#define SOUND_VOLUME_MAX				(1)
 
 
 typedef struct

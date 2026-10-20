@@ -224,6 +224,23 @@ void GPIO_LCD_PAD_init()
 	SET_FIELD_32(SPI1->CR1, SPI_CR1_SPE_Msk, SPI_CR1_SPE_Pos, 1); // SPI1 enable
 }
 
+void GPIO_SOUND_BUTTONS_init()
+{
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN; // GPIOB clock enable
+
+	/////////////////////////////////
+	// SOUND_UNMUTE
+	// PB1 pull-up input
+	SET_FIELD_32(GPIOB->PUPDR, GPIO_PUPDR_PUPD1_Msk, GPIO_PUPDR_PUPD1_Pos, LL_GPIO_PULL_UP); //pull-up
+	SET_FIELD_32(GPIOB->MODER, GPIO_MODER_MODER1_Msk, GPIO_MODER_MODER1_Pos, LL_GPIO_MODE_INPUT); //input
+
+	/////////////////////////////////
+	// SOUND_MUTE
+	// PB2 pull-up input
+	SET_FIELD_32(GPIOB->PUPDR, GPIO_PUPDR_PUPD2_Msk, GPIO_PUPDR_PUPD2_Pos, LL_GPIO_PULL_UP); //pull-up
+	SET_FIELD_32(GPIOB->MODER, GPIO_MODER_MODER2_Msk, GPIO_MODER_MODER2_Pos, LL_GPIO_MODE_INPUT); //input
+}
+
 void Flash_init()
 {
 	FLASH->ACR |= FLASH_ACR_ICEN; //instruction cache enable
@@ -579,6 +596,7 @@ int main(void)
 	PAD_Init();
 	IRQ_DMA2_SPI1_TX_Init();
 	DMA2_SPI1_TX_Init();
+	GPIO_SOUND_BUTTONS_init();
 	SOUND_Init();
 	I2S_init();
 #if I2S_SOUND == I2S_2
@@ -630,7 +648,7 @@ int main(void)
 
 	LCD_init();
 
-	// I2S_Start();
+	I2S_Start();
 
 	GAME_Init();
 
