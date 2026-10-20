@@ -32,7 +32,7 @@
 // #include "TimeoutTracker.h"
 
 #include "LCDControl.h"
-// #include "PADControl.h"
+#include "PADControl.h"
 #include "RenderEngine.h"
 #include "Sound.h"
 #include "AudioControl.h"
@@ -576,6 +576,7 @@ int main(void)
 	IRQ_init();
 	Delay_init();
 	GPIO_LCD_PAD_init();
+	PAD_Init();
 	IRQ_DMA2_SPI1_TX_Init();
 	DMA2_SPI1_TX_Init();
 	SOUND_Init();

@@ -42,6 +42,9 @@ void printf_init(void)
 void printf_c(char c)
 {
 #ifdef DEBUG
+    // Skip output when no debugger is attached, otherwise waiting for the ITM port would never end
+    if (!(CoreDebug->DHCSR & CoreDebug_DHCSR_C_DEBUGEN_Msk)) return;
+
     if (!(ITM->TCR & ITM_TCR_ITMENA_Msk)) return;
     if (!(ITM->TER & 1)) return;
 

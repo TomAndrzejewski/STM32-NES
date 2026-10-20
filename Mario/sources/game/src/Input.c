@@ -29,8 +29,9 @@
 //----------------
 // PRIVATE VARIABLES
 //----------------
-static uint32_t s_prevButtonsState = 0;
 static uint32_t s_currButtonsState = 0;
+static uint32_t s_pressedButtonsState = 0;
+static uint32_t s_releasedButtonsState = 0;
 
 // Maps each action to its pad button mask
 static const uint32_t s_actionLUT[] = {
@@ -47,7 +48,7 @@ static_assert((0 ACTION_BUTTON_BINDINGS) == INPUT_ACTIONS_SIZE, "Every action ha
 //----------------
 // PRIVATE FUNCTION PROTOTYPES
 //----------------
-static void INPUT_SetButtonsState(uint32_t buttonsState);
+static void INPUT_SetButtonsState(const PadSnapshot_t* snapshot);
 static void INPUT_SetFrameTimeUS(InputState_t* input, uint32_t frameTimeUS);
 
 
@@ -58,8 +59,9 @@ void INPUT_Update(InputState_t* input, uint32_t frameTimeUS)
 {
 	BOARD_ASSERT(input != NULL);
 
-	uint32_t buttonsState = GetButtonsState();
-	INPUT_SetButtonsState(buttonsState);
+	PadSnapshot_t snapshot;
+	PAD_TakeSnapshot(&snapshot);
+	INPUT_SetButtonsState(&snapshot);
 
 	INPUT_SetFrameTimeUS(input, frameTimeUS);
 }
@@ -69,7 +71,7 @@ bool INPUT_IsPressed(InputActions_t action)
 	BOARD_ASSERT(action < INPUT_ACTIONS_SIZE);
 
 	uint32_t actionBit = s_actionLUT[action];
-	return !(s_prevButtonsState & actionBit) && (s_currButtonsState & actionBit);
+	return (s_pressedButtonsState & actionBit) != 0;
 }
 
 bool INPUT_IsDown(InputActions_t action)
@@ -85,16 +87,17 @@ bool INPUT_IsReleased(InputActions_t action)
 	BOARD_ASSERT(action < INPUT_ACTIONS_SIZE);
 
 	uint32_t actionBit = s_actionLUT[action];
-	return (s_prevButtonsState & actionBit) && !(s_currButtonsState & actionBit);
+	return (s_releasedButtonsState & actionBit) != 0;
 }
 
 //----------------
 // PRIVATE FUNCTIONS
 //----------------
-static void INPUT_SetButtonsState(uint32_t buttonsState)
+static void INPUT_SetButtonsState(const PadSnapshot_t* snapshot)
 {
-	s_prevButtonsState = s_currButtonsState;
-	s_currButtonsState = buttonsState;
+	s_currButtonsState = snapshot->current;
+	s_pressedButtonsState = snapshot->pressed;
+	s_releasedButtonsState = snapshot->released;
 }
 
 static void INPUT_SetFrameTimeUS(InputState_t* input, uint32_t frameTimeUS)

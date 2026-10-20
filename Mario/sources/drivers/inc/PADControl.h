@@ -29,9 +29,21 @@
 #define PAD_LATCH_HIGH()	(GPIOB->BSRR = GPIO_BSRR_BS5)
 
 
+// Pad state collected by the sampling timer since the previous snapshot
+typedef struct
+{
+	uint32_t current;	// Buttons held at the last sample
+	uint32_t pressed;	// Buttons that went down at least once
+	uint32_t released;	// Buttons that went up at least once
+} PadSnapshot_t;
+
+
 uint32_t GetButtonsState();
 
 void PrintButtons(uint32_t buttons_state);
+
+void PAD_Init(void);
+void PAD_TakeSnapshot(PadSnapshot_t* snapshot);
 
 
 #endif /* SOURCES_SRC_PADCONTROL_H_ */
