@@ -256,7 +256,7 @@ static int16_t SOUND_GetSample(SquareWaveOscillator_t* osc)
 
 	// Get sample
 	sample = get_sine_p360(osc->phase);
-	sample = sample/8;
+	sample = sample/32;
 //	if (osc->phase < 0.5f) {
 //		sample = osc->amplitude;
 //	} else {
