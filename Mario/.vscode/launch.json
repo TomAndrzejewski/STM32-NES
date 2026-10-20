@@ -13,10 +13,18 @@
             "interface": "swd",                 //Interface setup
             "serialNumber": "",                 //Set ST-Link ID if you use multiple at the same time
             "runToEntryPoint": "main",          //Run to main and stop there
-            "svdFile": "/opt/st/stm32cubeclt_1.22.0/STMicroelectronics_CMSIS_SVD/STM32F446.svd",         //SVD file to see registers
             "v1": false,
-            "gdbPath": "/opt/st/stm32cubeclt_1.22.0/GNU-tools-for-STM32/bin/arm-none-eabi-gdb",
-            "serverpath": "/opt/st/stm32cubeclt_1.22.0/STLink-gdb-server/bin/ST-LINK_gdbserver",
+            "linux": {                          //STM32CubeCLT paths on Linux
+                "svdFile": "/opt/st/stm32cubeclt_1.22.0/STMicroelectronics_CMSIS_SVD/STM32F446.svd",         //SVD file to see registers
+                "gdbPath": "/opt/st/stm32cubeclt_1.22.0/GNU-tools-for-STM32/bin/arm-none-eabi-gdb",
+                "serverpath": "/opt/st/stm32cubeclt_1.22.0/STLink-gdb-server/bin/ST-LINK_gdbserver"
+            },
+            "windows": {                        //STM32CubeCLT paths on Windows
+                "svdFile": "C:/ST/STM32CubeCLT_1.22.0/STMicroelectronics_CMSIS_SVD/STM32F446.svd",           //SVD file to see registers
+                "gdbPath": "C:/ST/STM32CubeCLT_1.22.0/GNU-tools-for-STM32/bin/arm-none-eabi-gdb.exe",
+                "serverpath": "C:/ST/STM32CubeCLT_1.22.0/STLink-gdb-server/bin/ST-LINK_gdbserver.exe",
+                "stm32cubeprogrammer": "C:/ST/STM32CubeCLT_1.22.0/STM32CubeProgrammer/bin"
+            },
             "swoConfig": {
                 "enabled": true,
                 "source": "probe", // works since cortex-debug v1.3.0
