@@ -22,6 +22,11 @@
 //----------------
 // PRIVATE MACROS
 //----------------
+#define PAD_CLK_LOW()			(GPIOA->BSRR = GPIO_BSRR_BR10)
+#define PAD_CLK_HIGH()			(GPIOA->BSRR = GPIO_BSRR_BS10)
+#define PAD_LATCH_LOW()			(GPIOB->BSRR = GPIO_BSRR_BR5)
+#define PAD_LATCH_HIGH()		(GPIOB->BSRR = GPIO_BSRR_BS5)
+
 #define PAD_SAMPLE_RATE_HZ		(500UL)
 
 // APB2 timers run at twice the APB2 clock, which equals SYSCLK with the APB2 prescaler at 2

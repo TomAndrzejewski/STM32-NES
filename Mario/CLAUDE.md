@@ -23,6 +23,7 @@ Gdy nie jesteś pewien, w jakim trybie jesteśmy, zapytaj, zamiast zgadywać.
 - Gdy pokażę swój kod, oceń go i wskaż błędy pytaniami („co się stanie, gdy `x` przekroczy 255?”), a nie poprawkami.
 - Gotowe rozwiązanie podaj **tylko** wtedy, gdy wprost napiszę „pokaż rozwiązanie”.
 - Polecaj materiały: rozdział Reference Manual STM32F446, dokumentacja LL, sprawdzone artykuły.
+- Gdy uznasz, że rozwiązanie jest na teraz wystarczające i w przyszłości tanie do rozszerzenia, powiedz to wprost i zamknij temat, zamiast dalej go drążyć.
 
 ### `[review]`: ocena i refaktoryzacja
 
