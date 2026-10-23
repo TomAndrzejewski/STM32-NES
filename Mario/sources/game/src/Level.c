@@ -5,13 +5,13 @@
  *      Author: tomasz
  */
 
+ #include "Level.h"
+
 #include <string.h>
 
 #include "Game_Types.h"
 #include "LCDControl.h"
 #include "Sound.h"
-
-#include "Level.h"
 
 
 const Rect_t LevelBoundaries = {

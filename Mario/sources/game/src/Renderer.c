@@ -20,6 +20,9 @@
 #include "RenderEngine.h"
 
 
+#define LCD_COLOR_BLUESKY			(0x7F3C)
+
+
 //----------------
 // PRIVATE FUNCTION PROTOTYPES
 //----------------

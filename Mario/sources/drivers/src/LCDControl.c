@@ -5,256 +5,86 @@
  *      Author: tomasz
  */
 
-#include <stdlib.h>
-
 #include "LCDControl.h"
+
+#include "BoardAssert.h"
 #include "RenderEngine.h"
 #include "BoardFunctions.h"
-#include "TimeoutTracker.h"
 #include "printf_logger.h"
 
+#include "SPI.h"
 
-uint16_t const LCD_Colors[LCD_NUMOF_COLORS] = {
+#include <stm32f446xx.h>
+
+
+//----------------
+// PRIVATE MACROS
+//----------------
+#define DMA_SPI_TIMEOUT_MS	(10)
+
+#define LCD_SLPOUT		(0x11)
+#define LCD_COLMOD		(0x3A)
+#define LCD_DISPON		(0x29)
+#define LCD_CASET		(0x2A)
+#define LCD_RASET		(0x2B)
+#define LCD_RAMWR		(0x2C)
+#define LCD_SWRESET		(0x01)
+#define LCD_RDDMADCTL	(0x0B)
+#define LCD_MADCTL		(0x36)
+#define LCD_VSCRDEF		(0x33)
+#define LCD_VSCSAD		(0x37)
+
+#define LCD_RESET_LOW()		(GPIOA->BSRR = GPIO_BSRR_BR0)
+#define LCD_RESET_HIGH()	(GPIOA->BSRR = GPIO_BSRR_BS0)
+#define LCD_DC_CMD()		(GPIOA->BSRR = GPIO_BSRR_BR1)
+#define LCD_DC_DATA()		(GPIOA->BSRR = GPIO_BSRR_BS1)
+
+#define LCD_COLOR_BLUESKY	(0x7F3C)
+
+typedef enum
+{
+	LCD_WHITE,
+	LCD_RED,
+	LCD_BLUE,
+	LCD_GREEN,
+
+	LCD_NUMOF_COLORS,
+}LCD_ColorEnum;
+
+static uint16_t const LCD_Colors[LCD_NUMOF_COLORS] = {
 		0xFFFE,
 		0x00F8,
 		0xF800,
 		0xE007
 };
 
-static volatile bool s_dmaDone = true;
-static volatile uint32_t s_dmaStartTimestamp = 0;
-static volatile uint32_t s_dmaTransferTime = 0;
 
-void DMA2_Stream3_IRQHandler(void)
+//----------------
+// PRIVATE FUNCTION PROTOTYPES
+//----------------
+static void LCD_SPI_SendCmd_U8(uint8_t cmd);
+static void LCD_SPI_SendData_U8(uint8_t data);
+static void LCD_SPI_SendRead_U8(uint8_t data, uint8_t* output);
+
+static int LCD_SetRectToDraw(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
+static void LCD_ReadDisplayMADCTL(void);
+static void LCD_WriteDisplayMADCTL(void);
+static void LCD_ReadPixelFormat(void);
+static void LCD_WritePixelFormat(void);
+static void LCD_WriteDisplayON(void);
+static void LCD_ReadID3(void);
+static void LCD_ReadID2(void);
+static void LCD_ReadID1(void);
+
+
+
+//----------------
+// PUBLIC FUNCTIONS
+//----------------
+void LCD_init(void)
 {
-    if (DMA2->LISR & DMA_LISR_TCIF3)
-    {
-        // wyczyść flagę Transfer Complete
-        DMA2->LIFCR = DMA_LIFCR_CTCIF3;
-
-        TimeoutTracker_t timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
-    	while (SPI1->SR & SPI_SR_BSY) {
-    		if (timeout_has_expired(&timer)) {
-    			break;
-    		}
-    	}
-
-    	// --- DODAJ TE LINIE TUTAJ, ABY UBIĆ SZUM ---
-    	volatile uint8_t dummy_dr = *(volatile uint8_t *)&SPI1->DR;
-    	volatile uint32_t dummy_sr = SPI1->SR;
-    	(void)dummy_dr;
-    	(void)dummy_sr; // Te 4 linijki czyszczą flagę RXNE oraz kasują błąd Overrun (OVR)
-    	// -------------------------------------------
-
-    	LCD_CS_HIGH();
-
-        s_dmaDone = true;
-
-        s_dmaTransferTime = CalcTimeUS(s_dmaStartTimestamp);
-//        printf_uint(s_dmaTransferTime); printf_c('\t');
-    }
-}
-
-void DMA2_SPI1_Send_NoBlock(uint8_t* buffer, uint16_t length)
-{
-    TimeoutTracker_t timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
-	while (!s_dmaDone) {
-		if (timeout_has_expired(&timer)) {
-			break;
-		}
-	}
-	if (timeout_has_expired(&timer)) { // Bail out!!!
-		return;
-	}
+	SPI_Init();
 	
-	s_dmaDone = false;
-    // 1. Sprawdź, czy poprzedni transfer DMA się zakończył
-    // Jeśli DMA jeszcze wysyła, musimy poczekać (lub zabezpieczyć to wyżej w kodzie)
-    timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
-	while (DMA2_Stream3->CR & DMA_SxCR_EN) {
-		if (timeout_has_expired(&timer)) {
-			break;
-		}
-	}
-
-    s_dmaStartTimestamp = GetTimestamp();
-
-    // 2. Wyczyszczenie flag zakończenia poprzedniego transferu dla Strumienia 3 (rejestr LIFCR)
-    DMA2->LIFCR = DMA_LIFCR_CTCIF3 | DMA_LIFCR_CTEIF3;
-
-	__DSB();
-    // 3. Ustawienie adresu źródłowego w RAM i liczby bajtów
-    DMA2_Stream3->M0AR = (uint32_t)buffer;
-    DMA2_Stream3->NDTR = length;
-
-	LCD_DC_DATA();
-	LCD_CS_LOW();
-
-
-    // 4. Włączenie strumienia DMA - w tym momencie rusza ciągły zegar SPI na 36 MHz!
-    DMA2_Stream3->CR |= DMA_SxCR_EN;
-
-//	while (!(DMA2->LISR & DMA_LISR_TCIF3));
-//	while (SPI1->SR & SPI_SR_BSY);
-//
-//	// --- DODAJ TE LINIE TUTAJ, ABY UBIĆ SZUM ---
-//	volatile uint8_t dummy_dr = *(volatile uint8_t *)&SPI1->DR;
-//	volatile uint32_t dummy_sr = SPI1->SR;
-//	(void)dummy_dr;
-//	(void)dummy_sr; // Te 4 linijki czyszczą flagę RXNE oraz kasują błąd Overrun (OVR)
-//	// -------------------------------------------
-//
-//	LCD_CS_HIGH();
-}
-
-uint8_t SPI1_Write(uint8_t data)
-{
-    TimeoutTracker_t timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
-	while (!s_dmaDone) {
-		if (timeout_has_expired(&timer)) {
-			break;
-		}
-	}
-
-	timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
-	while (!(SPI1->SR & SPI_SR_TXE)) {	// Zakonczono wysylanie
-		if (timeout_has_expired(&timer)) {
-			break;
-		}
-	}
-
-	*(volatile uint8_t *)&SPI1->DR = data;
-
-	timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
-	while (!(SPI1->SR & SPI_SR_RXNE)) { // Czekaj na odebranie ostatniego bitu
-		if (timeout_has_expired(&timer)) {
-			break;
-		}
-	}
-//	while ((SPI1->SR & SPI_SR_BSY));    // flaga busy
-	return *((volatile uint8_t*)&SPI1->DR);
-}
-
-void SPI1_SendCmd_U8(uint8_t data)
-{
-    TimeoutTracker_t timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
-	while (!s_dmaDone) {
-		if (timeout_has_expired(&timer)) {
-			break;
-		}
-	}
-	// Czyszczenie SPI na start
-//	volatile uint32_t dummy_read;
-//	dummy_read = SPI1->DR;
-//	dummy_read = SPI1->SR;
-//	(void)dummy_read;
-
-	LCD_DC_CMD();
-	LCD_CS_LOW();
-
-	SPI1_Write(data);
-
-	LCD_CS_HIGH();
-	LCD_DC_DATA();
-}
-
-void SPI1_SendData_U8(uint8_t data)
-{
-    TimeoutTracker_t timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
-	while (!s_dmaDone) {
-		if (timeout_has_expired(&timer)) {
-			break;
-		}
-	}
-	// Czyszczenie SPI na start
-//	volatile uint32_t dummy_read;
-//	dummy_read = SPI1->DR;
-//	dummy_read = SPI1->SR;
-//	(void)dummy_read;
-
-	LCD_DC_DATA();
-	LCD_CS_LOW();
-
-	SPI1_Write(data);
-
-	LCD_CS_HIGH();
-//	LCD_DC_DATA();
-}
-
-int SPI1_SendRead_U8(uint8_t data, uint8_t* output)
-{
-	if (output == NULL)	{ return -1; }
-
-    TimeoutTracker_t timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
-	while (!s_dmaDone) {
-		if (timeout_has_expired(&timer)) {
-			break;
-		}
-	}
-
-	// Czyszczenie SPI na start
-	volatile uint32_t dummy_read;
-	dummy_read = SPI1->DR;
-	dummy_read = SPI1->SR;
-	(void)dummy_read;
-
-	LCD_DC_CMD();
-	LCD_CS_LOW();
-	SPI1_Write(data);
-
-	LCD_DC_DATA();
-
-	uint8_t retByte = SPI1_Write(0x00);
-
-	LCD_CS_HIGH();
-	LCD_DC_DATA();
-
-	*output = retByte;
-
-	return 0;
-}
-
-// nie dziala, bo trzeba by przelaczac spi na gpio output i recznie machnac raz zegarem XD
-int SPI1_SendRead_U24(uint8_t data, uint8_t* output2, uint8_t* output1, uint8_t* output0)
-{
-	if ((output2 == NULL) || (output1 == NULL) || (output0 == NULL))	{ return -1; }
-
-    TimeoutTracker_t timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
-	while (!s_dmaDone) {
-		if (timeout_has_expired(&timer)) {
-			break;
-		}
-	}
-
-	// Czyszczenie SPI na start
-	volatile uint32_t dummy_read;
-	dummy_read = SPI1->DR;
-	dummy_read = SPI1->SR;
-	(void)dummy_read;
-
-	LCD_DC_CMD();
-	LCD_CS_LOW();
-	SPI1_Write(data);
-
-	LCD_DC_DATA();
-
-//	SPI1_Write(0x00); //dummy cycle
-	uint8_t retByte2 = SPI1_Write(0x00);
-	uint8_t retByte1 = SPI1_Write(0x00);
-	uint8_t retByte0 = SPI1_Write(0x00);
-
-	LCD_CS_HIGH();
-	LCD_DC_DATA();
-
-	*output2 = retByte2;
-	*output1 = retByte1;
-	*output0 = retByte0;
-
-	return 0;
-}
-
-void LCD_init()
-{
 	printf_v("LCD Reset Start\n");
 	LCD_RESET_LOW();
 	delay(10);
@@ -263,7 +93,7 @@ void LCD_init()
 	printf_v("LCD Reset End\n");
 
 	printf_v("LCD Exit Sleep Start\n");
-	SPI1_SendCmd_U8(LCD_SLPOUT); // Exit Sleep Mode
+	LCD_SPI_SendCmd_U8(LCD_SLPOUT); // Exit Sleep Mode
 	delay(250);
 	printf_v("LCD Exit Sleep End\n");
 
@@ -278,44 +108,65 @@ void LCD_init()
 	LCD_WriteDisplayMADCTL();
 	delay(2000);
 	LCD_ReadDisplayMADCTL();
-
+	
+	LCD_WriteVertScrollDef();
+	LCD_WriteVertScrollStartAddr(0);
 
 	// not essential start
 	delay(200);
 
-	uint32_t startTime = 0, elapsedUS = 0;
-	startTime = GetTimestamp();
-//	LCD_SetBackground(LCD_WHITE);
-	LCD_PrepFillBackgroud();
+	Rect_t screenRect;
+	screenRect.p1.x = 0;
+	screenRect.p1.y = 0;
+	screenRect.p2.x = 319;
+	screenRect.p2.y = 239;
+
+	LCD_DrawRect(screenRect, 0);
 	RE_RenderFullBackgroud(LCD_Colors[LCD_WHITE]);
-	elapsedUS = CalcTimeUS(startTime);
-	printf_v("LCD_SetBackground(LCD_WHITE) took: %d us\n", elapsedUS);
 
 	delay(1000);
 
-	startTime = GetTimestamp();
-//	LCD_SetBackground(LCD_GREEN);
-	LCD_PrepFillBackgroud();
+	LCD_DrawRect(screenRect, 0);
 	RE_RenderFullBackgroud(LCD_COLOR_BLUESKY);
-	elapsedUS = CalcTimeUS(startTime);
-	printf_v("LCD_SetBackground(LCD_WHITE) took: %d us\n", elapsedUS);
 
 	delay(1000);
 	// not essential end
-
-	LCD_WriteVertScrollDef();
-	LCD_WriteVertScrollStartAddr(0);
 }
 
-void LCD_ReadDisplayMADCTL()
+void LCD_SendRect_DMA(uint8_t* buffer, uint16_t length)
 {
-	printf_v("LCD LCD_ReadDisplayMADCTL Start\n");
-	uint8_t madctl = 0;
-	SPI1_SendRead_U8(LCD_RDDMADCTL, &madctl);
-	printf_v("LCD LCD_ReadDisplayMADCTL End, bytes: 0x%x\n", madctl);
+	DMA2_SPI1_PrepareSend_NoBlock(buffer, length);
+
+	LCD_DC_DATA();
+
+	DMA2_SPI1_Send_NoBlock();
 }
 
-void LCD_WriteVertScrollDef()
+void LCD_DrawRect(Rect_t baseRect, int LCDOffsetX)
+{
+	Rect_t lcdRect = baseRect;
+
+	lcdRect.p1.x = (baseRect.p1.x + (LCD_WIDTH - LCDOffsetX)) % LCD_WIDTH;
+	lcdRect.p2.x = (baseRect.p2.x + (LCD_WIDTH - LCDOffsetX)) % LCD_WIDTH;
+	if (lcdRect.p1.x < 0 ||  lcdRect.p2.x < 0)
+	{
+		delay(1);
+	}
+
+	uint16_t x = lcdRect.p1.x;
+	uint16_t y = lcdRect.p1.y;
+	uint16_t w = lcdRect.p2.x-lcdRect.p1.x;
+	uint16_t h = lcdRect.p2.y-lcdRect.p1.y;
+	int ret = LCD_SetRectToDraw(x, y, w, h);
+	if (ret < 0)
+	{
+		printf_v("SetRectToDraw err: %d %d %d %d (%d)\n", x, y, w, h, ret);
+	}
+
+	LCD_SPI_SendCmd_U8(LCD_RAMWR);
+}
+
+void LCD_WriteVertScrollDef(void)
 {
 	uint16_t tfa = 0;
 	uint16_t vsa = 320;
@@ -323,88 +174,95 @@ void LCD_WriteVertScrollDef()
 
 	printf_v("LCD LCD_WriteVertScrollDef Start\n");
 
-	SPI1_SendCmd_U8(LCD_VSCRDEF);
+	LCD_SPI_SendCmd_U8(LCD_VSCRDEF);
 
 	uint8_t msb = 0;
 	uint8_t lsb = 0;
 
 	msb = (uint8_t)(tfa >> 8);
 	lsb = (uint8_t)(tfa & 0xFF);
-	SPI1_SendData_U8(msb);
-	SPI1_SendData_U8(lsb);
+	LCD_SPI_SendData_U8(msb);
+	LCD_SPI_SendData_U8(lsb);
 
 	msb = (uint8_t)(vsa >> 8);
 	lsb = (uint8_t)(vsa & 0xFF);
-	SPI1_SendData_U8(msb);
-	SPI1_SendData_U8(lsb);
+	LCD_SPI_SendData_U8(msb);
+	LCD_SPI_SendData_U8(lsb);
 
 	msb = (uint8_t)(bfa >> 8);
 	lsb = (uint8_t)(bfa & 0xFF);
-	SPI1_SendData_U8(msb);
-	SPI1_SendData_U8(lsb);
-
-//	printf_v("LCD LCD_WriteVertScrollDef End, bytes: 0x%x\n", madctl);
+	LCD_SPI_SendData_U8(msb);
+	LCD_SPI_SendData_U8(lsb);
 }
 
 void LCD_WriteVertScrollStartAddr(uint16_t startAddr)
 {
-//	printf_v("LCD LCD_WriteVertScrollStartAddr Start\n");
-
-	SPI1_SendCmd_U8(LCD_VSCSAD);
+	LCD_SPI_SendCmd_U8(LCD_VSCSAD);
 
 	uint8_t msb = 0;
 	uint8_t lsb = 0;
 
 	msb = (uint8_t)(startAddr >> 8);
 	lsb = (uint8_t)(startAddr & 0xFF);
-	SPI1_SendData_U8(msb);
-	SPI1_SendData_U8(lsb);
-
-//	printf_v("LCD LCD_WriteVertScrollStartAddr End, bytes: 0x%x\n", madctl);
+	LCD_SPI_SendData_U8(msb);
+	LCD_SPI_SendData_U8(lsb);
 }
 
-void LCD_WriteDisplayMADCTL()
+void LCD_ReadAvailableRegisters(void)
 {
-//	uint8_t madctl = 0b11100000;//tu ladnie renderowal sie mario
-	uint8_t madctl = (uint8_t)0b11000000;
-	printf_v("LCD LCD_WriteDisplayMADCTL Start\n");
-	SPI1_SendCmd_U8(LCD_MADCTL);
-	SPI1_SendData_U8(madctl);
-	printf_v("LCD LCD_WriteDisplayMADCTL End, bytes: 0x%x\n", madctl);
+	LCD_ReadDisplayMADCTL();
+	LCD_ReadPixelFormat();
+	LCD_ReadID1();
+	LCD_ReadID2();
+	LCD_ReadID3();
 }
 
-void LCD_ReadPixelFormat()
+static void LCD_SPI_SendCmd_U8(uint8_t cmd)
 {
-	printf_v("LCD Read PixelFormat Start\n");
-	uint8_t pixelFormat = 0;
-	SPI1_SendRead_U8(0x0C, &pixelFormat);
-	printf_v("LCD Read PixelFormat End, bytes: 0x%x\n", pixelFormat);
+	SPI_StartTransaction();
+
+	LCD_DC_CMD();
+
+	SPI_Send_U8(cmd);
+
+	LCD_DC_DATA();
+
+	SPI_EndTransaction();
 }
 
-void LCD_WritePixelFormat()
+static void LCD_SPI_SendData_U8(uint8_t data)
 {
-	uint8_t pixelFormat = 0x55;
-	printf_v("LCD Write PixelFormat: 0x%x Start\n", pixelFormat);
-	SPI1_SendCmd_U8(LCD_COLMOD);
-	SPI1_SendData_U8(pixelFormat);
-	printf_v("LCD Write PixelFormat End\n");
+	SPI_StartTransaction();
+
+	LCD_DC_DATA();
+
+	SPI_Send_U8(data);
+
+	SPI_EndTransaction();
 }
 
-void LCD_WriteDisplayON()
+static void LCD_SPI_SendRead_U8(uint8_t data, uint8_t* output)
 {
-	printf_v("LCD LCD_WriteDisplayON Start\n");
-	SPI1_SendCmd_U8(LCD_DISPON);
-	printf_v("LCD Write PixelFormat End\n");
+	BOARD_ASSERT(output != NULL);
+
+	SPI_StartTransaction();
+
+	LCD_DC_CMD();
+
+	SPI_Send_U8(data);
+
+	LCD_DC_DATA();
+
+	uint8_t retByte = SPI_Send_U8(0x00);
+
+	LCD_DC_DATA();
+
+	SPI_EndTransaction();
+
+	*output = retByte;
 }
 
-void LCD_SoftwareReset()
-{
-	printf_v("LCD LCD_SoftwareReset Start\n");
-	SPI1_SendCmd_U8(LCD_SWRESET);
-	printf_v("LCD LCD_SoftwareReset End\n");
-}
-
-int LCD_SetRectToDraw(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
+static int LCD_SetRectToDraw(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
 {
 	if (x > 319 || y > 239)
 	{
@@ -423,191 +281,96 @@ int LCD_SetRectToDraw(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
 	uint8_t lsb = 0;
 
 
-//	SPI1_SendCmd_U8(LCD_CASET);
-	SPI1_SendCmd_U8(LCD_RASET);
+	LCD_SPI_SendCmd_U8(LCD_RASET);
 
 	msb = (uint8_t)(x >> 8);
 	lsb = (uint8_t)(x & 0xFF);
-	SPI1_SendData_U8(msb);
-	SPI1_SendData_U8(lsb);
+	LCD_SPI_SendData_U8(msb);
+	LCD_SPI_SendData_U8(lsb);
 
 	msb = (uint8_t)(x2 >> 8);
 	lsb = (uint8_t)(x2 & 0xFF);
-	SPI1_SendData_U8(msb);
-	SPI1_SendData_U8(lsb);
+	LCD_SPI_SendData_U8(msb);
+	LCD_SPI_SendData_U8(lsb);
 
 
-//	SPI1_SendCmd_U8(LCD_RASET);
-	SPI1_SendCmd_U8(LCD_CASET);
+	LCD_SPI_SendCmd_U8(LCD_CASET);
 
 	msb = (uint8_t)(y >> 8);
 	lsb = (uint8_t)(y & 0xFF);
-	SPI1_SendData_U8(msb);
-	SPI1_SendData_U8(lsb);
+	LCD_SPI_SendData_U8(msb);
+	LCD_SPI_SendData_U8(lsb);
 
 	msb = (uint8_t)(y2 >> 8);
 	lsb = (uint8_t)(y2 & 0xFF);
-	SPI1_SendData_U8(msb);
-	SPI1_SendData_U8(lsb);
+	LCD_SPI_SendData_U8(msb);
+	LCD_SPI_SendData_U8(lsb);
 
 	return 0;
 }
 
-void LCD_PrepFillBackgroud()
+static void LCD_ReadDisplayMADCTL(void)
 {
-	LCD_SetRectToDraw(0, 0, 319, 239);
-
-	SPI1_SendCmd_U8(LCD_RAMWR);
+	printf_v("LCD LCD_ReadDisplayMADCTL Start\n");
+	uint8_t madctl = 0;
+	LCD_SPI_SendRead_U8(LCD_RDDMADCTL, &madctl);
+	printf_v("LCD LCD_ReadDisplayMADCTL End, bytes: 0x%x\n", madctl);
 }
 
-void LCD_SetBackground(LCD_ColorEnum color)
+static void LCD_WriteDisplayMADCTL(void)
 {
-	printf_v("LCD LCD_SetGreenBackground Start\n");
-
-	LCD_SetRectToDraw(0, 0, 319, 239);
-
-	SPI1_SendCmd_U8(LCD_RAMWR);
-
-	uint8_t msByte = 0, lsByte = 0;
-	uint16_t twoBytes = 0;
-	switch (color)
-	{
-	case LCD_GREEN:
-	{
-		twoBytes = 0xE007;
-		break;
-	}
-	case LCD_WHITE:
-	{
-		twoBytes = 0xFFFF;
-		break;
-	}
-	case LCD_RED:
-	{
-		twoBytes = 0xF800;
-		break;
-	}
-	case LCD_BLUE:
-	{
-		twoBytes = 0x00F8;
-		break;
-	}
-	}
-
-	msByte = (uint8_t)(twoBytes >> 8);
-	lsByte = (uint8_t)(twoBytes & 0xFF);
-
-
-	if (false)
-	{
-		int maxLoop = 320*240;
-		for (int i = 0; i < maxLoop; i++)
-		{
-			SPI1_SendData_U8(msByte);
-			SPI1_SendData_U8(lsByte);
-		}
-	}
-	else
-	{
-//		for (int i = 0; i < FRAMEBUFFER_NUMOF_PIXELS; i++)
-//		{
-//			if (!RE_FillPixel(twoBytes))
-//			{
-//				break;
-//			}
-//		}
-//
-//		for (int i = 0; i < 8; i++)
-//		{
-////			DMA2_SPI1_Send_NoBlock((uint8_t*)gFramebuffer, FRAMEBUFFER_SIZE);
-//
-//		}
-	}
-
-
-	printf_v("LCD LCD_SetGreenBackground End\n");
+	uint8_t madctl = (uint8_t)0b11000000;
+	printf_v("LCD LCD_WriteDisplayMADCTL Start\n");
+	LCD_SPI_SendCmd_U8(LCD_MADCTL);
+	LCD_SPI_SendData_U8(madctl);
+	printf_v("LCD LCD_WriteDisplayMADCTL End, bytes: 0x%x\n", madctl);
 }
 
-void LCD_DrawRect(Rect_t baseRect, int LCDOffsetX)
+static void LCD_ReadPixelFormat(void)
 {
-//	printf_v("LCD LCD_DrawMario Start\n");
-
-	Rect_t lcdRect = baseRect;
-//	if (lcdRect.p2.x > lcdRect.p1.x)
-//	{
-//		baseRect.p2.x--;
-//	}
-//	if (lcdRect.p2.y > lcdRect.p1.y)
-//	{
-//		lcdRect.p2.y--;
-//	}
-	lcdRect.p1.x = (baseRect.p1.x + (LCD_WIDTH - LCDOffsetX)) % LCD_WIDTH;
-	lcdRect.p2.x = (baseRect.p2.x + (LCD_WIDTH - LCDOffsetX)) % LCD_WIDTH;
-	if (lcdRect.p1.x < 0 ||  lcdRect.p2.x < 0)
-	{
-		delay(1);
-	}
-//	if (lcdRect.p1.x == lcdRect.p2.x + 1)
-//	{
-//		lcdRect.p2.x++;
-//	}
-
-	uint16_t x = lcdRect.p1.x;
-	uint16_t y = lcdRect.p1.y;
-	uint16_t w = lcdRect.p2.x-lcdRect.p1.x;
-//	uint16_t w = baseRect.p2.x - baseRect.p1.x;
-	uint16_t h = lcdRect.p2.y-lcdRect.p1.y;
-//	printf_v("SetRectToDraw: %d %d %d %d\n", x, y, w, h);
-	int ret = LCD_SetRectToDraw(x, y, w, h);
-	if (ret < 0)
-	{
-		printf_v("SetRectToDraw err: %d %d %d %d (%d)\n", x, y, w, h, ret);
-	}
-
-	SPI1_SendCmd_U8(LCD_RAMWR);
-
-//	printf_v("LCD LCD_DrawMario End\n");
+	printf_v("LCD Read PixelFormat Start\n");
+	uint8_t pixelFormat = 0;
+	LCD_SPI_SendRead_U8(0x0C, &pixelFormat);
+	printf_v("LCD Read PixelFormat End, bytes: 0x%x\n", pixelFormat);
 }
 
+static void LCD_WritePixelFormat(void)
+{
+	uint8_t pixelFormat = 0x55;
+	printf_v("LCD Write PixelFormat: 0x%x Start\n", pixelFormat);
+	LCD_SPI_SendCmd_U8(LCD_COLMOD);
+	LCD_SPI_SendData_U8(pixelFormat);
+	printf_v("LCD Write PixelFormat End\n");
+}
 
+static void LCD_WriteDisplayON(void)
+{
+	printf_v("LCD LCD_WriteDisplayON Start\n");
+	LCD_SPI_SendCmd_U8(LCD_DISPON);
+	printf_v("LCD Write PixelFormat End\n");
+}
 
-void LCD_ReadID3()
+static void LCD_ReadID3(void)
 {
 	printf_v("LCD Read ID3 Start\n");
 	uint8_t ID3 = 0;
-	SPI1_SendRead_U8(0xDC, &ID3);
+	LCD_SPI_SendRead_U8(0xDC, &ID3);
 	printf_v("LCD Read ID3 End, ID3: 0x%x\n", ID3);
 }
 
-void LCD_ReadID2()
+static void LCD_ReadID2(void)
 {
 	printf_v("LCD Read ID2 Start\n");
 	uint8_t ID2 = 0;
-	SPI1_SendRead_U8(0xDB, &ID2);
+	LCD_SPI_SendRead_U8(0xDB, &ID2);
 	printf_v("LCD Read ID2 End, ID2: 0x%x\n", ID2);
 }
 
-void LCD_ReadID1()
+static void LCD_ReadID1(void)
 {
 	printf_v("LCD Read ID1 Start\n");
 	uint8_t ID1 = 0;
-	SPI1_SendRead_U8(0xDA, &ID1);
+	LCD_SPI_SendRead_U8(0xDA, &ID1);
 	printf_v("LCD Read ID1 End, ID1: 0x%x\n", ID1);
 }
 
-void LCD_ReadCTRLDisplay()
-{
-	printf_v("LCD_ReadCTRLDisplay Start\n");
-	uint8_t ctrl = 0;
-	SPI1_SendRead_U8(0x54, &ctrl);
-	printf_v("LCD_ReadCTRLDisplay End, bytes: 0x%x\n", ctrl);
-}
-
-void LCD_WriteCTRLDisplay()
-{
-	uint8_t ctrl = 0b00101100;
-	printf_v("LCD_WriteCTRLDisplay: 0x%x Start\n", ctrl);
-	SPI1_SendCmd_U8(0x53);
-	SPI1_SendData_U8(ctrl);
-	printf_v("LCD_WriteCTRLDisplay End\n");
-}

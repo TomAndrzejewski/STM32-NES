@@ -22,6 +22,9 @@
 #define FB_0	(0)
 #define FB_1	(1)
 
+#define LCD_TRANSPARENT_COLOR		(0xFFFF)
+#define LCD_COLOR_BLUESKY			(0x7F3C)
+
 
 //----------------
 // PRIVATE VARIABLES
@@ -278,7 +281,7 @@ static void RE_SendFB_withOffset(int pixelsToSend, int pixelsOffset, bool exchan
 		return;
 	}
 
-	DMA2_SPI1_Send_NoBlock(s_fb + pixelsOffset*BYTES_PER_PIXEL, pixelsToSend*BYTES_PER_PIXEL);
+	LCD_SendRect_DMA(s_fb + pixelsOffset*BYTES_PER_PIXEL, pixelsToSend*BYTES_PER_PIXEL);
 
 	if (exchangeFramebuffers)
 	{
@@ -302,7 +305,7 @@ static void RE_SendFB(int pixelsToSend)
 		return;
 	}
 
-	DMA2_SPI1_Send_NoBlock(s_fb, pixelsToSend*BYTES_PER_PIXEL);
+	LCD_SendRect_DMA(s_fb, pixelsToSend*BYTES_PER_PIXEL);
 
 	if (s_currFb == FB_0)
 	{
