@@ -284,8 +284,6 @@ typedef struct
 	bool damageTaken;
 	bool IsGrounded;
 	bool JustHitFGObjectFromBottom;
-	bool triggerLevelUp;
-	bool levelUpOngoing;
 
 }PlayerState_t;
 
@@ -471,6 +469,36 @@ typedef struct
 
 }RendererState_t;
 
+typedef enum
+{
+	GAME_STATE_PLAYING,
+	GAME_STATE_PLAYER_LEVEL_UP,
+	GAME_STATE_PLAYER_DYING,
+	GAME_STATE_GAME_OVER,
+
+	GAME_STATE_COUNT,
+}GameStateEnum;
+
+typedef enum
+{
+	GAME_EVENT_PLAYER_LEVEL_UP,
+	GAME_EVENT_PLAYER_DIED,
+}GameEventEnum;
+
+typedef struct
+{
+	GameStateEnum state;
+	uint32_t timeInStateUS;
+
+	// Events raised during a frame, handled at the start of the next one
+	int eventsSize;
+	GameEventEnum events[GAME_STATE_EVENTS_MAX_SIZE];
+
+	// Degradation counter: events skipped because the buffer was full
+	uint32_t droppedEvents;
+
+}GameStateMachine_t;
+
 #define TIMESTAMPS_SIZE 32
 
 typedef struct {
@@ -521,7 +549,7 @@ typedef struct
 
 	InputState_t input;
 
-	// Game machine state enum
+	GameStateMachine_t stateMachine;
 
 	// Renderer data
 	RendererState_t	renderer;
@@ -531,7 +559,6 @@ typedef struct
 	GameStats_t stats;
 
 	bool firstGameLoop;
-	bool simulationPause;
 
 } GameContext_t;
 

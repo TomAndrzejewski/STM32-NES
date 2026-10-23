@@ -33,6 +33,8 @@
 
 #define COLLISIONS_SIZE					(32)
 
+#define GAME_STATE_EVENTS_MAX_SIZE		(8)
+
 
 ///////////////////////////////////////////////////////////////////
 #define COLL_TOP_ENABLED		(0x00000001)

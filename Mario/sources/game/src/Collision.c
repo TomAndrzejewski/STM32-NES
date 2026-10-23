@@ -10,6 +10,7 @@
 #include <stddef.h>
 
 #include "Game_Types.h"
+#include "GameState.h"
 #include "Geometry.h"
 #include "Level.h"
 #include "BoardAssert.h"
@@ -32,12 +33,13 @@ static void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx
 static void COLLISION_Player_FGObject_DetectBumpSide(const ForegroundObject_t* obj, const Rect_t* bumpRect, BumpSideEnum* bumpSide);
 static void COLLISION_Resolve(GameContext_t* ctx);
 static void COLLISION_Player_Floor(PlayerState_t* player, const GameContext_t* ctx);
-static void COLLISION_Player_Enemy(PlayerState_t* player, EnemyState_t* enemy, const Bump_t* bump, const GameContext_t* ctx);
-// static void COLLISION_Player_RewardFGObject_Handle(PlayerState_t* player, ForegroundObject_t* obj);
+static void COLLISION_Player_Enemy(const PlayerState_t* player, const EnemyState_t* enemy, const Bump_t* bump, GameStateMachine_t* sm);
+static void COLLISION_Player_PickupFGObject_Handle(ForegroundObject_t* obj, GameStateMachine_t* sm);
 static void COLLISION_Player_SolidFGObject_Handle(PlayerState_t* player, const ForegroundObject_t* obj, BumpSideEnum bumpSide);
 static void COLLISION_Player_SolidFGObject_SideEffect(ForegroundObject_t* obj, PlayerState_t* player, BumpSideEnum bumpSide, ObjectsManager_t* mgr);
 static void COLLISION_FGObject_FGObject(ForegroundObject_t* actor, ForegroundObject_t* obj, const Bump_t* bump);
 static void COLLISION_FGObject_Floor(ForegroundObject_t* actor, const GameContext_t* ctx);
+static bool COLLISION_IsPickupFGObject(GameObjectID id);
 
 
 //----------------
@@ -106,7 +108,7 @@ static void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx
 			continue;
 		}
 
-		if (!(fgObject->assetFlags & COLL_ANY_ENABLED)) {
+		if (!(fgObject->assetFlags & COLL_ANY_ENABLED) && !COLLISION_IsPickupFGObject(fgObject->id)) {
 			continue;
 		}
 
@@ -322,7 +324,7 @@ static void COLLISION_Resolve(GameContext_t* ctx)
 			const GameObjectRef_t* actor = (bump->actor1.id == ctx->player.id) ? &bump->actor2 : &bump->actor1;
 			EnemyState_t* enemy = &ctx->enemies.pool[actor->index];
 
-			COLLISION_Player_Enemy(&ctx->player, enemy, bump, ctx);
+			COLLISION_Player_Enemy(&ctx->player, enemy, bump, &ctx->stateMachine);
 			break;
 		}
 		case PLAYER_BUMP_FG_OBJECT:
@@ -330,25 +332,15 @@ static void COLLISION_Resolve(GameContext_t* ctx)
 			const GameObjectRef_t* actor = (bump->actor1.id == ctx->player.id) ? &bump->actor2 : &bump->actor1;
 			ForegroundObject_t* obj = &ctx->fgObjects[actor->index];
 
-			// switch (obj->id)
-			// {
-			// case FG_REWARD_LEVEL_UP_MUSHROOM_OBJECT_ID:
-			// {
-			// 	COLLISION_Player_RewardFGObject_Handle(&ctx->player, obj);
-			// 	break;
-			// }
-			// All solid blocks
-			// default:
-			// {
+			if (COLLISION_IsPickupFGObject(obj->id)) {
+				COLLISION_Player_PickupFGObject_Handle(obj, &ctx->stateMachine);
+			} else {
 				// Push the player out of the object, then let the object react to the bump
 				COLLISION_Player_SolidFGObject_Handle(&ctx->player, obj, bump->bumpSide);
 				if (bump->bumpSide != BUMP_SIDE_NONE) {
 					COLLISION_Player_SolidFGObject_SideEffect(obj, &ctx->player, bump->bumpSide, &ctx->objectsManager);
 				}
-
-			// 	break;
-			// }
-			// }
+			}
 
 			break;
 		}
@@ -384,28 +376,34 @@ static void COLLISION_Player_Floor(PlayerState_t* player, const GameContext_t* c
 	}
 }
 
-static void COLLISION_Player_Enemy(PlayerState_t* player, EnemyState_t* enemy, const Bump_t* bump, const GameContext_t* ctx)
+static void COLLISION_Player_Enemy(const PlayerState_t* player, const EnemyState_t* enemy, const Bump_t* bump, GameStateMachine_t* sm)
 {
-	(void)player;
-	(void)enemy;
 	(void)bump;
-	(void)ctx;
+	(void)sm;
+
+	// Any touch of a living enemy kills the player
+	if (enemy->IsAlive && !player->IsImmune) {
+		// GAME_STATE_RaiseEvent(sm, GAME_EVENT_PLAYER_DIED);
+	}
 }
 
-// static void COLLISION_Player_RewardFGObject_Handle(PlayerState_t* player, ForegroundObject_t* obj)
-// {
-// 	switch (obj->id)
-// 	{
-// 	case FG_REWARD_LEVEL_UP_MUSHROOM_OBJECT_ID:
-// 	{
-// 		player->triggerLevelUp = true;
-// 		obj->currFlags.IsAlive = false;
-// 		break;
-// 	}
-// 	default:
-// 		break;
-// 	}
-// }
+static void COLLISION_Player_PickupFGObject_Handle(ForegroundObject_t* obj, GameStateMachine_t* sm)
+{
+	switch (obj->id)
+	{
+	case FG_REWARD_LEVEL_UP_MUSHROOM_OBJECT_ID:
+	{
+		// Remove the mushroom from the world and let the player grow
+		obj->currFlags.IsAlive = false;
+		GAME_STATE_RaiseEvent(sm, GAME_EVENT_PLAYER_LEVEL_UP);
+		break;
+	}
+	default:
+		// Pickup object without a handler: add a missing case for it
+		BOARD_ASSERT(false);
+		break;
+	}
+}
 
 static void COLLISION_Player_SolidFGObject_Handle(PlayerState_t* player, const ForegroundObject_t* obj, BumpSideEnum bumpSide)
 {
@@ -628,4 +626,12 @@ static void COLLISION_FGObject_Floor(ForegroundObject_t* actor, const GameContex
 		actor->physics.engine.body.subpixelY = 0.0f;
 		actor->physics.engine.body.vy = 0.0f;
 	}
+}
+
+static bool COLLISION_IsPickupFGObject(GameObjectID id)
+{
+	if (id == FG_REWARD_LEVEL_UP_MUSHROOM_OBJECT_ID) {
+		return true;
+	}
+	return false;
 }

@@ -38,9 +38,6 @@
 
 #include "Game.h"
 
-#include "SPI.h"
-
-
 
 void FPU_init()
 {

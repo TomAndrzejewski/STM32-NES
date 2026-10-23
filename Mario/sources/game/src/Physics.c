@@ -68,6 +68,36 @@ void PHYSICS_Player_Update(PlayerState_t* player, const GameContext_t* ctx)
 	PHYSICS_Player_CalcMovementDirection(player);
 }
 
+void PHYSICS_Player_DeathStart(PlayerState_t* player)
+{
+	BOARD_ASSERT(player != NULL);
+
+	// Stop the horizontal movement and throw the player up
+	player->IsGrounded = false;
+	player->body.vx = 0.0f;
+	player->body.vy = 1.0f;
+	player->body.subpixelX = 0.0f;
+	player->body.subpixelY = 0.0f;
+}
+
+void PHYSICS_Player_DeathUpdate(PlayerState_t* player, const GameContext_t* ctx)
+{
+	BOARD_ASSERT(player != NULL);
+	BOARD_ASSERT(ctx != NULL);
+
+	// Y axis: fall with gravity up to the terminal velocity, ignoring the input and the ground
+	if (player->body.vy > -1.0f) {
+		float multiplier = 3.0f;
+		float dvy = ctx->input.frameData.frameTimeS * multiplier;
+		player->body.vy -= dvy;
+	}
+
+	// Accumulate subpixel movement from the vertical velocity
+	player->body.subpixelY += (player->body.vy * SUBPIXEL_RESOLUTION * 256) / TARGET_FRAMERATE_HZ;
+
+	PHYSICS_Player_CalcMapPos(player, ctx);
+}
+
 
 //----------------
 // PRIVATE FUNCTIONS

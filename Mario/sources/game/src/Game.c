@@ -14,6 +14,7 @@
 #include "Collision.h"
 #include "Game_Defs.h"
 #include "Game_Types.h"
+#include "GameState.h"
 #include "Geometry.h"
 #include "GraphicsAssets.h"
 #include "Input.h"
@@ -31,7 +32,6 @@
 //----------------
 // PRIVATE FUNCTION PROTOTYPES
 //----------------
-static void GAME_HandlePlayerLevelUp(GameContext_t* ctx);
 static void ENEMIES_UpdateFlags(Enemies_t* enemies, const GameContext_t* ctx);
 static void PLAYER_ClearFlags(PlayerState_t* player);
 static void GAME_CalcDirtyRect(const Point_t* prevPos, const Point_t* prevSize, const Point_t* currPos, const Point_t* currSize, Rect_t* dirtyRect);
@@ -52,7 +52,11 @@ void GAME_Init(void)
 	memset(ctx, 0, sizeof(GameContext_t));
 
 	ctx->firstGameLoop = true;
-	ctx->simulationPause = false;
+
+	///////////////////
+	// STATE MACHINE
+	///////////////////
+	GAME_STATE_Init(&ctx->stateMachine);
 
 	///////////////////
 	// STATISTICS
@@ -206,8 +210,6 @@ void GAME_Init(void)
 	ctx->player.damageTaken = false;
 	ctx->player.IsGrounded = true;
 	ctx->player.JustHitFGObjectFromBottom = false;
-	ctx->player.triggerLevelUp = false;
-	ctx->player.levelUpOngoing = false;
 	ctx->player.playerLevel = PLAYER_SMALL_MARIO;
 
 	///////////////////
@@ -231,18 +233,21 @@ void GAME_Update(void)
 	uint32_t targetFrameTimeUS = 1000000/TARGET_FRAMERATE_HZ;
 
 	GameStats_t* s = &ctx->stats;
-
-	// Big event, later use state machine
-	GAME_HandlePlayerLevelUp(ctx);
-
-	if (!ctx->simulationPause) {
-		ctx->input.frameData.simulationTimeUS += targetFrameTimeUS;
-	}
+	const GameStateMachine_t* sm = &ctx->stateMachine;
 
 	s->startTime[timeStamps] = GetTimestamp();
 	INPUT_Update(&ctx->input, targetFrameTimeUS);
 	s->finishTime[timeStamps] = GetTimestamp();
 	timeStamps++;
+
+	s->startTime[timeStamps] = GetTimestamp();
+	GAME_STATE_Update(&ctx->stateMachine, ctx);
+	s->finishTime[timeStamps] = GetTimestamp();
+	timeStamps++;
+
+	if (GAME_STATE_IsSystemEnabled(sm, GAME_SYSTEM_SIMULATION_TIME)) {
+		ctx->input.frameData.simulationTimeUS += targetFrameTimeUS;
+	}
 
 	// startTime[timeStamps] = GetTimestamp();
 	// FGOBJECTS_ClearFlags(pGameCtx);
@@ -250,7 +255,7 @@ void GAME_Update(void)
 	// timeStamps++;
 
 	s->startTime[timeStamps] = GetTimestamp();
-	if (!ctx->simulationPause) {
+	if (GAME_STATE_IsSystemEnabled(sm, GAME_SYSTEM_PLAYER_PHYSICS)) {
 		PHYSICS_Player_Update(&ctx->player, ctx);
 	}
 	s->finishTime[timeStamps] = GetTimestamp();
@@ -272,26 +277,31 @@ void GAME_Update(void)
 	timeStamps++;
 
 	s->startTime[timeStamps] = GetTimestamp();
-	if (!ctx->simulationPause) {
+	if (GAME_STATE_IsSystemEnabled(sm, GAME_SYSTEM_WORLD_PHYSICS)) {
 		PHYSICS_Update(ctx);
 	}
 	s->finishTime[timeStamps] = GetTimestamp();
 	timeStamps++;
 
+	// Collision flags of the player are cleared only when the collision sets them again
 	s->startTime[timeStamps] = GetTimestamp();
-	PLAYER_ClearFlags(&ctx->player);
+	if (GAME_STATE_IsSystemEnabled(sm, GAME_SYSTEM_COLLISION)) {
+		PLAYER_ClearFlags(&ctx->player);
+	}
 	s->finishTime[timeStamps] = GetTimestamp();
 	timeStamps++;
 
 	s->startTime[timeStamps] = GetTimestamp();
-	if (!ctx->simulationPause) {
+	if (GAME_STATE_IsSystemEnabled(sm, GAME_SYSTEM_COLLISION)) {
 		COLLISION_Update(ctx);
 	}
 	s->finishTime[timeStamps] = GetTimestamp();
 	timeStamps++;
 
 	s->startTime[timeStamps] = GetTimestamp();
-	ANIMATOR_Update(ctx);
+	if (GAME_STATE_IsSystemEnabled(sm, GAME_SYSTEM_ANIMATOR)) {
+		ANIMATOR_Update(ctx);
+	}
 	s->finishTime[timeStamps] = GetTimestamp();
 	timeStamps++;
 
@@ -426,16 +436,6 @@ void FGOBJECTS_GetDirtyRect(const ForegroundObject_t* obj, Rect_t* dirtyRect)
 //----------------
 // PRIVATE FUNCTIONS
 //----------------
-static void GAME_HandlePlayerLevelUp(GameContext_t* ctx)
-{
-	if (ctx->player.triggerLevelUp && ctx->player.levelUpOngoing) {
-		ctx->simulationPause = true;
-	}
-	else {
-		ctx->simulationPause = false;
-	}
-}
-
 static void ENEMIES_UpdateFlags(Enemies_t* enemies, const GameContext_t* ctx)
 {
 	for (int i = 0; i < enemies->activeEnemies; i++)

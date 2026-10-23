@@ -12,5 +12,7 @@
 
 void    PHYSICS_Update(GameContext_t* ctx);
 void    PHYSICS_Player_Update(PlayerState_t* player, const GameContext_t* ctx);
+void    PHYSICS_Player_DeathStart(PlayerState_t* player);
+void    PHYSICS_Player_DeathUpdate(PlayerState_t* player, const GameContext_t* ctx);
 
 #endif // SOURCES_INC_PHYSICS_H_
