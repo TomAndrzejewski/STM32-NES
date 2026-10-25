@@ -31,9 +31,10 @@
 //----------------
 static void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx);
 static void COLLISION_Player_FGObject_DetectBumpSide(const ForegroundObject_t* obj, const Rect_t* bumpRect, BumpSideEnum* bumpSide);
+static void COLLISION_Player_Enemy_DetectBumpSide(const EnemyState_t* enemy, const Rect_t* bumpRect, BumpSideEnum* bumpSide);
 static void COLLISION_Resolve(GameContext_t* ctx);
 static void COLLISION_Player_Floor(PlayerState_t* player, const GameContext_t* ctx);
-static void COLLISION_Player_Enemy(const PlayerState_t* player, const EnemyState_t* enemy, const Bump_t* bump, GameStateMachine_t* sm);
+static void COLLISION_Player_Enemy_Handle(PlayerState_t* player, EnemyState_t* enemy, BumpSideEnum bumpSide, GameStateMachine_t* sm);
 static void COLLISION_Player_PickupFGObject_Handle(ForegroundObject_t* obj, GameStateMachine_t* sm);
 static void COLLISION_Player_SolidFGObject_Handle(PlayerState_t* player, const ForegroundObject_t* obj, BumpSideEnum bumpSide);
 static void COLLISION_Player_SolidFGObject_SideEffect(ForegroundObject_t* obj, PlayerState_t* player, BumpSideEnum bumpSide, ObjectsManager_t* mgr);
@@ -116,17 +117,25 @@ static void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx
 
 		if (RECT_IsIntersection(&bumpRect)) {
 			if (coll->size < COLLISIONS_SIZE) {
-				coll->bumps[coll->size].bumpID = PLAYER_BUMP_FG_OBJECT;
-				coll->bumps[coll->size].actor1 = (GameObjectRef_t){ ctx->player.id, 0 };
-				coll->bumps[coll->size].actor2 = (GameObjectRef_t){ fgObject->id, indexLUT };
-				coll->bumps[coll->size].bumpRect = bumpRect;
-				COLLISION_Player_FGObject_DetectBumpSide(fgObject, &bumpRect, &coll->bumps[coll->size].bumpSide);
+				Bump_t* bump = &coll->bumps[coll->size];
+				bump->bumpID = PLAYER_BUMP_FG_OBJECT;
+				bump->actor1 = (GameObjectRef_t){ ctx->player.id, 0 };
+				bump->actor2 = (GameObjectRef_t){ fgObject->id, indexLUT };
+				bump->bumpRect = bumpRect;
+				COLLISION_Player_FGObject_DetectBumpSide(fgObject, &bumpRect, &bump->bumpSide);
 				coll->size++;
 			}
 		}
 	}
 
 	// Player bumps enemies
+	// Smaller bbox :)
+	Rect_t playerRectAgainstEnemy = playerRect;
+	playerRectAgainstEnemy.p1.x += 5;
+	playerRectAgainstEnemy.p2.x -= 5;
+	playerRectAgainstEnemy.p1.y += 5;
+	playerRectAgainstEnemy.p2.y -= 5;
+
 	for (int i = 0; i < ctx->enemies.activeEnemies; i++)
 	{
 		int indexLUT = ctx->enemies.enemiesLUT[i];
@@ -142,14 +151,16 @@ static void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx
 		enemyRect.p2.y = enemy->currMapPos.y + enemy->asset.BBox.p2.y;
 
 		Rect_t bumpRect = {0};
-		RECT_GetIntersection(&playerRect, &enemyRect, &bumpRect);
+		RECT_GetIntersection(&playerRectAgainstEnemy, &enemyRect, &bumpRect);
 
 		if (RECT_IsIntersection(&bumpRect)) {
 			if (coll->size < COLLISIONS_SIZE) {
-				coll->bumps[coll->size].bumpID = PLAYER_BUMP_ENEMY;
-				coll->bumps[coll->size].actor1 = (GameObjectRef_t){ ctx->player.id, 0 };
-				coll->bumps[coll->size].actor2 = (GameObjectRef_t){ enemy->id, indexLUT };
-				coll->bumps[coll->size].bumpRect = bumpRect;
+				Bump_t* bump = &coll->bumps[coll->size];
+				bump->bumpID = PLAYER_BUMP_ENEMY;
+				bump->actor1 = (GameObjectRef_t){ ctx->player.id, 0 };
+				bump->actor2 = (GameObjectRef_t){ enemy->id, indexLUT };
+				bump->bumpRect = bumpRect;
+				COLLISION_Player_Enemy_DetectBumpSide(enemy, &bumpRect, &bump->bumpSide);
 				coll->size++;
 			}
 		}
@@ -361,6 +372,56 @@ static void COLLISION_Player_FGObject_DetectBumpSide(const ForegroundObject_t* o
 	}
 }
 
+// Finds bump side seen from bumped object perspective (i.e. player jumps on top of object then BUMP_SIDE_TOP is set)
+static void COLLISION_Player_Enemy_DetectBumpSide(const EnemyState_t* enemy, const Rect_t* bumpRect, BumpSideEnum* bumpSide)
+{
+	*bumpSide = BUMP_SIDE_NONE;
+
+	const int bumpLenX = RECT_CalcXLen(bumpRect);
+	const int bumpLenY = RECT_CalcYLen(bumpRect);
+
+	// Vertical collision (top/bottom)
+	if (bumpLenX >= bumpLenY) {
+		if (!(enemy->assetFlags & COLL_TOP_ENABLED) && !(enemy->assetFlags & COLL_DOWN_ENABLED)) return;
+		if (bumpLenX <= COLLISION_THRESHOLD_VERTICAL) return;
+
+		int bumpCenterY = (bumpRect->p1.y + bumpRect->p2.y) / 2;
+
+		// Landing on top of the object
+		if (bumpCenterY > enemy->BBoxCenter.y) {
+			if (enemy->assetFlags & COLL_TOP_ENABLED) {
+				*bumpSide = BUMP_SIDE_TOP;
+			}
+		}
+		// Bumping from the bottom
+		else {
+			if (enemy->assetFlags & COLL_DOWN_ENABLED) {
+				*bumpSide = BUMP_SIDE_BOTTOM;
+			}
+		}
+	}
+	// Horizontal collision (left/right)
+	else {
+		if (!(enemy->assetFlags & COLL_LEFT_ENABLED) && !(enemy->assetFlags & COLL_RIGHT_ENABLED)) return;
+		if (bumpLenY <= COLLISION_THRESHOLD_HORIZONTAL) return;
+
+		int bumpCenterX = (bumpRect->p1.x + bumpRect->p2.x) / 2;
+
+		// Bumping from the right
+		if (bumpCenterX > enemy->BBoxCenter.x) {
+			if (enemy->assetFlags & COLL_RIGHT_ENABLED) {
+				*bumpSide = BUMP_SIDE_RIGHT;
+			}
+		}
+		// Bumping from the left
+		else {
+			if (enemy->assetFlags & COLL_LEFT_ENABLED) {
+				*bumpSide = BUMP_SIDE_LEFT;
+			}
+		}
+	}
+}
+
 static void COLLISION_Resolve(GameContext_t* ctx)
 {
 	for (int i = 0; i < ctx->collision.size; i++)
@@ -378,7 +439,7 @@ static void COLLISION_Resolve(GameContext_t* ctx)
 			const GameObjectRef_t* actor = (bump->actor1.id == ctx->player.id) ? &bump->actor2 : &bump->actor1;
 			EnemyState_t* enemy = &ctx->enemies.pool[actor->index];
 
-			COLLISION_Player_Enemy(&ctx->player, enemy, bump, &ctx->stateMachine);
+			COLLISION_Player_Enemy_Handle(&ctx->player, enemy, bump->bumpSide, &ctx->stateMachine);
 			break;
 		}
 		case PLAYER_BUMP_FG_OBJECT:
@@ -445,14 +506,33 @@ static void COLLISION_Player_Floor(PlayerState_t* player, const GameContext_t* c
 	}
 }
 
-static void COLLISION_Player_Enemy(const PlayerState_t* player, const EnemyState_t* enemy, const Bump_t* bump, GameStateMachine_t* sm)
+static void COLLISION_Player_Enemy_Handle(PlayerState_t* player, EnemyState_t* enemy, BumpSideEnum bumpSide, GameStateMachine_t* sm)
 {
-	(void)bump;
-	(void)sm;
+	switch (bumpSide)
+	{
+	// Land on top of the object
+	case BUMP_SIDE_TOP:
+	{
+		// Player jumps
+		player->body.vy = 1.0f;
 
-	// Any touch of a living enemy kills the player
-	if (enemy->currFlags.IsAlive && !player->IsImmune) {
-		// GAME_STATE_RaiseEvent(sm, GAME_EVENT_PLAYER_DIED);
+		// Enemy dies
+		enemy->currFlags.IsAlive = false;
+
+		break;
+	}
+	case BUMP_SIDE_BOTTOM:
+	case BUMP_SIDE_LEFT:
+	case BUMP_SIDE_RIGHT:
+	{
+		if (!player->IsImmune) {
+			GAME_STATE_RaiseEvent(sm, GAME_EVENT_PLAYER_DIED);
+		}
+
+		break;
+	}
+	default:
+		break;
 	}
 }
 

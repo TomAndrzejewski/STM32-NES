@@ -452,6 +452,7 @@ static void OBJECTS_MANAGER_Enemy_Load(EnemyState_t* enemy, const ObjectLevelIns
 		break;
 	}
 
+	enemy->assetFlags = objectDef->flags;
 	enemy->BBoxCenter.x = objectDef->x + (enemy->asset.BBox.p1.x + enemy->asset.BBox.p2.x) / 2;
 	enemy->BBoxCenter.y = objectDef->y + (enemy->asset.BBox.p1.y + enemy->asset.BBox.p2.y) / 2;
 	enemy->currFlags.IsAlive = true;

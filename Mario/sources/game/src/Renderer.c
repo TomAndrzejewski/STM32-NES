@@ -423,6 +423,8 @@ void RENDERER_DirtyRects_Render(RendererState_t* renderer, const GameContext_t* 
 				continue;
 			}
 			const EnemyState_t* enemy = &ctx->enemies.pool[indexLUT];
+			if (!enemy->currFlags.IsAlive) { continue; }
+			if (enemy->assetFlags & HIDDEN) { continue; }
 
 			RENDERER_RenderEnemy(enemy, &dirtyRect->rect, &screenRect, renderer->LCDOffsetX);
 		}
