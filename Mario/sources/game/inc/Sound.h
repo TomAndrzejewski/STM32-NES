@@ -27,7 +27,9 @@
 #define SOUND_SQUARE_WAVE_AMPLITUDE		(4000)
 
 #define SOUND_VOLUME_MIN				(0)
-#define SOUND_VOLUME_MAX				(1)
+#define SOUND_VOLUME_MAX				(4)
+#define SOUND_VOLUME_INC				(1)
+#define SOUND_VOLUME_STEPS				((SOUND_VOLUME_MAX - SOUND_VOLUME_MIN) / SOUND_VOLUME_INC)
 
 
 typedef struct

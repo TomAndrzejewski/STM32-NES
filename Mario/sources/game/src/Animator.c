@@ -283,6 +283,11 @@ static void ANIMATOR_Enemy_Decide(EnemyState_t* enemy, const GameContext_t* ctx)
 
 static void ANIMATOR_Enemy_SetAsset(EnemyState_t* enemy)
 {
+	BOARD_ASSERT(enemy->animableAsset != NULL);
+
+	// save sprite size for dirty rects
+	enemy->prevSpriteSize = enemy->asset.baseAsset.sprite.size;
+
 	int assetIndex = -1;
 	for (int i = 0; i < enemy->animableAsset->baseAssetsCount; i++)
 	{

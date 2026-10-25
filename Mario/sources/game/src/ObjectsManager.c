@@ -307,7 +307,7 @@ static void OBJECTS_MANAGER_FGObject_Load(ForegroundObject_t* obj, const ObjectL
 	fast_memset(obj, 0, sizeof(ForegroundObject_t));
 	
 	obj->animableAsset = NULL;
-    obj->currFlags.startPhysics = false;
+    obj->currFlags.startTimeBasedPhysics = false;
 	obj->currFlags.renderInBackground = false;
 
 	switch (objectDef->id)
@@ -370,7 +370,7 @@ static void OBJECTS_MANAGER_FGObject_Load(ForegroundObject_t* obj, const ObjectL
 		tbased->currentIndex = 0;
 		tbased->repeatedCounter = 0;
 
-        obj->currFlags.startPhysics = true; // trigger physics instantly
+        obj->currFlags.startTimeBasedPhysics = true; // trigger physics instantly
 
 		break;
 	}
@@ -385,7 +385,7 @@ static void OBJECTS_MANAGER_FGObject_Load(ForegroundObject_t* obj, const ObjectL
 		tbased->currentIndex = 0;
 		tbased->repeatedCounter = 0;
 
-        obj->currFlags.startPhysics = true; // trigger physics instantly
+        obj->currFlags.startTimeBasedPhysics = true; // trigger physics instantly
 
 		obj->currFlags.renderInBackground = true;
 
@@ -420,11 +420,18 @@ static void OBJECTS_MANAGER_Enemy_Load(EnemyState_t* enemy, const ObjectLevelIns
 
 	enemy->id = objectDef->id;
 	enemy->animableAsset = NULL;
+    enemy->currFlags.physicsOngoing = false;
 
 	switch (enemy->id)
 	{
 	case ENEMY_GOOMBA_ID: {
 		enemy->asset = GOOMBA_ASSET;
+
+		// Configure body based movement
+		enemy->physics.type = PHYSICS_VELOCITY;
+		memset(&enemy->physics.engine, 0, sizeof(enemy->physics.engine));
+		enemy->physics.engine.body.vx = -0.15f;
+
 		break;
 	}
 	case ENEMY_KOOPA_ID: {
@@ -432,6 +439,12 @@ static void OBJECTS_MANAGER_Enemy_Load(EnemyState_t* enemy, const ObjectLevelIns
 		enemy->asset.id = enemy->animableAsset->id;
 		enemy->asset.BBox = enemy->animableAsset->BBox;
 		enemy->currAnimation = KOOPA_WALK_1_ANIMATION_ID;
+
+		// Configure body based movement
+		enemy->physics.type = PHYSICS_VELOCITY;
+		memset(&enemy->physics.engine, 0, sizeof(enemy->physics.engine));
+		enemy->physics.engine.body.vx = -0.15f;
+
 		break;
 	}
 	default:
@@ -439,11 +452,20 @@ static void OBJECTS_MANAGER_Enemy_Load(EnemyState_t* enemy, const ObjectLevelIns
 		break;
 	}
 
-	enemy->IsAlive = true;
-	enemy->IsOnScreen = false;
-	enemy->currMapPos.x = objectDef->x;
-	enemy->currMapPos.y = objectDef->y;
-	enemy->prevMapPos = enemy->currMapPos;
+	enemy->BBoxCenter.x = objectDef->x + (enemy->asset.BBox.p1.x + enemy->asset.BBox.p2.x) / 2;
+	enemy->BBoxCenter.y = objectDef->y + (enemy->asset.BBox.p1.y + enemy->asset.BBox.p2.y) / 2;
+	enemy->currFlags.IsAlive = true;
+	enemy->currFlags.IsOnScreen = true;
+	enemy->currFlags.playerBumpedFromBelow = false;
+	enemy->currFlags.clearRenderedSprite = false;
+	enemy->currFlags.IsGrounded = false;
+	enemy->currFlags.startTimeBasedPhysics = false;
+	enemy->currFlags.renderInBackground = false;
+	enemy->prevFlags = enemy->currFlags;
+	enemy->origMapPos.x = objectDef->x;
+	enemy->origMapPos.y = objectDef->y;
+	enemy->currMapPos = enemy->origMapPos;
+	enemy->prevMapPos = enemy->origMapPos;
 	enemy->prevSpriteSize = enemy->asset.baseAsset.sprite.size;
 }
 

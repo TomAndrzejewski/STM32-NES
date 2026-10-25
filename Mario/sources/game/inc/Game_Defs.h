@@ -15,7 +15,7 @@
 
 ///////////////////////////////////////////////////////////////////
 #define OBJECTS_MANAGER_LEFT_DESPAWN_OFFSET		(64)
-#define OBJECTS_MANAGER_RIGHT_SPAWN_OFFSET		(64)
+#define OBJECTS_MANAGER_RIGHT_SPAWN_OFFSET		(32)
 
 #define OBJECTS_MANAGER_SPAWN_BUFFER_MAX_SIZE	(4)
 

@@ -19,12 +19,20 @@
 //----------------
 // PRIVATE FUNCTION PROTOTYPES
 //----------------
+static void PHYSICS_Enemy_Update(EnemyState_t* enemy, const GameContext_t* ctx);
+static void PHYSICS_Enemy_Time_Movement(EnemyState_t* enemy, const GameContext_t* ctx);
+static void PHYSICS_Enemy_Time_Movement_Finish(EnemyState_t* enemy);
+static void PHYSICS_Enemy_Velocity_Movement(EnemyState_t* enemy, const GameContext_t* ctx);
+static void PHYSICS_Enemy_Velocity_CalcMapPos(EnemyState_t* enemy);
+static void PHYSICS_Enemy_SaveFlags(EnemyState_t* enemy);
+
 static void PHYSICS_FGObject_Update(ForegroundObject_t* obj, const GameContext_t* ctx);
 static void PHYSICS_FGObject_Time_Movement(ForegroundObject_t* obj, const GameContext_t* ctx);
 static void PHYSICS_FGObject_Time_Movement_Finish(ForegroundObject_t* obj);
 static void PHYSICS_FGObject_Velocity_Movement(ForegroundObject_t* obj, const GameContext_t* ctx);
 static void PHYSICS_FGObject_Velocity_CalcMapPos(ForegroundObject_t* obj);
 static void PHYSICS_FGObject_SaveFlags(ForegroundObject_t* obj);
+
 static void PHYSICS_Player_RestartFlags(PlayerState_t* player);
 static void PHYSICS_Player_Movement(PlayerState_t* player, const GameContext_t* ctx);
 static void PHYSICS_Player_CalcMapPos(PlayerState_t* player, const GameContext_t* ctx);
@@ -51,6 +59,17 @@ void PHYSICS_Update(GameContext_t* ctx)
 		}
 
 		PHYSICS_FGObject_Update(obj, ctx);
+	}
+
+	for (int i = 0; i < ctx->enemies.activeEnemies; i++)
+	{
+		int indexLUT = ctx->enemies.enemiesLUT[i];
+		if (!ctx->enemies.IsEnemyActive[indexLUT]) continue;
+
+		EnemyState_t* enemy = &ctx->enemies.pool[indexLUT];
+		if (!enemy->currFlags.IsAlive) continue;
+
+		PHYSICS_Enemy_Update(enemy, ctx);
 	}
 }
 
@@ -102,6 +121,171 @@ void PHYSICS_Player_DeathUpdate(PlayerState_t* player, const GameContext_t* ctx)
 //----------------
 // PRIVATE FUNCTIONS
 //----------------
+static void PHYSICS_Enemy_Update(EnemyState_t* enemy, const GameContext_t* ctx)
+{
+	enemy->prevMapPos = enemy->currMapPos;
+
+	//todotomka slabo ze to sie tutaj robi, trzeba jakos usystematyzowac flagi
+	enemy->currFlags.IsGrounded = false;
+
+	PHYSICS_Enemy_Time_Movement(enemy, ctx);
+
+	PHYSICS_Enemy_Velocity_Movement(enemy, ctx);
+
+	PHYSICS_Enemy_Velocity_CalcMapPos(enemy);
+
+	PHYSICS_Enemy_SaveFlags(enemy);
+}
+
+static void PHYSICS_Enemy_Time_Movement(EnemyState_t* enemy, const GameContext_t* ctx)
+{
+	// Time based physics switched off
+	if (enemy->physics.type != PHYSICS_TIME) {
+		return;
+	}
+
+	TimeBasedMovement_t* mv = &enemy->physics.engine.timeBased;
+	if (mv->asset == NULL) {
+		return;
+	}
+
+	// Trigger physics if bumped
+	if (!enemy->prevFlags.playerBumpedFromBelow && enemy->currFlags.playerBumpedFromBelow) {
+		enemy->currFlags.startTimeBasedPhysics = true;
+	}
+
+	// Start the movement
+	if (enemy->currFlags.startTimeBasedPhysics) {
+		enemy->currFlags.startTimeBasedPhysics = false;
+		enemy->currFlags.physicsOngoing = true;
+		mv->elapsedTimeUS = ctx->input.frameData.simulationTimeUS;
+	}
+
+	if (enemy->currFlags.physicsOngoing)
+	{
+		// Finish the movement and rewind its frames
+		if (mv->currentIndex >= mv->asset->framesCount) {
+			enemy->currFlags.physicsOngoing = false;
+			mv->currentIndex = 0;
+			// Object-specific follow-up: decides what the object becomes once its movement has ended
+			PHYSICS_Enemy_Time_Movement_Finish(enemy);
+			return;
+		}
+
+		if (mv->asset->movementFramesY != NULL && enemy->currFlags.physicsOngoing) {
+			const MovementFrameY_t* mvFrame = &mv->asset->movementFramesY[mv->currentIndex];
+
+			// Move by one step once the frame duration has passed, then advance to the next frame after all its repeats
+			uint32_t tdiffUS = ctx->input.frameData.simulationTimeUS - mv->elapsedTimeUS;
+			if (tdiffUS > mvFrame->durationUS) {
+				enemy->currMapPos.y += mvFrame->dy;
+				mv->elapsedTimeUS = ctx->input.frameData.simulationTimeUS;
+				mv->repeatedCounter++;
+				if (mv->repeatedCounter >= mvFrame->repeatCount) {
+					mv->currentIndex++;
+					mv->repeatedCounter = 0;
+				}
+			}
+		}
+	}
+}
+
+static void PHYSICS_Enemy_Time_Movement_Finish(EnemyState_t* enemy)
+{
+	switch(enemy->id)
+	{
+	default:
+		break;
+	}
+}
+
+static void PHYSICS_Enemy_Velocity_Movement(EnemyState_t* enemy, const GameContext_t* ctx)
+{
+	switch(enemy->id)
+	{
+	case ENEMY_GOOMBA_ID:
+	{
+		if (enemy->physics.type != PHYSICS_VELOCITY) {
+			break;
+		}
+
+		Body_t* body = &enemy->physics.engine.body;
+
+		// Y axis: stand on the ground or fall with gravity up to the terminal velocity
+		if (enemy->currFlags.IsGrounded) {
+			body->vy = 0.0f;
+		}
+		else if (body->vy > -0.7f) {
+			float multiplier = 1.6f;
+			float dvy = ctx->input.frameData.frameTimeS * multiplier;
+			body->vy -= dvy;
+		}
+
+		// Accumulate subpixel movement from the velocities
+		if (enemy->currFlags.physicsOngoing) {
+			body->subpixelX += (body->vx * SUBPIXEL_RESOLUTION * 256) / TARGET_FRAMERATE_HZ;
+			body->subpixelY += (body->vy * SUBPIXEL_RESOLUTION * 256) / TARGET_FRAMERATE_HZ;
+		}
+
+		break;
+	}
+	default:
+		break;
+	}
+}
+
+static void PHYSICS_Enemy_Velocity_CalcMapPos(EnemyState_t* enemy)
+{
+	int pixelsToMove = 0;
+
+	const Rect_t* levelBounds = NULL;
+	int ret = LEVEL_GetLevelBoundaries(&levelBounds);
+	BOARD_ASSERT(ret == 0 && levelBounds != NULL);
+
+	switch (enemy->id)
+	{
+	case ENEMY_GOOMBA_ID:
+	{
+		if (enemy->physics.type != PHYSICS_VELOCITY) break;
+
+		Body_t* body = &enemy->physics.engine.body;
+
+		// Y axis: move by the whole pixels collected in subpixels, only within the level
+		pixelsToMove = (int)body->subpixelY / SUBPIXEL_RESOLUTION;
+		if (pixelsToMove != 0) {
+			body->subpixelY -= pixelsToMove * SUBPIXEL_RESOLUTION;
+
+			int movedPosY = enemy->currMapPos.y + pixelsToMove;
+			if (movedPosY >= levelBounds->p1.y && movedPosY < levelBounds->p2.y) {
+				enemy->currMapPos.y += pixelsToMove;
+			}
+		}
+
+		// X axis: move by the whole pixels collected in subpixels, only within the level
+		pixelsToMove = (int)body->subpixelX / SUBPIXEL_RESOLUTION;
+		if (pixelsToMove != 0) {
+			body->subpixelX -= pixelsToMove * SUBPIXEL_RESOLUTION;
+
+			int movedPosX = enemy->currMapPos.x + pixelsToMove;
+			if (movedPosX >= levelBounds->p1.x && movedPosX < levelBounds->p2.x) {
+				enemy->currMapPos.x += pixelsToMove;
+			}
+		}
+
+		break;
+	}
+	default:
+		break;
+	}
+}
+
+static void PHYSICS_Enemy_SaveFlags(EnemyState_t* enemy)
+{
+	enemy->prevFlags = enemy->currFlags;
+}
+
+
+
 static void PHYSICS_FGObject_Update(ForegroundObject_t* obj, const GameContext_t* ctx)
 {
 	obj->prevMapPos = obj->currMapPos;
@@ -132,12 +316,12 @@ static void PHYSICS_FGObject_Time_Movement(ForegroundObject_t* obj, const GameCo
 
 	// Trigger physics if bumped
 	if (!obj->prevFlags.playerBumpedFromBelow && obj->currFlags.playerBumpedFromBelow) {
-		obj->currFlags.startPhysics = true;
+		obj->currFlags.startTimeBasedPhysics = true;
 	}
 
 	// Start the movement
-	if (obj->currFlags.startPhysics) {
-		obj->currFlags.startPhysics = false;
+	if (obj->currFlags.startTimeBasedPhysics) {
+		obj->currFlags.startTimeBasedPhysics = false;
 		obj->currFlags.physicsOngoing = true;
 		mv->elapsedTimeUS = ctx->input.frameData.simulationTimeUS;
 	}

@@ -33,9 +33,9 @@
 // PRIVATE FUNCTION PROTOTYPES
 //----------------
 static void ENEMIES_UpdateFlags(Enemies_t* enemies, const GameContext_t* ctx);
+static bool ENEMIES_CalcIsOnScreen(const EnemyState_t* enemy, const Rect_t* screenRect);
 static void PLAYER_ClearFlags(PlayerState_t* player);
 static void GAME_CalcDirtyRect(const Point_t* prevPos, const Point_t* prevSize, const Point_t* currPos, const Point_t* currSize, Rect_t* dirtyRect);
-static bool ENEMIES_CalcIsOnScreen(const EnemyState_t* enemy, const Rect_t* screenRect);
 
 
 static GameContext_t s_gameCtx = {0};
@@ -441,11 +441,30 @@ static void ENEMIES_UpdateFlags(Enemies_t* enemies, const GameContext_t* ctx)
 	for (int i = 0; i < enemies->activeEnemies; i++)
 	{
 		int indexLUT = enemies->enemiesLUT[i];
+		if (!enemies->IsEnemyActive[indexLUT]) continue;
 
-		if (!enemies->IsEnemyActive[indexLUT]) {
-			continue;
+		EnemyState_t* enemy = &enemies->pool[indexLUT];
+		enemy->currFlags.IsOnScreen = ENEMIES_CalcIsOnScreen(enemy, &ctx->camera.screenRect);
+		if (!enemy->prevFlags.IsOnScreen && enemy->currFlags.IsOnScreen) {
+			enemy->currFlags.physicsOngoing = true;
 		}
-		enemies->pool[indexLUT].IsOnScreen = ENEMIES_CalcIsOnScreen(&enemies->pool[indexLUT], &ctx->camera.screenRect);
+	}
+}
+
+static bool ENEMIES_CalcIsOnScreen(const EnemyState_t* enemy, const Rect_t* screenRect)
+{
+	Rect_t enemyRect;
+	enemyRect.p1 = enemy->currMapPos;
+	enemyRect.p2.x = enemy->currMapPos.x + enemy->asset.baseAsset.sprite.size.x;
+	enemyRect.p2.y = enemy->currMapPos.y + enemy->asset.baseAsset.sprite.size.y;
+
+	Rect_t commonRect = {0};
+	RECT_GetIntersection(&enemyRect, screenRect, &commonRect);
+
+	if (RECT_IsIntersection(&commonRect)) {
+		return true;
+	} else {
+		return false;
 	}
 }
 
@@ -475,21 +494,4 @@ static void GAME_CalcDirtyRect(const Point_t* prevPos, const Point_t* prevSize, 
 
 	// Inverted rect means a negative sprite size: check the asset definition
 	BOARD_ASSERT(dirtyRect->p1.x <= dirtyRect->p2.x && dirtyRect->p1.y <= dirtyRect->p2.y);
-}
-
-static bool ENEMIES_CalcIsOnScreen(const EnemyState_t* enemy, const Rect_t* screenRect)
-{
-	Rect_t enemyRect;
-	enemyRect.p1 = enemy->currMapPos;
-	enemyRect.p2.x = enemy->currMapPos.x + enemy->asset.baseAsset.sprite.size.x;
-	enemyRect.p2.y = enemy->currMapPos.y + enemy->asset.baseAsset.sprite.size.y;
-
-	Rect_t commonRect = {0};
-	RECT_GetIntersection(&enemyRect, screenRect, &commonRect);
-
-	if (RECT_IsIntersection(&commonRect)) {
-		return true;
-	} else {
-		return false;
-	}
 }

@@ -82,8 +82,8 @@ static SoundNote_t s_currNote = {0};
 static SquareWaveOscillator_t s_squareOsc = {0};
 
 // Volume buttons are wired to GPIOB inputs and read as low when pressed
-#define SOUND_MUTE_BUTTON_PIN			(GPIO_IDR_ID2)
-#define SOUND_UNMUTE_BUTTON_PIN			(GPIO_IDR_ID1)
+#define SOUND_MUTE_BUTTON_PIN			(GPIO_IDR_ID1)
+#define SOUND_UNMUTE_BUTTON_PIN			(GPIO_IDR_ID2)
 
 static int16_t s_volumeGain = SOUND_VOLUME_MIN;
 static uint32_t s_prevVolumeButtons = 0;
@@ -161,12 +161,15 @@ static void SOUND_HandleVolumeButtons(void)
 
 	if (pressed & SOUND_MUTE_BUTTON_PIN)
 	{
-		s_volumeGain = SOUND_VOLUME_MIN;
+		s_volumeGain += SOUND_VOLUME_INC;
 	}
 	if (pressed & SOUND_UNMUTE_BUTTON_PIN)
 	{
-		s_volumeGain = SOUND_VOLUME_MAX;
+		s_volumeGain -= SOUND_VOLUME_INC;
 	}
+
+	if (s_volumeGain > SOUND_VOLUME_MAX) s_volumeGain = SOUND_VOLUME_MAX;
+	if (s_volumeGain < SOUND_VOLUME_MIN) s_volumeGain = SOUND_VOLUME_MIN; 
 }
 
 static int SOUND_Update(int bufferHalf)
@@ -220,7 +223,7 @@ static int SOUND_SynthSamples(int16_t samplesBuf[], int samplesToSynth)
 	{
 		// Trigger oscillator
 		int16_t sample = SOUND_GetSample(&s_squareOsc);
-		sample = (int16_t)(sample * s_volumeGain);
+		sample = (int16_t)(sample * s_volumeGain/SOUND_VOLUME_STEPS);
 		samplesBuf[2 * i] = sample;
 		samplesBuf[2 * i + 1] = sample;
 
@@ -256,7 +259,7 @@ static int16_t SOUND_GetSample(SquareWaveOscillator_t* osc)
 
 	// Get sample
 	sample = get_sine_p360(osc->phase);
-	sample = sample/32;
+	sample = sample/8;
 //	if (osc->phase < 0.5f) {
 //		sample = osc->amplitude;
 //	} else {

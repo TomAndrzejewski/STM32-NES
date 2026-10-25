@@ -37,6 +37,8 @@ static void COLLISION_Player_Enemy(const PlayerState_t* player, const EnemyState
 static void COLLISION_Player_PickupFGObject_Handle(ForegroundObject_t* obj, GameStateMachine_t* sm);
 static void COLLISION_Player_SolidFGObject_Handle(PlayerState_t* player, const ForegroundObject_t* obj, BumpSideEnum bumpSide);
 static void COLLISION_Player_SolidFGObject_SideEffect(ForegroundObject_t* obj, PlayerState_t* player, BumpSideEnum bumpSide, ObjectsManager_t* mgr);
+static void COLLISION_Enemy_FGObject(EnemyState_t* actor, ForegroundObject_t* obj, const Bump_t* bump);
+static void COLLISION_Enemy_Floor(EnemyState_t* actor, const GameContext_t* ctx);
 static void COLLISION_FGObject_FGObject(ForegroundObject_t* actor, ForegroundObject_t* obj, const Bump_t* bump);
 static void COLLISION_FGObject_Floor(ForegroundObject_t* actor, const GameContext_t* ctx);
 static bool COLLISION_IsPickupFGObject(GameObjectID id);
@@ -97,20 +99,11 @@ static void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx
 	for (int i = 0; i < ctx->activefgObjects; i++)
 	{
 		int indexLUT = ctx->fgObjectsLUT[i];
-
-		if (!ctx->IsFGObjectActive[indexLUT]) {
-			continue;
-		}
+		if (!ctx->IsFGObjectActive[indexLUT]) continue;
 
 		const ForegroundObject_t* fgObject = &ctx->fgObjects[indexLUT];
-
-		if (!fgObject->currFlags.IsAlive) {
-			continue;
-		}
-
-		if (!(fgObject->assetFlags & COLL_ANY_ENABLED) && !COLLISION_IsPickupFGObject(fgObject->id)) {
-			continue;
-		}
+		if (!fgObject->currFlags.IsAlive) continue;
+		if (!(fgObject->assetFlags & COLL_ANY_ENABLED) && !COLLISION_IsPickupFGObject(fgObject->id)) continue;
 
 		Rect_t objRect;
 		objRect.p1.x = fgObject->currMapPos.x + fgObject->asset.BBox.p1.x;
@@ -137,16 +130,10 @@ static void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx
 	for (int i = 0; i < ctx->enemies.activeEnemies; i++)
 	{
 		int indexLUT = ctx->enemies.enemiesLUT[i];
-
-		if (!ctx->enemies.IsEnemyActive[indexLUT]) {
-			continue;
-		}
+		if (!ctx->enemies.IsEnemyActive[indexLUT]) continue;
 
 		const EnemyState_t* enemy = &ctx->enemies.pool[indexLUT];
-
-		if (!enemy->IsOnScreen) {
-			continue;
-		}
+		if (!enemy->currFlags.IsAlive) continue;
 
 		Rect_t enemyRect;
 		enemyRect.p1.x = enemy->currMapPos.x + enemy->asset.BBox.p1.x;
@@ -249,6 +236,73 @@ static void COLLISION_Calculate(CollisionState_t* coll, const GameContext_t* ctx
 					coll->bumps[coll->size].bumpID = FG_OBJECT_BUMP_FG_OBJECT;
 					coll->bumps[coll->size].actor1 = (GameObjectRef_t){ fgObject->id, indexLUT };
 					coll->bumps[coll->size].actor2 = (GameObjectRef_t){ fgObject2->id, indexLUT2 };
+					coll->bumps[coll->size].bumpRect = bumpRect;
+					coll->size++;
+				}
+			}
+		}
+	}
+
+	// Enemies bump floor or other foreground objects
+	for (int i = 0; i < ctx->enemies.activeEnemies; i++)
+	{
+		int indexLUT = ctx->enemies.enemiesLUT[i];
+		if (!ctx->enemies.IsEnemyActive[indexLUT]) continue;
+
+		const EnemyState_t* enemy = &ctx->enemies.pool[indexLUT];
+		if (!enemy->currFlags.IsAlive) continue;
+		if (enemy->physics.type != PHYSICS_VELOCITY) continue;
+
+		Rect_t objRect;
+		objRect.p1.x = enemy->currMapPos.x + enemy->asset.BBox.p1.x;
+		objRect.p1.y = enemy->currMapPos.y + enemy->asset.BBox.p1.y;
+		objRect.p2.x = enemy->currMapPos.x + enemy->asset.BBox.p2.x;
+		objRect.p2.y = enemy->currMapPos.y + enemy->asset.BBox.p2.y;
+
+		// Enemy bumps floor
+		Rect_t bumpRect = {0};
+		RECT_GetIntersection(&objRect, &floorRect, &bumpRect);
+
+		if (RECT_IsIntersection(&bumpRect)) {
+			if (coll->size < COLLISIONS_SIZE) {
+				coll->bumps[coll->size].bumpID = ENEMY_BUMP_FLOOR;
+				coll->bumps[coll->size].actor1 = (GameObjectRef_t){ enemy->id, indexLUT };
+				coll->bumps[coll->size].actor2 = (GameObjectRef_t){ 0, 0 };
+				coll->bumps[coll->size].bumpRect = bumpRect;
+				coll->size++;
+			}
+		}
+
+		// Enemy bumps other foreground objects
+		for (int j = 0; j < ctx->activefgObjects; j++)
+		{
+			int indexLUT2 = ctx->fgObjectsLUT[j];
+			if (!ctx->IsFGObjectActive[indexLUT2]) continue;
+
+			const ForegroundObject_t* fgObject = &ctx->fgObjects[indexLUT2];
+
+			if (!fgObject->currFlags.IsAlive) {
+				continue;
+			}
+
+			if (!(fgObject->assetFlags & COLL_ANY_ENABLED)) {
+				continue;
+			}
+
+			Rect_t objRect2;
+			objRect2.p1.x = fgObject->currMapPos.x + fgObject->asset.BBox.p1.x;
+			objRect2.p1.y = fgObject->currMapPos.y + fgObject->asset.BBox.p1.y;
+			objRect2.p2.x = fgObject->currMapPos.x + fgObject->asset.BBox.p2.x;
+			objRect2.p2.y = fgObject->currMapPos.y + fgObject->asset.BBox.p2.y;
+
+			Rect_t bumpRect = {0};
+			RECT_GetIntersection(&objRect, &objRect2, &bumpRect);
+
+			if (RECT_IsIntersection(&bumpRect)) {
+				if (coll->size < COLLISIONS_SIZE) {
+					coll->bumps[coll->size].bumpID = ENEMY_BUMP_FG_OBJECT;
+					coll->bumps[coll->size].actor1 = (GameObjectRef_t){ enemy->id, indexLUT };
+					coll->bumps[coll->size].actor2 = (GameObjectRef_t){ fgObject->id, indexLUT2 };
 					coll->bumps[coll->size].bumpRect = bumpRect;
 					coll->size++;
 				}
@@ -359,6 +413,21 @@ static void COLLISION_Resolve(GameContext_t* ctx)
 			COLLISION_FGObject_Floor(obj, ctx);
 			break;
 		}
+		case ENEMY_BUMP_FG_OBJECT:
+		{
+			EnemyState_t* enemy = &ctx->enemies.pool[bump->actor1.index];
+			ForegroundObject_t* obj = &ctx->fgObjects[bump->actor2.index];
+
+			COLLISION_Enemy_FGObject(enemy, obj, bump);
+			break;
+		}
+		case ENEMY_BUMP_FLOOR:
+		{
+			EnemyState_t* enemy = &ctx->enemies.pool[bump->actor1.index];
+
+			COLLISION_Enemy_Floor(enemy, ctx);
+			break;
+		}
 		default:
 			break;
 		}
@@ -382,7 +451,7 @@ static void COLLISION_Player_Enemy(const PlayerState_t* player, const EnemyState
 	(void)sm;
 
 	// Any touch of a living enemy kills the player
-	if (enemy->IsAlive && !player->IsImmune) {
+	if (enemy->currFlags.IsAlive && !player->IsImmune) {
 		// GAME_STATE_RaiseEvent(sm, GAME_EVENT_PLAYER_DIED);
 	}
 }
@@ -541,6 +610,90 @@ static void COLLISION_Player_SolidFGObject_SideEffect(ForegroundObject_t* obj, P
 				OBJECTS_MANAGER_OrderSpawn(mgr, &rewardToSpawn);
 			}
 		}
+	}
+}
+
+static void COLLISION_Enemy_FGObject(EnemyState_t* actor, ForegroundObject_t* obj, const Bump_t* bump)
+{
+	const int bumpLenX = RECT_CalcXLen(&bump->bumpRect);
+	const int bumpLenY = RECT_CalcYLen(&bump->bumpRect);
+
+	Body_t* actorBody = &actor->physics.engine.body;
+
+	// Vertical collision (top/bottom)
+	if (bumpLenX >= bumpLenY) {
+		if (!(obj->assetFlags & COLL_TOP_ENABLED) && !(obj->assetFlags & COLL_DOWN_ENABLED)) return;
+		if (bumpLenX <= COLLISION_THRESHOLD_VERTICAL) return;
+
+		int bumpCenterY = (bump->bumpRect.p1.y + bump->bumpRect.p2.y) / 2;
+
+		// Landing on top of the object
+		if (bumpCenterY > obj->BBoxCenter.y) {
+			if (!(obj->assetFlags & COLL_TOP_ENABLED)) return;
+			// The object moves up: throw the actor one pixel above it into the air and reverse its direction when it is left of the object center
+			if (obj->currMapPos.y > obj->prevMapPos.y) {
+				actor->currFlags.IsGrounded = false;
+				actor->currMapPos.y = obj->currMapPos.y + obj->asset.BBox.p2.y + 1;
+				actorBody->subpixelY = 0.0f;
+				actorBody->vy = 0.4f;
+				if (actor->currMapPos.x < obj->BBoxCenter.x) {
+					actorBody->subpixelX = 0.0f;
+					actorBody->vx = -actorBody->vx;
+				}
+			}
+			// Land on top of the object
+			else if (!actor->currFlags.IsGrounded) {
+				actor->currFlags.IsGrounded = true;
+				actor->currMapPos.y = obj->currMapPos.y + obj->asset.BBox.p2.y;
+				actorBody->subpixelY = 0.0f;
+				actorBody->vy = 0.0f;
+			}
+		}
+		// Bumping from the bottom
+		else {
+			if (obj->assetFlags & COLL_DOWN_ENABLED) {
+				// Bounce down from the bottom of the object
+				actorBody->vy = -0.7f;
+				actor->currMapPos.y = obj->currMapPos.y - actor->asset.BBox.p2.y;
+			}
+		}
+	}
+	// Horizontal collision (left/right)
+	else {
+		if (!(obj->assetFlags & COLL_LEFT_ENABLED) && !(obj->assetFlags & COLL_RIGHT_ENABLED)) return;
+		if (bumpLenY <= COLLISION_THRESHOLD_HORIZONTAL) return;
+
+		int bumpCenterX = (bump->bumpRect.p1.x + bump->bumpRect.p2.x) / 2;
+
+		// Bumping from the right
+		if (bumpCenterX > obj->BBoxCenter.x) {
+			if (obj->assetFlags & COLL_RIGHT_ENABLED) {
+				// Turn back one pixel away from the object in order to not "glue" to it
+				actorBody->vx = 0.15f;
+				actorBody->subpixelX = 0.0f;
+				actor->currMapPos.x = obj->currMapPos.x + obj->asset.BBox.p2.x + 1;
+			}
+		}
+		// Bumping from the left
+		else {
+			if (obj->assetFlags & COLL_LEFT_ENABLED) {
+				// Turn back one pixel away from the object in order to not "glue" to it
+				actorBody->vx = -0.15f;
+				actorBody->subpixelX = 0.0f;
+				actor->currMapPos.x = obj->currMapPos.x - actor->asset.BBox.p2.x - 1;
+			}
+		}
+	}
+}
+
+static void COLLISION_Enemy_Floor(EnemyState_t* actor, const GameContext_t* ctx)
+{
+		// Land on the floor
+	if (!actor->currFlags.IsGrounded) {
+		actor->currFlags.IsGrounded = true;
+		actor->currMapPos.y = ctx->map.floorYLevel;
+		actor->physics.engine.body.subpixelY = 0.0f;
+		actor->physics.engine.body.vy = 0.0f;
 	}
 }
 
