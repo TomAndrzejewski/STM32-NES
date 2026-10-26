@@ -19,6 +19,6 @@ int LEVEL_GetBGRepObjectsLocations(const RepObjectLevelPos_t** posTable, int* nu
 int LEVEL_GetLevelBoundaries(const Rect_t** levelBoundaries);
 
 int LEVEL_GetNextSoundNote(const NoteAsset_t** note);
-
+void LEVEL_ResetSoundNote();
 
 #endif /* SOURCES_INC_LEVEL_H_ */

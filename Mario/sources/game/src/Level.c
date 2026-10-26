@@ -822,6 +822,11 @@ int LEVEL_GetNextSoundNote(const NoteAsset_t** note)
 	return 0;
 }
 
+void LEVEL_ResetSoundNote()
+{
+	s_currNoteAsset = 0;
+}
+
 
 
 

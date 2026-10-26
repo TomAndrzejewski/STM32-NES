@@ -385,7 +385,10 @@ void GAME_RestartLevel(void)
 	LCD_DrawRect(screenRect, 0);
 	RE_RenderFullBackgroud(LCD_COLOR_BLUESKY);
 
+	I2S_Stop();
 	delay(1500);
+	SOUND_Init();
+	I2S_Start();
 	GAME_Init();
 }
 

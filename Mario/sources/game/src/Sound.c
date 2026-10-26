@@ -14,6 +14,7 @@
 
 #include "Common_Defs.h"
 #include "Level.h"
+#include "BoardFunctions.h"
 
 
 #define SINE_LUT_SIZE 100
@@ -102,6 +103,21 @@ static int SOUND_ConfigureOscillator(SquareWaveOscillator_t* osc, int16_t amplit
 static int16_t SOUND_GetSample(SquareWaveOscillator_t* osc);
 
 
+void I2S_Start(void)
+{
+	// Switch ON MAX98357A
+	GPIOB->BSRR = GPIO_BSRR_BS7;
+	delay(1);
+	//Start DMA
+	DMA1_Stream7->CR |= DMA_SxCR_EN;
+}
+
+void I2S_Stop(void)
+{
+	// Switch OFF MAX98357A
+	GPIOB->BSRR = GPIO_BSRR_BR7;
+}
+
 void DMA1_Stream7_IRQHandler(void)
 {
 	SOUND_Irq();
@@ -110,6 +126,7 @@ void DMA1_Stream7_IRQHandler(void)
 int SOUND_Init(void)
 {
 	memset(&s_soundBuffer, 0, sizeof(s_soundBuffer));
+	LEVEL_ResetSoundNote();
 	int ret = SOUND_SetFirstSoundNote();
 	return ret;
 }

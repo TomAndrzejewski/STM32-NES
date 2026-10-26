@@ -58,5 +58,8 @@ typedef struct
 int SOUND_Init(void);
 int16_t* SOUND_GetBufferPtr(void);
 
+void I2S_Start(void);
+void I2S_Stop(void);
+
 
 #endif /* SOURCES_INC_SOUND_H_ */

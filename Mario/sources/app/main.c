@@ -326,15 +326,6 @@ void DMA1_I2S3_TX_init(void)
 	SET_FIELD_32(DMA1_Stream7->FCR, DMA_SxFCR_FTH_Msk, DMA_SxFCR_FTH_Pos, 0b11); // full fifo threshold
 }
 
-void I2S_Start(void)
-{
-	// Switch ON MAX98357A
-	GPIOB->BSRR = GPIO_BSRR_BS7;
-	delay(1);
-	//Start DMA
-	DMA1_Stream7->CR |= DMA_SxCR_EN;
-}
-
 
 void BusFault_Init()
 {
