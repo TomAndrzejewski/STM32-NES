@@ -49,7 +49,7 @@ void GAME_Init(void)
 	GameContext_t* ctx = &s_gameCtx;
 	int ret = 0;
 
-	memset(ctx, 0, sizeof(GameContext_t));
+	fast_memset(ctx, 0, sizeof(GameContext_t));
 
 	ctx->firstGameLoop = true;
 
@@ -229,6 +229,9 @@ void GAME_Update(void)
 {
 	GameContext_t* ctx = &s_gameCtx;
 
+	// Game over has its own handling
+	if (ctx->stateMachine.state == GAME_STATE_GAME_OVER) return;
+
 	int timeStamps = 0;
 	uint32_t targetFrameTimeUS = 1000000/TARGET_FRAMERATE_HZ;
 
@@ -306,7 +309,7 @@ void GAME_Update(void)
 	timeStamps++;
 
 	if (ctx->firstGameLoop) {
-		RENDERER_FirstRender(ctx);
+		RENDERER_FirstRender(ctx, false);
 	}
 
 	// startTime[timeStaps] = GetTimestamp();
@@ -368,6 +371,22 @@ void GAME_Update(void)
 	}
 
 	s->frameCounter++;
+}
+
+void GAME_RestartLevel(void)
+{
+	RE_Init();
+
+	Rect_t screenRect;
+	screenRect.p1.x = 0;
+	screenRect.p1.y = 0;
+	screenRect.p2.x = 319;
+	screenRect.p2.y = 239;
+	LCD_DrawRect(screenRect, 0);
+	RE_RenderFullBackgroud(LCD_COLOR_BLUESKY);
+
+	delay(1500);
+	GAME_Init();
 }
 
 bool MISC_IsThisPlayerID(const GameObjectID id)

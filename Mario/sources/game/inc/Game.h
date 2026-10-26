@@ -12,6 +12,7 @@
 
 void    GAME_Init(void);
 void    GAME_Update(void);
+void    GAME_RestartLevel(void);
 
 bool    MISC_IsThisPlayerID(const GameObjectID id);
 

@@ -11,7 +11,7 @@
 #include "Game_Types.h"
 
 void    RENDERER_Update(GameContext_t* ctx);
-void    RENDERER_FirstRender(const GameContext_t* ctx);
+void    RENDERER_FirstRender(const GameContext_t* ctx, bool renderOnlyBackground);
 void    RENDERER_ScrollRender(RendererState_t* renderer, const GameContext_t* ctx);
 void    RENDERER_DirtyRects_Calculate(RendererState_t* renderer, const GameContext_t* ctx);
 void    RENDERER_DirtyRects_Render(RendererState_t* renderer, const GameContext_t* ctx);

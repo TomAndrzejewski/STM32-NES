@@ -18,6 +18,8 @@
 #define LCD_WIDTH		(320)
 #define LCD_SIZE		(LCD_HEIGHT * LCD_WIDTH)
 
+#define LCD_COLOR_BLUESKY			(0x7F3C)
+
 
 void LCD_init(void);
 void LCD_ReadAvailableRegisters(void);

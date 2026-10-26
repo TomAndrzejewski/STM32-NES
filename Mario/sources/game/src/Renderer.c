@@ -20,9 +20,6 @@
 #include "RenderEngine.h"
 
 
-#define LCD_COLOR_BLUESKY			(0x7F3C)
-
-
 //----------------
 // PRIVATE FUNCTION PROTOTYPES
 //----------------
@@ -47,7 +44,7 @@ void RENDERER_Update(GameContext_t* ctx)
 	RENDERER_DirtyRects_Render(&ctx->renderer, ctx);
 }
 
-void RENDERER_FirstRender(const GameContext_t* ctx)
+void RENDERER_FirstRender(const GameContext_t* ctx, bool renderOnlyBackground)
 {
 	BOARD_ASSERT(ctx != NULL);
 	BOARD_ASSERT(ctx->floorIndex >= 0);
@@ -72,13 +69,16 @@ void RENDERER_FirstRender(const GameContext_t* ctx)
 		int baseRectArea = RECT_CalcArea(&screenRect);
 		RE_FillBackgroud(LCD_COLOR_BLUESKY, baseRectArea);
 
-		for (int j = 0; j < ctx->activebgObjects; j++)
+		if (!renderOnlyBackground)
 		{
-			int indexLUT = ctx->bgObjectsLUT[j];
-			if (!ctx->IsBGObjectActive[indexLUT]) {
-				continue;
+			for (int j = 0; j < ctx->activebgObjects; j++)
+			{
+				int indexLUT = ctx->bgObjectsLUT[j];
+				if (!ctx->IsBGObjectActive[indexLUT]) {
+					continue;
+				}
+				RENDERER_RenderBGObject(&ctx->bgObjects[indexLUT], &mapRect, &screenRect, ctx->renderer.LCDOffsetX);
 			}
-			RENDERER_RenderBGObject(&ctx->bgObjects[indexLUT], &mapRect, &screenRect, ctx->renderer.LCDOffsetX);
 		}
 
 		RE_SendRect(screenRect, ctx->renderer.LCDOffsetX);

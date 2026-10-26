@@ -15,6 +15,7 @@
 #include "BoardAssert.h"
 #include "Physics.h"
 #include "printf_logger.h"
+#include "BoardFunctions.h"
 
 
 //----------------
@@ -37,7 +38,8 @@ static const uint32_t s_stateSystems[] = {
 									| GAME_SYSTEM_COLLISION
 									| GAME_SYSTEM_ANIMATOR,
 	[GAME_STATE_PLAYER_LEVEL_UP]	= 0,
-	[GAME_STATE_PLAYER_DYING]		= GAME_SYSTEM_ANIMATOR,
+	[GAME_STATE_PLAYER_DYING]		= GAME_SYSTEM_ANIMATOR
+									| GAME_SYSTEM_COLLISION,
 	[GAME_STATE_GAME_OVER]			= 0,
 };
 
@@ -189,7 +191,11 @@ static void GAME_STATE_Enter(GameStateEnum state, GameContext_t* ctx)
 	}
 	case GAME_STATE_PLAYING:
 	case GAME_STATE_GAME_OVER:
+	{
+		delay(100);
+		GAME_RestartLevel();
 		break;
+	}
 	default:
 		// Unknown game state: add a missing case for it
 		BOARD_ASSERT(false);
