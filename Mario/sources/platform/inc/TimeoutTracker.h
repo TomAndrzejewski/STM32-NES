@@ -16,7 +16,7 @@
 // Struktura pilnująca czasu
 typedef struct {
     uint32_t start_time;
-    uint32_t timeout_ms;
+    uint32_t timeout_us;
 } TimeoutTracker_t;
 
 // Funkcja startująca odliczanie
@@ -24,7 +24,15 @@ static inline TimeoutTracker_t timeout_start_ms(uint32_t timeout_ms)
 {
     TimeoutTracker_t t;
     t.start_time = GetTimestamp();
-    t.timeout_ms = timeout_ms;
+    t.timeout_us = timeout_ms * (uint32_t)1000;
+    return t;
+}
+
+static inline TimeoutTracker_t timeout_start_us(uint32_t timeout_us)
+{
+    TimeoutTracker_t t;
+    t.start_time = GetTimestamp();
+    t.timeout_us = timeout_us;
     return t;
 }
 
@@ -32,8 +40,8 @@ static inline TimeoutTracker_t timeout_start_ms(uint32_t timeout_ms)
 static inline bool timeout_has_expired(TimeoutTracker_t *t)
 {
 	if (t == NULL)	{ return true; }
-	uint32_t time_spent = CalcTimeMS(t->start_time);
-    return (time_spent > t->timeout_ms);
+	uint32_t time_spent = CalcTimeUS(t->start_time);
+    return (time_spent > t->timeout_us);
 }
 
 #endif /* SOURCES_INC_TIMEOUTTRACKER_H_ */
