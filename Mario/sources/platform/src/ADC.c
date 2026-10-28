@@ -105,7 +105,7 @@ void ADC_Init(void)
     
     RCC->APB2ENR |= RCC_APB2ENR_ADC1EN; // ADC1 clock enable
     ADC1->CR2 |= ADC_CR2_ADON;  // A/D Converter ON
-    delayUS(1);
+    delayUS(10); // tSTAB delay
 
     ADC1->CR2 |= ADC_CR2_EOCS; // EOC bit is set at the end of each regular conversion
 }
@@ -121,7 +121,6 @@ int ADC_CreateProfile(const ADC_Profile* profile, unsigned* handle)
     for (int i = 0; i < (int)ARRAY_SIZE(s_profileCreatedFlag); i++)
     {
         if (!s_profileCreatedFlag[i]) {
-            s_profileCreatedFlag[i] = true;
             profileIndex = i;
             break;
         }
@@ -134,6 +133,7 @@ int ADC_CreateProfile(const ADC_Profile* profile, unsigned* handle)
     ADC_ValidateSampleTime(profile);
 
     // Save as new profile
+    s_profileCreatedFlag[profileIndex] = true;
     s_profiles[profileIndex] = *profile;
 
     // Return handle
