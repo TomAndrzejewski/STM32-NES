@@ -33,6 +33,7 @@
 
 #include "LCDControl.h"
 #include "PADControl.h"
+#include "BatteryControl.h"
 #include "RenderEngine.h"
 #include "Sound.h"
 
@@ -361,6 +362,7 @@ int main(void)
 	I2S_init();
 	DMA1_I2S3_TX_init();
 	IRQ_DMA1_I2S3_TX_Init();
+	BATTERY_Init();
 	Timer_10_init();
 	printf_init();
 	print_start();
@@ -384,6 +386,10 @@ int main(void)
 		uint32_t startLoopTime = GetTimestamp();
 		
 		GAME_Update();
+
+		uint16_t VBat = 0;
+		BATTERY_GetVoltage(&VBat);
+		// printf_v("\nVBat: %d\n", VBat);
 		
 		timeSpentInLoopUS = CalcTimeUS(startLoopTime);
 	}

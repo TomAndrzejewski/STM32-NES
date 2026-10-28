@@ -8,7 +8,10 @@
 #ifndef SOURCES_INC_BATTERYCONTROL_H_
 #define SOURCES_INC_BATTERYCONTROL_H_
 
+#include <stdint.h>
+
 void BATTERY_Init(void);
+int  BATTERY_GetVoltage(uint16_t* voltage);
 
 
 #endif // SOURCES_INC_BATTERYCONTROL_H_
