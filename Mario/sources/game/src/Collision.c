@@ -42,7 +42,7 @@ static void COLLISION_Enemy_FGObject(EnemyState_t* actor, ForegroundObject_t* ob
 static void COLLISION_Enemy_Floor(EnemyState_t* actor, const GameContext_t* ctx);
 static void COLLISION_FGObject_FGObject(ForegroundObject_t* actor, ForegroundObject_t* obj, const Bump_t* bump);
 static void COLLISION_FGObject_Floor(ForegroundObject_t* actor, const GameContext_t* ctx);
-static bool COLLISION_IsPickupFGObject(GameObjectID id);
+static bool COLLISION_IsPickupFGObject(GameObjectIDEnum id);
 
 
 //----------------
@@ -859,7 +859,7 @@ static void COLLISION_FGObject_Floor(ForegroundObject_t* actor, const GameContex
 	}
 }
 
-static bool COLLISION_IsPickupFGObject(GameObjectID id)
+static bool COLLISION_IsPickupFGObject(GameObjectIDEnum id)
 {
 	if (id == FG_REWARD_LEVEL_UP_MUSHROOM_OBJECT_ID) {
 		return true;

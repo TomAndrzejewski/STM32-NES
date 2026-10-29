@@ -41,15 +41,14 @@
 
 #define LCD_COLOR_BLUESKY	(0x7F3C)
 
-typedef enum
-{
+typedef enum {
 	LCD_WHITE,
 	LCD_RED,
 	LCD_BLUE,
 	LCD_GREEN,
 
 	LCD_NUMOF_COLORS,
-}LCD_ColorEnum;
+} LCD_ColorEnum;
 
 static uint16_t const LCD_Colors[LCD_NUMOF_COLORS] = {
 		0xFFFE,

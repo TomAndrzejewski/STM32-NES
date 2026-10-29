@@ -26,9 +26,9 @@ static void OBJECTS_MANAGER_SpawnObject(GameContext_t* ctx, const ObjectLevelIns
 static void OBJECTS_MANAGER_FGObject_Load(ForegroundObject_t* obj, const ObjectLevelInstance_t* objectDef);
 static void OBJECTS_MANAGER_Enemy_Load(EnemyState_t* enemy, const ObjectLevelInstance_t* objectDef);
 static void OBJECTS_MANAGER_BGObject_Load(BackgroundObject_t* obj, const ObjectLevelInstance_t* objectDef);
-static bool OBJECTS_MANAGER_IsThisFGID(const GameObjectID id);
-static bool OBJECTS_MANAGER_IsThisEnemyID(const GameObjectID id);
-static bool OBJECTS_MANAGER_IsThisBGID(const GameObjectID id);
+static bool OBJECTS_MANAGER_IsThisFGID(const GameObjectIDEnum id);
+static bool OBJECTS_MANAGER_IsThisEnemyID(const GameObjectIDEnum id);
+static bool OBJECTS_MANAGER_IsThisBGID(const GameObjectIDEnum id);
 
 
 //----------------
@@ -523,7 +523,7 @@ static void OBJECTS_MANAGER_BGObject_Load(BackgroundObject_t* obj, const ObjectL
 	}
 }
 
-static bool OBJECTS_MANAGER_IsThisFGID(const GameObjectID id)
+static bool OBJECTS_MANAGER_IsThisFGID(const GameObjectIDEnum id)
 {
 	if (id >= FOREGROUND_OBJECT_ID_START && id <= FOREGROUND_OBJECT_ID_END) {
 		return true;
@@ -531,7 +531,7 @@ static bool OBJECTS_MANAGER_IsThisFGID(const GameObjectID id)
 	return false;
 }
 
-static bool OBJECTS_MANAGER_IsThisEnemyID(const GameObjectID id)
+static bool OBJECTS_MANAGER_IsThisEnemyID(const GameObjectIDEnum id)
 {
 	if (id >= ENEMY_ID_START && id <= ENEMY_ID_END) {
 		return true;
@@ -539,7 +539,7 @@ static bool OBJECTS_MANAGER_IsThisEnemyID(const GameObjectID id)
 	return false;
 }
 
-static bool OBJECTS_MANAGER_IsThisBGID(const GameObjectID id)
+static bool OBJECTS_MANAGER_IsThisBGID(const GameObjectIDEnum id)
 {
 	if (id >= BACKGROUND_OBJECT_ID_START && id <= BACKGROUND_OBJECT_ID_END) {
 		return true;

@@ -23,8 +23,7 @@
 
 
 // Pad state collected by the sampling timer since the previous snapshot
-typedef struct
-{
+typedef struct {
 	uint32_t current;	// Buttons held at the last sample
 	uint32_t pressed;	// Buttons that went down at least once
 	uint32_t released;	// Buttons that went up at least once

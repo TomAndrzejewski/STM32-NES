@@ -32,23 +32,20 @@
 #define SOUND_VOLUME_STEPS				((SOUND_VOLUME_MAX - SOUND_VOLUME_MIN) / SOUND_VOLUME_INC)
 
 
-typedef struct
-{
+typedef struct {
 	float		phase;		// current phase, [0.0...1.0]
 	float		phaseStep;
 	int16_t		amplitude;	// aplitude of square wave
 
 } SquareWaveOscillator_t;
 
-typedef struct
-{
+typedef struct {
 	uint16_t	freq;		// Hz
 	uint16_t	time_ms;
 
-}NoteAsset_t;
+} NoteAsset_t;
 
-typedef struct
-{
+typedef struct {
 	int samplesToPlay;
 	int sampleNumber;
 

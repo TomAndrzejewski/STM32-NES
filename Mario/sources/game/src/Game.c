@@ -392,7 +392,7 @@ void GAME_RestartLevel(void)
 	GAME_Init();
 }
 
-bool MISC_IsThisPlayerID(const GameObjectID id)
+bool MISC_IsThisPlayerID(const GameObjectIDEnum id)
 {
 	if (id >= PLAYER_ID_START && id <= PLAYER_ID_END) {
 		return true;

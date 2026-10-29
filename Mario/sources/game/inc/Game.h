@@ -14,7 +14,7 @@ void    GAME_Init(void);
 void    GAME_Update(void);
 void    GAME_RestartLevel(void);
 
-bool    MISC_IsThisPlayerID(const GameObjectID id);
+bool    MISC_IsThisPlayerID(const GameObjectIDEnum id);
 
 void    PLAYER_GetDirtyRect(const PlayerState_t* player, Rect_t* dirtyRect);
 void    PLAYER_LevelUp(PlayerState_t* player);

@@ -81,7 +81,10 @@ Gdy nie jesteś pewien, w jakim trybie jesteśmy, zapytaj, zamiast zgadywać.
 ## Konwencje kodu
 
 - Funkcje z prefiksem modułu wielkimi literami: `GAME_Update`, `PLAYER_GetDirtyRect`, `ENEMIES_UpdateFlags`.
-- Typy z sufiksem `_t` (`GameContext_t`, `Rect_t`), stałe i makra `WIELKIMI_LITERAMI`, wartości w nawiasach.
+- Typy z sufiksem `_t` (`GameContext_t`, `Rect_t`), enumy z sufiksem `Enum` (`GameStateEnum`),
+  stałe i makra `WIELKIMI_LITERAMI`, wartości w nawiasach.
+- Struktury i enumy przez `typedef`, klamra w linii `typedef`, nazwa po spacji za klamrą zamykającą:
+  `typedef enum {` / `GAME_STATE_PLAYING,` / `} GameStateEnum;`.
 - Zmienne `static` (w pliku i w funkcji) z prefiksem `s_`, globalne z `g_`, lokalne i argumenty bez prefiksu.
   Nie zaczynaj nazw od `_` (identyfikatory zarezerwowane w C).
 - Wyniki funkcje zwracają przez wskaźnik.

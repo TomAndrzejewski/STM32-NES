@@ -53,8 +53,7 @@
 //-----------------------------------------------------------
 // REMEMBER! ADD NEW ID TO Level.c ObjRenderPriorities TAB
 //-----------------------------------------------------------
-typedef enum
-{
+typedef enum {
 	OBJECT_NOT_USED = -1,
 
 	ENEMY_GOOMBA_ID = ENEMY_ID_START,
@@ -83,30 +82,27 @@ typedef enum
 
 	PLAYER_MARIO_ID = PLAYER_ID_START,
 
-}GameObjectID;
+} GameObjectIDEnum;
 
 
-typedef struct
-{
+typedef struct {
 	Sprite_t sprite;
 
-}BaseAsset_t;
+} BaseAsset_t;
 
-typedef struct
-{
-	GameObjectID id;
+typedef struct {
+	GameObjectIDEnum id;
 	BaseAsset_t baseAsset;
 
-}BackgroundAsset_t;
+} BackgroundAsset_t;
 
-typedef struct
-{
-	GameObjectID id; // one-time initialized
+typedef struct {
+	GameObjectIDEnum id; // one-time initialized
 	BaseAsset_t baseAsset; // one-time initialized or changing in ANIMATOR
 
 	Rect_t BBox; // one-time initialized, p1 - offset from (0,0) in sprite, p2 - length
 
-}SimpleAsset_t;
+} SimpleAsset_t;
 
 //////////////
 // ANIMACJE
@@ -116,8 +112,7 @@ typedef struct
 // ANIMATOR STERUJE WYBOREM ANIMATION_ID I PRZY TYM ASSETEM
 //
 
-typedef enum
-{
+typedef enum {
 	MARIO_STANDSTILL_ANIMATION_ID,
 	MARIO_RUN_1_ANIMATION_ID,
 	MARIO_RUN_2_ANIMATION_ID,
@@ -138,64 +133,57 @@ typedef enum
 	FG_REWARD_COIN_3_ANIMATION_ID,
 	FG_REWARD_COIN_4_ANIMATION_ID,
 
-}AnimationIDEnum;
+} AnimationIDEnum;
 
-typedef struct
-{
+typedef struct {
 	const BaseAsset_t* baseAsset;
 	const AnimationIDEnum animationID;
 
-}BaseAnimationAsset_t;
+} BaseAnimationAsset_t;
 
-typedef struct
-{
-	GameObjectID id;
+typedef struct {
+	GameObjectIDEnum id;
 
 	int baseAssetsCount;
 	const BaseAnimationAsset_t* baseAssets;
 
 	Rect_t BBox; // p1 - offset from (0,0) in sprite
 
-}AnimableAsset_t;
+} AnimableAsset_t;
 
-typedef struct
-{
-	GameObjectID id;
+typedef struct {
+	GameObjectIDEnum id;
 	int		x;
 	int		y;
 	uint32_t flags;
 
-}ObjectLevelInstance_t;
+} ObjectLevelInstance_t;
 
-typedef struct
-{
-	GameObjectID id;
+typedef struct {
+	GameObjectIDEnum id;
 	int		x;
 	int		y;
 	int		mulX;
 	int		mulY;
 
-}RepObjectLevelPos_t;
+} RepObjectLevelPos_t;
 
-typedef struct
-{
+typedef struct {
 	float		subpixelX;
 	float		subpixelY;
 
 	float		vx;
 	float		vy;
 
-}Body_t;
+} Body_t;
 
-typedef struct
-{
-	GameObjectID id;
+typedef struct {
+	GameObjectIDEnum id;
 	int index;
 
-}GameObjectRef_t;
+} GameObjectRef_t;
 
-typedef enum
-{
+typedef enum {
 	PLAYER_BUMP_ENEMY,
 	PLAYER_BUMP_FG_OBJECT,
 	PLAYER_BUMP_FLOOR,
@@ -206,33 +194,30 @@ typedef enum
 	ENEMY_BUMP_FG_OBJECT,
 	ENEMY_BUMP_FLOOR,
 
-}BumpID_t;
+} BumpIDEnum;
 
-typedef enum 
-{
+typedef enum {
 	BUMP_SIDE_NONE = 0,
 	BUMP_SIDE_TOP,
 	BUMP_SIDE_BOTTOM,
 	BUMP_SIDE_LEFT,
 	BUMP_SIDE_RIGHT,
 
-}BumpSideEnum;
+} BumpSideEnum;
 
-typedef struct
-{
-	BumpID_t bumpID;
+typedef struct {
+	BumpIDEnum bumpID;
 	GameObjectRef_t actor1;
 	GameObjectRef_t actor2;
 	Rect_t bumpRect;
 	BumpSideEnum bumpSide;
-}Bump_t;
+} Bump_t;
 
-typedef struct
-{
+typedef struct {
 	int size;
 	Bump_t bumps[COLLISIONS_SIZE];
 
-}CollisionState_t;
+} CollisionState_t;
 
 typedef struct {
 	uint32_t durationUS;
@@ -271,35 +256,31 @@ typedef enum {
 	PLAYER_SMALL_MARIO,
 	PLAYER_SUPER_MARIO,
 	PLAYER_FIRE_MARIO,
-} PlayerLevel;
+} PlayerLevelEnum;
 
-typedef enum
-{
+typedef enum {
 	PLAYER_ANIMATOR_STANDSTILL,
 	PLAYER_ANIMATOR_RUNNING,
 	PLAYER_ANIMATOR_DECELERATING,
 	PLAYER_ANIMATOR_JUMPING,
 	PLAYER_ANIMATOR_DEAD,
-}PlayerAnimatorStateEnum;
+} PlayerAnimatorStateEnum;
 
-typedef struct 
-{
+typedef struct {
 	AnimationIDEnum currAnimation;
 	PlayerAnimatorStateEnum state;
 	uint32_t runAnimationFrameTimeUS;
 
-}PlayerAnimator_t;
+} PlayerAnimator_t;
 
-typedef struct
-{
+typedef struct {
 	bool lastMovementDirectionRight;
 	bool IsDecelerating;
 
-}PlayerPhysicsFlags_t;
+} PlayerPhysicsFlags_t;
 
-typedef struct
-{
-	GameObjectID id;
+typedef struct {
+	GameObjectIDEnum id;
 
 	Point_t		currMapPos;
 	Point_t		prevMapPos;
@@ -313,7 +294,7 @@ typedef struct
 	const AnimableAsset_t* animableAsset;
 	PlayerAnimator_t animator;
 
-	PlayerLevel	playerLevel;
+	PlayerLevelEnum	playerLevel;
 	int lifePoints;
 
 	bool IsImmune;
@@ -321,7 +302,7 @@ typedef struct
 	bool IsGrounded;
 	bool JustHitFGObjectFromBottom;
 
-}PlayerState_t;
+} PlayerState_t;
 
 typedef struct {
 	bool IsAlive					: 1;
@@ -335,7 +316,7 @@ typedef struct {
 } EnemyFlags_t;
 
 typedef struct {
-	GameObjectID id;
+	GameObjectIDEnum id;
 
 	Point_t origMapPos;
 	Point_t	currMapPos;
@@ -354,19 +335,17 @@ typedef struct {
 	EnemyFlags_t prevFlags;
 } EnemyState_t;
 
-typedef struct
-{
-	GameObjectID id;
+typedef struct {
+	GameObjectIDEnum id;
 
 	Point_t mapPos;
 
 	const BackgroundAsset_t* asset;
 	uint32_t assetFlags; // parameters set from map maker
 
-}BackgroundObject_t;
+} BackgroundObject_t;
 
-typedef struct
-{
+typedef struct {
 	bool IsAlive					: 1;
 	bool playerBumpedFromBelow		: 1;
 	bool startTimeBasedPhysics		: 1;
@@ -375,11 +354,10 @@ typedef struct
 	bool renderInBackground			: 1;
 	bool IsGrounded					: 1;
 
-}FGObjectFlags_t;
+} FGObjectFlags_t;
 
-typedef struct
-{
-	GameObjectID id;
+typedef struct {
+	GameObjectIDEnum id;
 
 	Point_t origMapPos;
 	Point_t currMapPos;
@@ -400,36 +378,32 @@ typedef struct
 	FGObjectFlags_t currFlags;
 	FGObjectFlags_t prevFlags;
 
-}ForegroundObject_t;
+} ForegroundObject_t;
 
-typedef struct
-{
-	GameObjectID id;
+typedef struct {
+	GameObjectIDEnum id;
 
 	Point_t mapPos;
 	Point_t	mulVector;
 
 	const BackgroundAsset_t* asset;
 
-}BackgroundRepObject_t;
+} BackgroundRepObject_t;
 
-typedef struct
-{
+typedef struct {
 	int floorYLevel;
 
-}MapState_t;
+} MapState_t;
 
-typedef struct
-{
+typedef struct {
 	Point_t prevPos;
 	Point_t currPos;
 
 	Rect_t screenRect;
 
-}CameraState_t;
+} CameraState_t;
 
-typedef struct
-{
+typedef struct {
 	Rect_t activeWorldRect;
 
 	int objectPoolSize;
@@ -445,64 +419,56 @@ typedef struct
 	uint32_t droppedBGObjects;
 	uint32_t droppedSpawnOrders;
 
-}ObjectsManager_t;
+} ObjectsManager_t;
 
-typedef struct
-{
+typedef struct {
 	uint32_t simulationTimeUS;
 	int frameTimeUS;
 	float frameTimeS; // same as frameTimeUS only in float and in S
 
-}FrameData_t;
+} FrameData_t;
 
-typedef struct
-{
+typedef struct {
 	FrameData_t frameData;
-}InputState_t;
+} InputState_t;
 
-typedef struct
-{
+typedef struct {
 	Rect_t 	rect;
 	int		used;
 
-}DirtyRect_t;
+} DirtyRect_t;
 
-typedef struct
-{
+typedef struct {
 	int activeEnemies;
 	int enemiesLUT[ENEMIES_MAX_SIZE];
 	bool IsEnemyActive[ENEMIES_MAX_SIZE];
 	EnemyState_t pool[ENEMIES_MAX_SIZE];
 
-}Enemies_t;
+} Enemies_t;
 
-typedef struct
-{
+typedef struct {
 	int LCDOffsetX;
 
 	int activeDirtyRects;
 	DirtyRect_t	dirtyRects[DIRTY_RECTS_SIZE];
 
-}RendererState_t;
+} RendererState_t;
 
-typedef enum
-{
+typedef enum {
 	GAME_STATE_PLAYING,
 	GAME_STATE_PLAYER_LEVEL_UP,
 	GAME_STATE_PLAYER_DYING,
 	GAME_STATE_GAME_OVER,
 
 	GAME_STATE_COUNT,
-}GameStateEnum;
+} GameStateEnum;
 
-typedef enum
-{
+typedef enum {
 	GAME_EVENT_PLAYER_LEVEL_UP,
 	GAME_EVENT_PLAYER_DIED,
-}GameEventEnum;
+} GameEventEnum;
 
-typedef struct
-{
+typedef struct {
 	GameStateEnum state;
 	uint32_t timeInStateUS;
 
@@ -513,7 +479,7 @@ typedef struct
 	// Degradation counter: events skipped because the buffer was full
 	uint32_t droppedEvents;
 
-}GameStateMachine_t;
+} GameStateMachine_t;
 
 #define TIMESTAMPS_SIZE 32
 
@@ -527,8 +493,7 @@ typedef struct {
 	uint32_t maxTimeSum;
 } GameStats_t;
 
-typedef struct
-{
+typedef struct {
 	// Player position
 	// Player physics
 	PlayerState_t player;
@@ -578,13 +543,12 @@ typedef struct
 
 } GameContext_t;
 
-typedef struct
-{
+typedef struct {
 	// Physics settings
 	// Controller settings
 	// Player BBox settings
 
-}GameSettings_t;
+} GameSettings_t;
 
 
 

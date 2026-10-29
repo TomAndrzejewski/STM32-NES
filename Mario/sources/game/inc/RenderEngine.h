@@ -31,8 +31,7 @@ typedef struct {
 	Point_t		mulVector;
 } RepSprite_t;
 
-typedef struct
-{
+typedef struct {
 	Rect_t	commonRect;
 	Rect_t	baseRect;
 	Point_t	baseToSpriteOffset;
@@ -41,7 +40,7 @@ typedef struct
 	int		LCDOffsetX;
 	bool 	mirrorX;
 
-}SpriteRender_t;
+} SpriteRender_t;
 
 
 void    RE_Init();

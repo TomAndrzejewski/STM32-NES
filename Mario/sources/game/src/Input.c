@@ -66,7 +66,7 @@ void INPUT_Update(InputState_t* input, uint32_t frameTimeUS)
 	INPUT_SetFrameTimeUS(input, frameTimeUS);
 }
 
-bool INPUT_IsPressed(InputActions_t action)
+bool INPUT_IsPressed(InputActionEnum action)
 {
 	BOARD_ASSERT(action < INPUT_ACTIONS_SIZE);
 
@@ -74,7 +74,7 @@ bool INPUT_IsPressed(InputActions_t action)
 	return (s_pressedButtonsState & actionBit) != 0;
 }
 
-bool INPUT_IsDown(InputActions_t action)
+bool INPUT_IsDown(InputActionEnum action)
 {
 	BOARD_ASSERT(action < INPUT_ACTIONS_SIZE);
 
@@ -82,7 +82,7 @@ bool INPUT_IsDown(InputActions_t action)
 	return (s_currButtonsState & actionBit) != 0;
 }
 
-bool INPUT_IsReleased(InputActions_t action)
+bool INPUT_IsReleased(InputActionEnum action)
 {
 	BOARD_ASSERT(action < INPUT_ACTIONS_SIZE);
 

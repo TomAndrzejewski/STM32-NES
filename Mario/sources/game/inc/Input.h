@@ -17,12 +17,12 @@ typedef enum {
     INPUT_ACTION_RUN_RIGHT,
 
     INPUT_ACTIONS_SIZE
-} InputActions_t;
+} InputActionEnum;
 
 void    INPUT_Update(InputState_t* input, uint32_t frameTimeUS);
 
-bool    INPUT_IsPressed(InputActions_t action); // Rising edge
-bool    INPUT_IsDown(InputActions_t action); // Pressed now
-bool    INPUT_IsReleased(InputActions_t action); // Falling edge
+bool    INPUT_IsPressed(InputActionEnum action); // Rising edge
+bool    INPUT_IsDown(InputActionEnum action); // Pressed now
+bool    INPUT_IsReleased(InputActionEnum action); // Falling edge
 
 #endif // SOURCES_INC_INPUT_H_
