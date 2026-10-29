@@ -88,6 +88,8 @@ Gdy nie jesteś pewien, w jakim trybie jesteśmy, zapytaj, zamiast zgadywać.
 - Stan gry przekazywany przez `GameContext_t* ctx`. Unikaj nowych zmiennych globalnych.
 - ID obiektów w zakresach z `Game_Types.h`.
 - **Bez dynamicznej alokacji** (`malloc`) w kodzie gry. Tablice o stałym rozmiarze z `Game_Defs.h`.
+- `switch` po enumie: bez `default`, żeby kompilator (`-Werror=switch`) pilnował kompletności case'ów.
+  `default` tylko wtedy, gdy celowo obsługujemy część wartości (niezalecane).
 - Pamiętaj o ograniczeniach RAM/Flash i o tym, że kod przerwań/DMA działa równolegle z pętlą gry
   (`volatile`, sekcje krytyczne).
 - Komentarze i nazwy w kodzie po angielsku.
