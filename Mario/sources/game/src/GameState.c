@@ -190,6 +190,9 @@ static void GAME_STATE_Enter(GameStateEnum state, GameContext_t* ctx)
 		break;
 	}
 	case GAME_STATE_PLAYING:
+	{
+		break;
+	}
 	case GAME_STATE_GAME_OVER:
 	{
 		delay(100);
