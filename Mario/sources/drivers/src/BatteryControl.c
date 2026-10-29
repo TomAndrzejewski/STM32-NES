@@ -22,6 +22,10 @@
 //----------------
 // PRIVATE MACROS
 //----------------
+#define ADC_RESOLUTION_MAX                  (4096)
+#define ADC_VREF_MV                         (3300)
+#define ADC_STEP                            ((float)ADC_VREF_MV / (float)ADC_RESOLUTION_MAX)
+
 #define BATTERY_ADC_CHANNEL                 (8)    // PB0 = ADC1_IN8 (Nucleo A3)
 
 #define BATTERY_ADC_PRESCALER_DIV4          (1)    // ADCCLK = PCLK2 / 4 = 18 MHz
@@ -31,6 +35,7 @@
 #define BATTERY_ADC_STAB_DELAY_US           (3)
 #define BATTERY_ADC_CONVERSION_TIMEOUT_US   (100)
 
+#define BATTERY_ADC_GAIN                    (1.37037037f)
 
 //----------------
 // PRIVATE TYPES
@@ -58,9 +63,9 @@ void BATTERY_Init(void)
 }
 
 // Return code: -1 - error, 0 - ok
-int BATTERY_GetVoltage(uint16_t* voltage)
+int BATTERY_GetVoltage(float* voltage_mv)
 {
-    BOARD_ASSERT(voltage != NULL);
+    BOARD_ASSERT(voltage_mv != NULL);
 
     (void)ADC1->DR; // Clear EOC left by an earlier timed-out conversion
 
@@ -73,8 +78,7 @@ int BATTERY_GetVoltage(uint16_t* voltage)
     }
 
     uint16_t analog = (uint16_t)ADC1->DR;
-    uint32_t tmp = analog * 3300;
-    *voltage = tmp / 4096; 
+    *voltage_mv = analog * ADC_STEP * BATTERY_ADC_GAIN;
 
     return 0;
 }

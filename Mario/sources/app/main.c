@@ -387,9 +387,10 @@ int main(void)
 		
 		GAME_Update();
 
-		uint16_t VBat = 0;
-		BATTERY_GetVoltage(&VBat);
-		// printf_v("\nVBat: %d\n", VBat);
+		float mv = 0;
+		BATTERY_GetVoltage(&mv);
+		uint32_t mVBat = (uint32_t)mv;
+		printf_v("\nmVBat: %d\n", mVBat);
 		
 		timeSpentInLoopUS = CalcTimeUS(startLoopTime);
 	}

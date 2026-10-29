@@ -326,7 +326,7 @@ const RepObjectLevelPos_t BGRepObjectsLevelPosition[] = {
 };
 
 // Length of one melody slot (eighth note) and of the silence that follows every tone
-#define MUSIC_SLOT_MS		(150)
+#define MUSIC_SLOT_MS		(175)
 #define MUSIC_GAP_MS		(25)
 
 // Note lengths in milliseconds: a tone plus its gap fills whole slots, three triplet tones

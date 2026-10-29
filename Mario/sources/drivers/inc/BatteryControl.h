@@ -11,7 +11,7 @@
 #include <stdint.h>
 
 void BATTERY_Init(void);
-int  BATTERY_GetVoltage(uint16_t* voltage);
+int  BATTERY_GetVoltage(float* voltage);
 
 
 #endif // SOURCES_INC_BATTERYCONTROL_H_
