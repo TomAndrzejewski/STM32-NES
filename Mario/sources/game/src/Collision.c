@@ -489,8 +489,6 @@ static void COLLISION_Resolve(GameContext_t* ctx)
 			COLLISION_Enemy_Floor(enemy, ctx);
 			break;
 		}
-		default:
-			break;
 		}
 	}
 }
@@ -531,7 +529,7 @@ static void COLLISION_Player_Enemy_Handle(PlayerState_t* player, EnemyState_t* e
 
 		break;
 	}
-	default:
+	case BUMP_SIDE_NONE:
 		break;
 	}
 }
@@ -596,7 +594,7 @@ static void COLLISION_Player_SolidFGObject_Handle(PlayerState_t* player, const F
 
 		break;
 	}
-	default:
+	case BUMP_SIDE_NONE:
 		break;
 	}
 }

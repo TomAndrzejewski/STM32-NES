@@ -57,10 +57,10 @@ target_compile_options(${PROJECT_NAME}.elf PRIVATE
     # Warnings
     -Wall
     -Wextra
-    -Wno-switch
     -Wdouble-promotion
     -Wfloat-conversion
     -Werror=override-init
+    -Werror=switch
     #-Wshadow
 
     # Debug / Release

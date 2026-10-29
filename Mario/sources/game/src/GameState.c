@@ -138,8 +138,8 @@ static void GAME_STATE_HandleEvent(GameStateEnum state, GameEventEnum event, Gam
 	case GAME_STATE_PLAYER_DYING:
 	case GAME_STATE_GAME_OVER:
 		break;
-	default:
-		// Unknown game state: add a missing case for it
+	case GAME_STATE_COUNT:
+		// Not a real game state: check where the state was set
 		BOARD_ASSERT(false);
 		break;
 	}
@@ -168,8 +168,8 @@ static void GAME_STATE_Exit(GameStateEnum state, GameContext_t* ctx)
 	case GAME_STATE_PLAYER_DYING:
 	case GAME_STATE_GAME_OVER:
 		break;
-	default:
-		// Unknown game state: add a missing case for it
+	case GAME_STATE_COUNT:
+		// Not a real game state: check where the state was set
 		BOARD_ASSERT(false);
 		break;
 	}
@@ -199,8 +199,8 @@ static void GAME_STATE_Enter(GameStateEnum state, GameContext_t* ctx)
 		GAME_RestartLevel();
 		break;
 	}
-	default:
-		// Unknown game state: add a missing case for it
+	case GAME_STATE_COUNT:
+		// Not a real game state: check where the state was set
 		BOARD_ASSERT(false);
 		break;
 	}
@@ -228,10 +228,11 @@ static void GAME_STATE_Run(const GameStateMachine_t* sm, GameContext_t* ctx, Gam
 		break;
 	}
 	case GAME_STATE_PLAYING:
+		break;
 	case GAME_STATE_GAME_OVER:
 		break;
-	default:
-		// Unknown game state: add a missing case for it
+	case GAME_STATE_COUNT:
+		// Not a real game state: check where the state was set
 		BOARD_ASSERT(false);
 		break;
 	}

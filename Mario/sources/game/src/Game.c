@@ -428,10 +428,6 @@ void PLAYER_LevelUp(PlayerState_t* player)
 		// Add points here and with every levelup
 		break;
 	}
-	default:
-		// Unknown player level: add a missing case for it
-		BOARD_ASSERT(false);
-		break;
 	}
 }
 
