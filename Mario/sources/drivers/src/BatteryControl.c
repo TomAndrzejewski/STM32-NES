@@ -37,6 +37,8 @@
 
 #define BATTERY_ADC_GAIN                    (1.37037037f)
 
+#define BATTERY_MVBAT_MEAN_FILTER_SIZE      (8)
+
 //----------------
 // PRIVATE TYPES
 //----------------
@@ -46,7 +48,8 @@
 //----------------
 // PRIVATE VARIABLES
 //----------------
-
+static float s_mvBatBuffer[BATTERY_MVBAT_MEAN_FILTER_SIZE];
+static int s_mvBatBufferIndex;
 
 //----------------
 // PRIVATE FUNCTION PROTOTYPES
@@ -60,12 +63,15 @@ static void BATTERY_ADCInit(void);
 void BATTERY_Init(void)
 {
     BATTERY_ADCInit();
+
+    fast_memset(s_mvBatBuffer, 0, sizeof(s_mvBatBuffer));
+    s_mvBatBufferIndex = 0;
 }
 
 // Return code: -1 - error, 0 - ok
-int BATTERY_GetVoltage(float* voltage_mv)
+int BATTERY_GetVoltage(float* out_voltage_mv)
 {
-    BOARD_ASSERT(voltage_mv != NULL);
+    BOARD_ASSERT(out_voltage_mv != NULL);
 
     (void)ADC1->DR; // Clear EOC left by an earlier timed-out conversion
 
@@ -77,8 +83,29 @@ int BATTERY_GetVoltage(float* voltage_mv)
         if (timeout_has_expired(&timer)) return -1;
     }
 
+    // Read ADC Data Register
     uint16_t analog = (uint16_t)ADC1->DR;
-    *voltage_mv = analog * ADC_STEP * BATTERY_ADC_GAIN;
+
+    // Convert to battery voltage
+    float mv = analog * ADC_STEP * BATTERY_ADC_GAIN;
+
+    // Fill mean average
+    s_mvBatBuffer[s_mvBatBufferIndex] = mv;
+    s_mvBatBufferIndex++;
+    if (s_mvBatBufferIndex >= (int)ARRAY_SIZE(s_mvBatBuffer)) {
+        s_mvBatBufferIndex = 0;
+    }
+
+    // Calculate mean average
+    float avgMvBat = 0.0f;
+    for (int i = 0; i < (int)ARRAY_SIZE(s_mvBatBuffer); i++)
+    {
+        avgMvBat += s_mvBatBuffer[i];
+    }
+    avgMvBat /= BATTERY_MVBAT_MEAN_FILTER_SIZE;
+
+    // Output
+    *out_voltage_mv = avgMvBat;
 
     return 0;
 }

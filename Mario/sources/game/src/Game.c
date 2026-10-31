@@ -27,6 +27,7 @@
 #include "Physics.h"
 #include "printf_logger.h"
 #include "Renderer.h"
+#include "BatteryControl.h"
 
 
 //----------------
@@ -333,6 +334,13 @@ void GAME_Update(void)
 	s->finishTime[timeStamps] = GetTimestamp();
 	timeStamps++;
 
+	s->startTime[timeStamps] = GetTimestamp();
+	float mv = 0;
+	BATTERY_GetVoltage(&mv);
+	uint32_t mVBat = (uint32_t)mv;
+	s->finishTime[timeStamps] = GetTimestamp();
+	timeStamps++;
+
 	// Statistics
 	if (1 && !ctx->firstGameLoop)
 	{
@@ -352,17 +360,36 @@ void GAME_Update(void)
 
 		if (CalcTimeMS(s->printStatsTimer) > 1 * 1000) {
 			s->printStatsTimer = GetTimestamp();
-			printf_v("Frame %d maxFrameTime: %d us, maxTimeSum: %d us, max timestamps:\n", s->frameCounter, s->maxFrameTime, s->maxTimeSum);
-			for (int i = 0; i < timeStamps; i++)
-			{
-				printf_uint(s->maxTime[i]);
-				printf_c('\t');
-			}
-			printf_c('\n');
 
-			const ObjectsManager_t* mgr = &ctx->objectsManager;
-			printf_v("Dropped FG: %d, enemies: %d, BG: %d, spawn orders: %d\n",
-				(int)mgr->droppedFGObjects, (int)mgr->droppedEnemies, (int)mgr->droppedBGObjects, (int)mgr->droppedSpawnOrders);
+			if (false) // Human readable mode
+			{
+				printf_str("=======================================================\n");
+
+				printf_v("FrameCounter: %d\n", s->frameCounter);
+
+				printf_v("maxFrameTime: %d us, maxTimeSum: %d us, max timestamps:\n", s->maxFrameTime, s->maxTimeSum);
+				for (int i = 0; i < timeStamps; i++)
+				{
+					printf_uint(s->maxTime[i]);
+					printf_c('\t');
+				}
+				printf_c('\n');
+
+				printf_v("Battery: mVBat: %d\n", mVBat);
+
+				const ObjectsManager_t* mgr = &ctx->objectsManager;
+				printf_v("Dropped FG: %d, enemies: %d, BG: %d, spawn orders: %d\n",
+					(int)mgr->droppedFGObjects, (int)mgr->droppedEnemies, (int)mgr->droppedBGObjects, (int)mgr->droppedSpawnOrders);
+			}
+			else // CSV mode
+			{
+				printf_v("%d\t%d\t%d\t%d\t\n",
+					s->frameCounter,
+					s->maxFrameTime,
+					s->maxTimeSum,
+					mVBat);
+			}
+			
 		}
 	}
 
