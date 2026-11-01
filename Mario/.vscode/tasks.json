@@ -93,6 +93,24 @@
                 "cwd": "${workspaceFolder}"
             },
             "problemMatcher": []
+        },
+        {
+            "type": "process",
+            "label": "SWO: Flash and log",
+            "dependsOn": "CubeProg: Flash project (SWD)",
+            "windows": {
+                "command": "C:/Program Files/Git/bin/bash.exe"
+            },
+            "linux": {
+                "command": "bash"
+            },
+            "args": [
+                "clog.sh"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
         }
     ]
 }

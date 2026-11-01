@@ -352,6 +352,7 @@ int main(void)
 	Flash_init();
 	BusFault_Init();
 	Clock_init();
+	Uptime_init();
 	FPU_init();
 	IRQ_init();
 	Delay_init();

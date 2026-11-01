@@ -20,6 +20,9 @@ uint32_t CalcTimeUS(uint32_t startTime);
 uint32_t CalcTimeMS(uint32_t startTime);
 uint32_t CalcDiffTimeUS(uint32_t startTime, uint32_t finishTime);
 
+void Uptime_init();
+uint32_t GetUptimeMS();
+
 void fast_memset(void *dest, uint32_t value, size_t bytes);
 
 

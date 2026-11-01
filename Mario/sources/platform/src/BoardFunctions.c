@@ -8,8 +8,11 @@
 #include <stm32f446xx.h>
 #include "core_cm4.h"
 
+#include "BoardAssert.h"
 #include "BoardDefs.h"
 #include "BoardFunctions.h"
+
+static volatile uint32_t s_uptimeMS;
 
 void delayUS(uint32_t us)
 {
@@ -58,6 +61,23 @@ uint32_t CalcTimeMS(uint32_t startTime)
 	uint32_t cycles_per_us = (SYSCLOCK_MHZ / 1000UL);
 
 	return (elapsed_cycles / cycles_per_us);
+}
+
+void Uptime_init()
+{
+	// One SysTick interrupt per millisecond
+	uint32_t failed = SysTick_Config(SYSCLOCK_MHZ / 1000UL);
+	BOARD_ASSERT(failed == 0);
+}
+
+uint32_t GetUptimeMS()
+{
+	return s_uptimeMS;
+}
+
+void SysTick_Handler(void)
+{
+	s_uptimeMS++;
 }
 
 __attribute__((optimize("-O3"), noinline))

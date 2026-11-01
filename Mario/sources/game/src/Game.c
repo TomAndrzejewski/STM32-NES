@@ -360,10 +360,13 @@ void GAME_Update(void)
 
 		if (CalcTimeMS(s->printStatsTimer) > 1 * 1000) {
 			s->printStatsTimer = GetTimestamp();
+			uint32_t uptimeMS = GetUptimeMS();
 
 			if (false) // Human readable mode
 			{
 				printf_str("=======================================================\n");
+
+				printf_v("UptimeMS: %d\n", uptimeMS);
 
 				printf_v("FrameCounter: %d\n", s->frameCounter);
 
@@ -383,7 +386,8 @@ void GAME_Update(void)
 			}
 			else // CSV mode
 			{
-				printf_v("%d\t%d\t%d\t%d\t\n",
+				printf_v("%d\t%d\t%d\t%d\t%d\t\n",
+					uptimeMS,
 					s->frameCounter,
 					s->maxFrameTime,
 					s->maxTimeSum,
