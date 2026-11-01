@@ -89,10 +89,10 @@ void SPI_Init(void)
 void SPI_StartTransaction(void)
 {
     TimeoutTracker_t timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
-	while (!s_dmaDone) {
-		if (timeout_has_expired(&timer)) {
-			break;
-		}
+	for (;;) {
+		bool expired = timeout_has_expired(&timer);
+		if (s_dmaDone) break;
+		if (expired) break;
 	}
 
 	// Czyszczenie SPI na start
@@ -118,23 +118,20 @@ uint8_t SPI_Send_U8(uint8_t data)
 void DMA2_SPI1_PrepareSend_NoBlock(uint8_t* buffer, uint16_t length)
 {
     TimeoutTracker_t timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
-	while (!s_dmaDone) {
-		if (timeout_has_expired(&timer)) {
-			break;
-		}
+	for (;;) {
+		bool expired = timeout_has_expired(&timer);
+		if (s_dmaDone) break;
+		if (expired) return; // Bail out!!!
 	}
-	if (timeout_has_expired(&timer)) { // Bail out!!!
-		return;
-	}
-	
+
 	s_dmaDone = false;
     // 1. Sprawdź, czy poprzedni transfer DMA się zakończył
     // Jeśli DMA jeszcze wysyła, musimy poczekać (lub zabezpieczyć to wyżej w kodzie)
     timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
-	while (DMA2_Stream3->CR & DMA_SxCR_EN) {
-		if (timeout_has_expired(&timer)) {
-			break;
-		}
+	for (;;) {
+		bool expired = timeout_has_expired(&timer);
+		if (!(DMA2_Stream3->CR & DMA_SxCR_EN)) break;
+		if (expired) break;
 	}
 
     s_dmaStartTimestamp = GetTimestamp();
@@ -164,10 +161,10 @@ void DMA2_Stream3_IRQHandler(void)
         DMA2->LIFCR = DMA_LIFCR_CTCIF3;
 
         TimeoutTracker_t timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
-    	while (SPI1->SR & SPI_SR_BSY) {
-    		if (timeout_has_expired(&timer)) {
-    			break;
-    		}
+    	for (;;) {
+    		bool expired = timeout_has_expired(&timer);
+    		if (!(SPI1->SR & SPI_SR_BSY)) break;
+    		if (expired) break;
     	}
 
     	// --- DODAJ TE LINIE TUTAJ, ABY UBIĆ SZUM ---
@@ -238,26 +235,26 @@ static void DMA2_SPI1_TX_Init(void)
 static uint8_t SPI_Write(uint8_t data)
 {
     TimeoutTracker_t timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
-	while (!s_dmaDone) {
-		if (timeout_has_expired(&timer)) {
-			break;
-		}
+	for (;;) {
+		bool expired = timeout_has_expired(&timer);
+		if (s_dmaDone) break;
+		if (expired) break;
 	}
 
 	timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
-	while (!(SPI1->SR & SPI_SR_TXE)) {	// Zakonczono wysylanie
-		if (timeout_has_expired(&timer)) {
-			break;
-		}
+	for (;;) {
+		bool expired = timeout_has_expired(&timer);
+		if (SPI1->SR & SPI_SR_TXE) break;	// Zakonczono wysylanie
+		if (expired) break;
 	}
 
 	*(volatile uint8_t *)&SPI1->DR = data;
 
 	timer = timeout_start_ms(DMA_SPI_TIMEOUT_MS);
-	while (!(SPI1->SR & SPI_SR_RXNE)) { // Czekaj na odebranie ostatniego bitu
-		if (timeout_has_expired(&timer)) {
-			break;
-		}
+	for (;;) {
+		bool expired = timeout_has_expired(&timer);
+		if (SPI1->SR & SPI_SR_RXNE) break; // Czekaj na odebranie ostatniego bitu
+		if (expired) break;
 	}
 
 	return *((volatile uint8_t*)&SPI1->DR);

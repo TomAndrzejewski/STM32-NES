@@ -180,8 +180,10 @@ int ADC_Sample(uint16_t* samplesBuf, unsigned size)
         {
             // Wait until conversion is finished
             TimeoutTracker_t timer = timeout_start_us(ADC_END_OF_CONVERSION_TIMEOUT_US);
-            while (!(ADC1->SR & ADC_SR_EOC)) {
-                if (timeout_has_expired(&timer)) {
+            for (;;) {
+                bool expired = timeout_has_expired(&timer);
+                if (ADC1->SR & ADC_SR_EOC) break;
+                if (expired) {
                     failed = true;
                     break;
                 }

@@ -37,7 +37,7 @@
 
 #define BATTERY_ADC_GAIN                    (1.37037037f)
 
-#define BATTERY_MVBAT_MEAN_FILTER_SIZE      (8)
+#define BATTERY_MVBAT_MEAN_FILTER_SIZE      (64)
 
 //----------------
 // PRIVATE TYPES
@@ -79,8 +79,10 @@ int BATTERY_GetVoltage(float* out_voltage_mv)
 
     // Wait until conversion is finished
     TimeoutTracker_t timer = timeout_start_us(BATTERY_ADC_CONVERSION_TIMEOUT_US);
-    while (!(ADC1->SR & ADC_SR_EOC)) {
-        if (timeout_has_expired(&timer)) return -1;
+    for (;;) {
+        bool expired = timeout_has_expired(&timer);
+        if (ADC1->SR & ADC_SR_EOC) break;
+        if (expired) return -1;
     }
 
     // Read ADC Data Register
